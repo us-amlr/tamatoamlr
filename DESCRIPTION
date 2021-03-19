@@ -1,0 +1,11 @@
+Package: amlrPinnipeds
+Title: Analyze and visualize data from the ***REMOVED*** database
+Version: 0.1.0.9000
+Authors@R: 
+        person("Sam", "Woodman", email = "sam.woodman@noaa.gov", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6071-8186"))
+Description: Connects to the ***REMOVED*** database, and allows users to analyze and visualize data from the database
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
