@@ -56,14 +56,76 @@ ui.tabs <- function() {
     #--------------------------------------------------------------------------
     tabItem(
       tabName = "tab_census",
-      tags$h5("todo: census")
+      fluidRow(
+        column(
+          width = 6,
+          fluidRow(
+            box(
+              status = "primary", width = 12,
+              plotOutput("census_plot")
+            ),
+            box(
+              status = "primary", width = 12,
+              DTOutput("census_tbl")
+            )
+          )
+        ),
+        column(
+          width = 6,
+          fluidRow(
+            box(
+              title = "Plot info", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
+              fluidRow(
+                # column(
+                #   width = 4,
+                #   checkboxGroupInput("tr_species", label = tags$h5("Species"),
+                #                      choices = list("Fur seals" = "fur seal",
+                #                                     "Elephant seals" = "elephant seal",
+                #                                     "Leopard seals" = "leopard seal",
+                #                                     "Weddell seals" = "weddell seal"),
+                #                      selected = "fur seal")
+              ),
+              column(
+                width = 4,
+                radioButtons("census_type", label = tags$h5("Census type"),
+                             choices = list("AFS pup census" = "afs_pup",
+                                            "AFS study beach" = "afs_study_beach",
+                                            "Phocid census" = "phocid"))
+              ),
+              column(
+                width = 4,
+                conditionalPanel(
+                  condition = "input.census_type == phocid",
+                  tags$h5("phocid census todo")
+                )
+              )
+            )
+          ),
+          box(
+            title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
+            fluidRow(
+              conditionalPanel(
+                condition = "input.census_type == afs_pup",
+                column(3, selectInput("census_season_min", label = tags$h5("Minimum season"),
+                                      choices = season.list, selected = season.list.id.min)),
+                column(3, selectInput("census_season_max", label = tags$h5("Maximum season"),
+                                      choices = season.list, selected = season.list.id.max))
+              ),
+              conditionalPanel(
+                condition = "input.census_type != afs_pup",
+                column(3, selectInput("census_season_select", label = tags$h5("Select season"),
+                                      choices = season.list, selected = season.list.id.max)),
+                column(3, dateRangeInput("census_date_range", label = tags$h5("Date range"))) #Updated in observer() based on selected season
+              )
+            )
+          )
+        )
+      )
     ),
 
     #--------------------------------------------------------------------------
     tabItem(
       tabName = "tab_tr",
-      # numericInput("nrows", "How many rows to show?", 10),
-      # tableOutput("tr_tbl")
       fluidRow(
         column(
           width = 6,
@@ -106,7 +168,7 @@ ui.tabs <- function() {
               title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
               fluidRow(
                 column(3, selectInput("tr_season_min", label = tags$h5("Minimum season"),
-                                      choices = season.list, selected = season.list.id.max)),
+                                      choices = season.list, selected = season.list.id.min)),
                 column(3, selectInput("tr_season_max", label = tags$h5("Maximum season"),
                                       choices = season.list, selected = season.list.id.max))
               )

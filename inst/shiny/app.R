@@ -181,6 +181,7 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------------
   ### Server files
   source(file.path("server_files", "server_afs_natality_pup_fate.R"), local = TRUE, chdir = TRUE)
+  source(file.path("server_files", "server_census.R"), local = TRUE, chdir = TRUE)
   source(file.path("server_files", "server_tag_resights.R"), local = TRUE, chdir = TRUE)
 
 
