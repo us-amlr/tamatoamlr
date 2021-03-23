@@ -1,10 +1,25 @@
 Package: amlrPinnipeds
-Title: Analyze and visualize data from the ***REMOVED*** database
+Title: Analyze and visualize data from the ***REMOVED***_Test database
 Version: 0.1.0.9000
 Authors@R: 
         person("Sam", "Woodman", email = "sam.woodman@noaa.gov", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6071-8186"))
-Description: Connects to the ***REMOVED*** database, and allows users to analyze and visualize data from the database
-License: GPL-3
+Description: This package contains a Shiny app that connects to the ***REMOVED***_Test database, 
+    and allows users to analyze and visualize data from said database.
+Imports: 
+    DBI, 
+    dbplyr,
+    dplyr,
+    DT, 
+    ggplot2,
+    lubridate, 
+    pool,
+    purrr,
+    shiny, 
+    shinydashboard, 
+    shinyjs, 
+    stringr, 
+    tidyr
+License: CC0
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
