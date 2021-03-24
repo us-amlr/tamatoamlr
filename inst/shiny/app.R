@@ -3,26 +3,26 @@
 ###############################################################################
 # Check for and attach packages
 list.packages <- list(
-  "DT", "shiny", "shinydashboard", "shinyjs",
-  "DBI", "pool",
+  "DBI", "odbc", "pool",
+  "DT", "shiny", "shinybusy", "shinydashboard", "shinyjs",
   "dbplyr", "dplyr", "ggplot2", "lubridate", "purrr", "stringr", "tidyr"
 )
 
 if (!require(amlrPinnipeds))
   stop("Error attaching amlrPinnipeds package - please reinstall amlrPinnipeds package")
-if (!all(sapply(list.packages, require, character.only = TRUE)))
+if (!all(sapply(list.packages, require, character.only = TRUE, warn.conflicts = FALSE)))
   stop("Error attaching packages - please reinstall amlrPinnipeds package")
 
 
 
 ###############################################################################
 ### Set up db connection, with error checking
-# Based on https://github.com/rstudio/pool
 db.driver <- "SQL Server"
 db.server <- "swc-estrella-s"
 db.name <- "AMLR_PINNIPEDS_Test"
 
-pool <- try(dbPool(
+# Based on https://github.com/rstudio/pool
+pool <- try(pool::dbPool(
   drv = odbc::odbc(),
   Driver = db.driver,
   Server = db.server,
@@ -66,6 +66,20 @@ onStop(function() {
 
 jscode <- "shinyjs.closeWindow = function() { window.close(); }"
 
+pinniped.sp.list.all <- list(
+  "Fur seal" = "fur seal",
+  "Crabeater seal" = "crabeater seal",
+  "Elephant seal" = "elephant seal",
+  "Leopard seal" = "leopard seal",
+  "Weddell seal" = "weddell seal"
+)
+# pinniped.sp.list.tr <- pinniped.sp.list.all[c(1, 3:5)]
+pinniped.sp.list.tr <- pinniped.sp.list.all[
+  c("Fur seal", "Elephant seal", "Leopard seal", "Weddell seal")
+]
+pinniped.sp.list.phocid <- pinniped.sp.list.all[
+  c("Crabeater seal", "Elephant seal", "Leopard seal", "Weddell seal")
+]
 
 
 ###############################################################################
@@ -74,12 +88,11 @@ ui.new.line <- function() helpText(HTML("<br/>"))
 
 
 # Load files with UI code
-source(file.path("ui_function.R"), local = TRUE, chdir = TRUE)
-
+source(file.path("ui_tabs.R"), local = TRUE, chdir = TRUE)
 
 # UI function
 ui <- dashboardPage(
-  dashboardHeader(title = "AMLR Pinnipeds Database", titleWidth = "220"),
+  dashboardHeader(title = "AMLR Pinnipeds Database Summaries", titleWidth = "400"),
 
   dashboardSidebar(
     sidebarMenu(
@@ -98,20 +111,28 @@ ui <- dashboardPage(
     # See https://stackoverflow.com/questions/35306295/how-to-stop-running-shiny-app-by-closing-the-browser-window
     extendShinyjs(text = jscode, functions = c("closeWindow")),
 
-    # See https://stackoverflow.com/questions/59760316/change-the-color-of-text-in-validate-in-a-shiny-app
-    tags$head( #validation text
-      tags$style(HTML("
-                      .shiny-output-error-validation {
-                      color: red; font-weight: bold;
-                      }
-                      "))
+    # Use shinybusy to indicate when plot work is being done
+    shinybusy::add_busy_spinner(
+      spin = "double-bounce", position = "top-right", margin = c(20, 20),
+      height = "100px", width = "100px"
     ),
 
-    # ui.createMap()
-    ui.tabs()
+
+    # See https://stackoverflow.com/questions/59760316/change-the-color-of-text-in-validate-in-a-shiny-app
+    tags$head(tags$style(HTML("
+      .shiny-output-error-validation {
+      color: red; font-weight: bold;
+      }
+    "))),
+
+    tabItems(
+      ui_tab_info(),
+      ui_tab_afs_natal(),
+      ui_tab_census(),
+      ui_tab_tr()
+    )
   )
 )
-
 
 ###############################################################################
 ##### server
@@ -168,13 +189,11 @@ server <- function(input, output, session) {
   # Season info display table
   output$info_season_info <- renderTable({
     season.info %>%
-      select(season_name, season_open_date, season_close_date, season_days, diet_scat_date) %>%
-      set_names(c("Season name", "Opening date", "Closing date", "Season days", "Diet study start date"))
-    # tbl(pool, "season_info") %>%
-    #   select(season_name, season_open_date, season_close_date, season_days, diet_scat_date) %>%
-    #   arrange(desc(season_open_date)) %>%
-    #   collect() %>%
-    #   set_names(c("Season name", "Opening date", "Closing date", "Season days", "Diet study start date"))
+      select(`Season name` = season_name,
+             `Opening date` = season_open_date,
+             `Closing date` = season_close_date,
+             `Season days` = season_days,
+             `Diet study start date` = diet_scat_date)
   })
 
 
@@ -183,6 +202,7 @@ server <- function(input, output, session) {
   source(file.path("server_files", "server_afs_natality_pup_fate.R"), local = TRUE, chdir = TRUE)
   source(file.path("server_files", "server_census.R"), local = TRUE, chdir = TRUE)
   source(file.path("server_files", "server_tag_resights.R"), local = TRUE, chdir = TRUE)
+  source(file.path("server_files", "server_funcs.R"), local = TRUE, chdir = TRUE)
 
 
   #----------------------------------------------------------------------------

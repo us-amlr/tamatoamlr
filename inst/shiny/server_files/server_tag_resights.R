@@ -16,7 +16,6 @@ tr_tbl_group_df <- reactive({
   tr.species.str <- tolower(input$tr_species)
   tr.species.df <- data.frame(species = tr.species.str, stringsAsFactors = FALSE)
 
-  # browser()
   vtrs.summ <- tbl(pool, "vTag_Resights_Season") %>%
     filter(between(season_info_id, season.id.min, season.id.max)) %>%
     left_join(tbl(pool, "pinnipeds"), by = c("pinniped_id" = "ID")) %>%
