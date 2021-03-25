@@ -5,16 +5,18 @@ Authors@R:
         person("Sam", "Woodman", email = "sam.woodman@noaa.gov", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6071-8186"))
 Description: This package contains a Shiny app that connects to the AMLR_PINNIPEDS_Test database, 
     and allows users to analyze and visualize data from said database.
+Depends: R (>= 3.5.0)
 Imports: 
     DBI, 
     dbplyr,
-    dplyr,
+    dplyr (>= 1.0),
     DT, 
     ggplot2,
     lubridate, 
     odbc,
     pool,
     purrr,
+    scales,
     shiny, 
     shinybusy,
     shinydashboard, 

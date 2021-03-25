@@ -1,11 +1,13 @@
 ### Functions specific to the amlrPinnipeds Shiny app
 
 
+#------------------------------------------------------------------------------
 ### Sort x by corresponding season_open_date (descending), then other user-provided columns
 arrange_season_info <- function(x, ...) {
   stopifnot(
     inherits(x, "data.frame"),
-    "season_name" %in% names(x)
+    "season_name" %in% names(x),
+    exists("season.info")
   )
 
   season.info.sel <- season.info %>% select(season_name, season_open_date)
@@ -17,3 +19,18 @@ arrange_season_info <- function(x, ...) {
 
   x.out
 }
+
+
+#------------------------------------------------------------------------------
+### Make the 'species' column a factor with the levels of pinniped.sp.levels
+factor_species <- function(x) {
+  stopifnot(
+    inherits(x, "data.frame"),
+    "species" %in% names(x),
+    exists("pinniped.sp.levels")
+  )
+
+  x %>% mutate(species = factor(species, levels = pinniped.sp.levels))
+}
+
+#------------------------------------------------------------------------------
