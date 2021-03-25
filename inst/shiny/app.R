@@ -17,6 +17,7 @@ if (!all(sapply(list.packages, require, character.only = TRUE, warn.conflicts = 
 
 ###############################################################################
 ### Set up db connection, with error checking
+# TODO: pass these arguments in via the amlr_pinnipeds_gui function since they're outside of the session?
 db.driver <- "SQL Server"
 db.server <- "swc-***REMOVED***-s"
 db.name <- "***REMOVED***_Test"
@@ -32,8 +33,9 @@ pool <- try(pool::dbPool(
 ), silent = TRUE)
 
 
-# Check for connection to db, then get some broadly used season_info data
+# Check for connection to db, then get/save broadly used data
 if (!isTruthy(pool)) {
+  # TODO: should this be displayed in some uiOutput.?
   stop("The Shiny app was unable to connect to the ", db.name, " database on the ",
        db.server, " server via a trusted connection - are you logged in to VPN?")
 
@@ -41,7 +43,10 @@ if (!isTruthy(pool)) {
   season.info <- tbl(pool, "season_info") %>%
     select(-ts) %>%
     arrange(desc(season_open_date)) %>%
-    collect()
+    collect() %>%
+    mutate(season_open_date = as.Date(season_open_date),
+           season_close_date = as.Date(season_close_date),
+           diet_scat_date = as.Date(diet_scat_date))
 
   # Used in displays/filters
   season.list <- set_names(as.list(season.info$ID), season.info$season_name)
@@ -73,7 +78,8 @@ pinniped.sp.list.all <- list(
   "Leopard seal" = "leopard seal",
   "Weddell seal" = "weddell seal"
 )
-# pinniped.sp.list.tr <- pinniped.sp.list.all[c(1, 3:5)]
+pinniped.sp.levels <- names(pinniped.sp.list.all) #levels for factor
+
 pinniped.sp.list.tr <- pinniped.sp.list.all[
   c("Fur seal", "Elephant seal", "Leopard seal", "Weddell seal")
 ]
@@ -81,11 +87,14 @@ pinniped.sp.list.phocid <- pinniped.sp.list.all[
   c("Crabeater seal", "Elephant seal", "Leopard seal", "Weddell seal")
 ]
 
+# Colors for pinnipeds in plots
+pinniped.sp.colors <- purrr::set_names(
+  scales::hue_pal()(5), names(pinniped.sp.list.all)
+)
+
 
 ###############################################################################
 ##### UI
-ui.new.line <- function() helpText(HTML("<br/>"))
-
 
 # Load files with UI code
 source(file.path("ui_tabs.R"), local = TRUE, chdir = TRUE)
@@ -151,21 +160,15 @@ server <- function(input, output, session) {
 
   #----------------------------------------------------------------------------
   ### Reactive values
-  # tbl_season_info <- reactive({
-  #   tbl(pool, "season_info") %>%
-  #     select(-ts) %>%
-  #     arrange(desc(season_open_date)) %>%
-  #     collect()
-  # })
-  #
-  # # Reactive val for list of season names and IDs in the db - used in displays/filters
-  # val.season.list <- reactiveVal(value = list())
-  # observe(val.season.list <- set_names(as.list(tbl_season_info()$ID), tbl_season_info()$season_name))
 
-  # # Reactive values of tables, in case whole table has been brought into memory
-  # vals <- reactiveValues(
-  #   season.list = list()
-  # )
+  # Make reactiveValues for tables, in case whole table has been brought into memory?
+
+  # Catch-all reactiveValues
+  vals <- reactiveValues(
+    census.beaches = NULL,
+    census.cols = NULL,
+    census.warning.na.records = NULL
+  )
 
 
   #----------------------------------------------------------------------------
@@ -189,6 +192,7 @@ server <- function(input, output, session) {
   # Season info display table
   output$info_season_info <- renderTable({
     season.info %>%
+      mutate(across(where(is.Date), as.character)) %>%
       select(`Season name` = season_name,
              `Opening date` = season_open_date,
              `Closing date` = season_close_date,

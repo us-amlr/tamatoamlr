@@ -11,7 +11,8 @@ tr_tbl_group_df <- reactive({
 
   validate(
     need(input$tr_species, "Please select at least one species"),
-    need(!("leopard seal" %in% input$tr_species), "Not ready for leops")
+    #TODO: incorporate leops
+    need(!("leopard seal" %in% input$tr_species), "Have not incorporated leop tag resights")
   )
   tr.species.str <- tolower(input$tr_species)
   tr.species.df <- data.frame(species = tr.species.str, stringsAsFactors = FALSE)
@@ -38,7 +39,7 @@ tr_tbl_group_df <- reactive({
     filter(!is.na(species), !is.na(season_info_id)) %>%
     left_join(select(season.info, season_info_id = ID, season_name), by = "season_info_id") %>%
     mutate(species = str_to_sentence(species)) %>%
-    arrange(season_name, species)
+    arrange_season_info(species)
 })
 
 
@@ -56,11 +57,11 @@ output$tr_plot <- renderPlot({
     validate("tag resights - tell Sam to do the plot")
   }
 
-  # TODO: some way to make the colors the same for each species no matter which are plotted
-  ggplot(tr_tbl_group_df(),
+  ggplot(factor_species(tr_tbl_group_df()),
          aes(x = season_name, y = !!as.name(y.val), color = species, group = species)) +
     geom_point() +
     geom_line() +
+    scale_color_manual(values = pinniped.sp.colors) +
     expand_limits(y = 0) +
     xlab("Season") +
     ylab(y.lab) +
