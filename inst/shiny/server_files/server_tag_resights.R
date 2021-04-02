@@ -57,7 +57,7 @@ output$tr_plot <- renderPlot({
     validate("tag resights - tell Sam to do the plot")
   }
 
-  ggplot(factor_species(tr_tbl_group_df()),
+  ggplot(as_factor_species(tr_tbl_group_df()),
          aes(x = season_name, y = !!as.name(y.val), color = species, group = species)) +
     geom_point() +
     geom_line() +

@@ -384,12 +384,12 @@ output$census_plot <- renderPlot({
 
   census.df <- if (input$census_summary_level_3 == "by_sp") {
     census_df() %>%
-      factor_species() %>%
+      as_factor_species() %>%
       arrange_season_info(!!!grp.syms)
   } else {
     census_df() %>%
       pivot_longer(cols = where(is.numeric), names_to = "count_class", values_to = "count_value") %>%
-      factor_species() %>%
+      as_factor_species() %>%
       arrange_season_info(!!!grp.syms, count_class)
   }
 
