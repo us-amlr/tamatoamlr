@@ -23,7 +23,7 @@ arrange_season_info <- function(x, ...) {
 
 #------------------------------------------------------------------------------
 ### Make the 'species' column a factor with the levels of pinniped.sp.levels
-factor_species <- function(x) {
+as_factor_species <- function(x) {
   stopifnot(
     inherits(x, "data.frame"),
     "species" %in% names(x),
