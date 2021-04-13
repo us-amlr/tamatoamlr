@@ -57,9 +57,9 @@ ui_tab_afs_natal <- function() {
             title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
             fluidRow(
               column(4, selectInput("afs_natal_season_min", label = tags$h5("Minimum season"),
-                                    choices = season.list, selected = season.list.id.max)),
+                                    choices = NULL)),
               column(4, selectInput("afs_natal_season_max", label = tags$h5("Maximum season"),
-                                    choices = season.list, selected = season.list.id.max))
+                                    choices = NULL))
             )
           )
         )
@@ -146,7 +146,7 @@ ui_tab_census <- function() {
                 condition = "input.census_summary_level_1 != 'fs_single'",
                 column(
                   width = 12,
-                  fluidRow(seasoninfo_mod_ui("census", 4)),
+                  fluidRow(mod_season_range_ui("census", 4)),
                   # column(
                   #   width = 4,
                   #   selectInput("census_season_min", label = tags$h5("Minimum season"),
@@ -195,51 +195,51 @@ ui_tab_census <- function() {
 }
 
 #--------------------------------------------------------------------------
-ui_tab_tr <- function() {
-  tabItem(
-    tabName = "tab_tr",
-    fluidRow(
-      column(
-        width = 6,
-        fluidRow(
-          box(
-            status = "primary", width = 12,
-            plotOutput("tr_plot")
-          ),
-          box(
-            status = "primary", width = 12,
-            DTOutput("tr_tbl")
-          )
-        )
-      ),
-      column(
-        width = 6,
-        fluidRow(
-          box(
-            title = "Plot info", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
-            fluidRow(
-              column(4, radioButtons("tr_type", label = tags$h5("Data to plot"),
-                                     choices = list("Individuals by year" = "ind_by_year",
-                                                    "Total resights by year" = "tot_by_year"),
-                                     selected = NULL))
-            )
-          ),
-          box(
-            title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
-            fluidRow(
-              seasoninfo_mod_ui("tag_resights", 4),
-              # column(4, selectInput("tr_season_min", label = tags$h5("Minimum season"),
-              #                       choices = season.list, selected = season.list.id.min)),
-              # column(4, selectInput("tr_season_max", label = tags$h5("Maximum season"),
-              #                       choices = season.list, selected = season.list.id.max)),
-              column(4, checkboxGroupInput("tr_species", label = tags$h5("Species"),
-                                           choices = pinniped.sp.list.tr,
-                                           selected = "fur seal")),
-
-            )
-          )
-        )
-      )
-    )
-  )
-}
+# ui_tab_tr <- function() {
+#   tabItem(
+#     tabName = "tab_tr",
+#     fluidRow(
+#       column(
+#         width = 6,
+#         fluidRow(
+#           box(
+#             status = "primary", width = 12,
+#             plotOutput("tr_plot")
+#           ),
+#           box(
+#             status = "primary", width = 12,
+#             DTOutput("tr_tbl")
+#           )
+#         )
+#       ),
+#       column(
+#         width = 6,
+#         fluidRow(
+#           box(
+#             title = "Plot info", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
+#             fluidRow(
+#               column(4, radioButtons("tr_type", label = tags$h5("Data to plot"),
+#                                      choices = list("Individuals by year" = "ind_by_year",
+#                                                     "Total resights by year" = "tot_by_year"),
+#                                      selected = NULL))
+#             )
+#           ),
+#           box(
+#             title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
+#             fluidRow(
+#               seasoninfo_mod_ui("tag_resights", 4),
+#               # column(4, selectInput("tr_season_min", label = tags$h5("Minimum season"),
+#               #                       choices = season.list, selected = season.list.id.min)),
+#               # column(4, selectInput("tr_season_max", label = tags$h5("Maximum season"),
+#               #                       choices = season.list, selected = season.list.id.max)),
+#               column(4, checkboxGroupInput("tr_species", label = tags$h5("Species"),
+#                                            choices = pinniped.sp.list.tr,
+#                                            selected = "fur seal")),
+#
+#             )
+#           )
+#         )
+#       )
+#     )
+#   )
+# }
