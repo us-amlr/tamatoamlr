@@ -16,7 +16,7 @@ if (!all(sapply(list.packages, require, character.only = TRUE, warn.conflicts = 
 
 
 ###############################################################################
-### Set up db connection, with error checking
+### Set up db connections, with error checking
 db.driver <- "SQL Server"
 db.server <- "swc-***REMOVED***-s"
 db.name.prod <- "***REMOVED***"
@@ -59,17 +59,15 @@ onStop(function() {
 })
 
 
-# TODO
-season.list <- NULL
-season.list.id.min <- NULL
-season.list.id.max <- NULL
+
+### Load modules
+# source(file.path("modules", "general_modules.R"), local = TRUE, chdir = TRUE)
+# source(file.path("modules", "tagresights_mod_server.R"), local = TRUE, chdir = TRUE)
 
 
 
 # ###############################################################################
 # ##### Assorted other stuff...
-
-source(file.path("app_modules.R"), local = TRUE, chdir = TRUE)
 
 # old <- options()
 # on.exit(options(old))
@@ -79,25 +77,13 @@ source(file.path("app_modules.R"), local = TRUE, chdir = TRUE)
 
 jscode <- "shinyjs.closeWindow = function() { window.close(); }"
 
-pinniped.sp.list.all <- list(
-  "Fur seal" = "fur seal",
-  "Crabeater seal" = "crabeater seal",
-  "Elephant seal" = "elephant seal",
-  "Leopard seal" = "leopard seal",
-  "Weddell seal" = "weddell seal"
-)
-pinniped.sp.levels <- names(pinniped.sp.list.all) #levels for factor
 
-pinniped.sp.list.tr <- pinniped.sp.list.all[
-  c("Fur seal", "Elephant seal", "Leopard seal", "Weddell seal")
-]
-pinniped.sp.list.phocid <- pinniped.sp.list.all[
-  c("Crabeater seal", "Elephant seal", "Leopard seal", "Weddell seal")
-]
+pinniped.sp.levels <- names(amlrPinnipeds::pinniped.sp.list) #levels for factor
+
 
 # Colors for pinnipeds in plots
 pinniped.sp.colors <- purrr::set_names(
-  scales::hue_pal()(5), names(pinniped.sp.list.all)
+  scales::hue_pal()(5), names(amlrPinnipeds::pinniped.sp.list)
 )
 
 
@@ -106,6 +92,7 @@ pinniped.sp.colors <- purrr::set_names(
 
 # Load files with UI code
 source(file.path("ui_tabs.R"), local = TRUE, chdir = TRUE)
+# source(file.path("modules", "ui_modules.R"), local = TRUE, chdir = TRUE)
 
 # UI function
 ui <- dashboardPage(
@@ -144,11 +131,13 @@ ui <- dashboardPage(
     "))),
 
     tabItems(
-      ui_tab_info(),
-      ui_tab_afs_diet(),
-      ui_tab_afs_natal(),
-      ui_tab_census(),
-      ui_tab_tr()
+      tabItem(tabName = "tab_info", fluidRow(mod_database_ui("db"), mod_season_ui("si"))),
+      tabItem(tabName = "tab_census", mod_census_ui("census")),
+      # ui_tab_afs_diet(),
+      # ui_tab_afs_natal(),
+      # ui_tab_census()
+      tabItem(tabName = "tab_tr", mod_tag_resights_ui("tr"))
+      # ui_tab_tr()
     )
   )
 )
@@ -169,113 +158,26 @@ server <- function(input, output, session) {
 
 
   #----------------------------------------------------------------------------
-  ### Reactive values
+  ### Modules
+  pool <- mod_database_server("db", pool.remote.prod, pool.remote.test, db.driver, db.server)
+  si.list <- mod_season_server("si", pool)
 
-  # Make reactiveValues for tables, in case whole table has been brought into memory?
-  vals.db <- reactiveValues(
-    pool = NULL,
-    db.name = NULL
+  mod_census_server("census", pool, si.list$season.df, si.list$season.id.list)
+
+  mod_tag_resights_server(
+    "tr", pool, si.list$season.df, si.list$season.id.list,
+    names(amlrPinnipeds::pinniped.sp.list), pinniped.sp.colors
   )
 
-  vals.si <- reactiveValues(
-    df = NULL,
-    season.list = list(),
-    season.id.min = NULL,
-    season.id.max = NULL
-  )
 
-  # Catch-all reactiveValues
-  vals <- reactiveValues(
-    census.beaches = NULL,
-    census.cols = NULL,
-    census.warning.na.records = NULL
-  )
-
-  #----------------------------------------------------------------------------
-  observeEvent(vals.db$pool, {
-    vals.si$df <- tbl(pool.remote.prod, "season_info") %>%
-      select(-ts) %>%
-      arrange(desc(season_open_date)) %>%
-      collect() %>%
-      mutate(season_open_date = as.Date(season_open_date),
-             season_close_date = as.Date(season_close_date),
-             diet_scat_date = as.Date(diet_scat_date))
-
-    # Used in displays/filters
-    vals.si$season.list <- set_names(as.list(vals.si$df$ID), vals.si$df$season_name)
-    vals.si$season.id.min <- min(unlist(vals.si$season.list))
-    vals.si$season.id.max <- max(unlist(vals.si$season.list))
-  })
-
-
-  #----------------------------------------------------------------------------
-  ### General info tab
-
-  # Which database to use?
-  observeEvent(input$info_db_name, {
-    if (input$info_db_name == "remote_prod") {
-      vals.db$pool <- pool.remote.prod
-      vals.db$db.name <- db.name.prod
-
-    } else if (input$info_db_name == "remote_test") {
-      vals.db$pool <- pool.remote.test
-      vals.db$db.name <- db.name.test
-
-    } else if (input$info_db_name == "local") {
-      vals.db$pool <- NULL
-      vals.db$db.name <- NULL
-
-    } else {
-      vals.db$pool <- NULL
-      vals.db$db.name <- NULL
-    }
-  })
-
-
-  # Info about db connection
-  output$pool_db_conn <- renderTable({
-   validate(
-      need(inherits(vals.db$pool, "Pool"),
-           paste("The amlrPinnipeds Shiny app was not able to connect to the specified database -",
-                 "are you connected to VPN?"))
-    )
-
-    validate(
-      need(input$info_db_name != "local",
-           "Cannot connect to a local database at this time; please select another option")
-    )
-
-    data.frame( #dbGetInfo(pool) is not useful atm
-      Label = c("Driver", "Server", "Database name"),
-      Value = c(db.driver, db.server, vals.db$db.name)
-    )
-  })
-
-  # Season info display table
-  output$info_season_info <- renderTable({
-    req(vals.si$df) %>%
-      mutate(across(where(is.Date), as.character)) %>%
-      select(`Season name` = season_name,
-             `Opening date` = season_open_date,
-             `Closing date` = season_close_date,
-             `Season days` = season_days,
-             `Diet study start date` = diet_scat_date)
-  })
 
 
   #----------------------------------------------------------------------------
   ### Server files
-  source(file.path("server_files", "server_afs_natality_pup_fate.R"), local = TRUE, chdir = TRUE)
-  source(file.path("server_files", "server_census.R"), local = TRUE, chdir = TRUE)
-  source(file.path("server_files", "server_tag_resights.R"), local = TRUE, chdir = TRUE)
-  source(file.path("server_files", "server_funcs.R"), local = TRUE, chdir = TRUE)
-
-
-  #----------------------------------------------------------------------------
-  ### Other
-
-
-
+  # source(file.path("server_files", "server_afs_natality_pup_fate.R"), local = TRUE, chdir = TRUE)
+  # source(file.path("server_files", "server_census.R"), local = TRUE, chdir = TRUE)
+  # source(file.path("server_files", "server_tag_resights.R"), local = TRUE, chdir = TRUE)
+  # source(file.path("server_files", "server_funcs.R"), local = TRUE, chdir = TRUE)
 }
 
 shiny::shinyApp(ui = ui, server = server)

@@ -12,7 +12,9 @@ amlr_pinnipeds_dbPool(
 )
 }
 \arguments{
-\item{Database, }{Driver: character; see \code{\link[pool]{dbPool}}}
+\item{Database}{character; see \code{\link[pool]{dbPool}}}
+
+\item{Driver}{character; see \code{\link[pool]{dbPool}}}
 
 \item{Server}{character; see \code{\link[pool]{dbPool}}}
 

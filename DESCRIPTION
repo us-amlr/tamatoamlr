@@ -17,7 +17,7 @@ Imports:
     pool,
     purrr,
     scales,
-    shiny, 
+    shiny (>= 1.5), 
     shinybusy,
     shinydashboard, 
     shinyjs, 
