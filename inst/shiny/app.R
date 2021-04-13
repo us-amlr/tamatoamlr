@@ -17,52 +17,60 @@ if (!all(sapply(list.packages, require, character.only = TRUE, warn.conflicts = 
 
 ###############################################################################
 ### Set up db connection, with error checking
-# TODO: pass these arguments in via the amlr_pinnipeds_gui function since they're outside of the session?
 db.driver <- "SQL Server"
 db.server <- "swc-estrella-s"
-db.name <- "AMLR_PINNIPEDS_Test"
+db.name.prod <- "AMLR_PINNIPEDS"
+db.name.test <- "AMLR_PINNIPEDS_Test"
 
 # Based on https://github.com/rstudio/pool
-pool <- try(pool::dbPool(
+pool.remote.prod <- try(pool::dbPool(
   drv = odbc::odbc(),
   Driver = db.driver,
   Server = db.server,
-  Database = db.name,
+  Database = db.name.prod,
+  Trusted_Connection = "True",
+  idleTimeout = 3600000  # 1 hour
+), silent = TRUE)
+
+pool.remote.test <- try(pool::dbPool(
+  drv = odbc::odbc(),
+  Driver = db.driver,
+  Server = db.server,
+  Database = db.name.test,
   Trusted_Connection = "True",
   idleTimeout = 3600000  # 1 hour
 ), silent = TRUE)
 
 
 # Check for connection to db, then get/save broadly used data
-if (!isTruthy(pool)) {
-  # TODO: should this be displayed in some uiOutput.?
-  stop("The Shiny app was unable to connect to the ", db.name, " database on the ",
+if (!dbIsValid(pool.remote.prod)) {
+  stop("The Shiny app was unable to connect to the ", db.name.prod, " database on the ",
        db.server, " server via a trusted connection - are you logged in to VPN?")
 
-} else {
-  season.info <- tbl(pool, "season_info") %>%
-    select(-ts) %>%
-    arrange(desc(season_open_date)) %>%
-    collect() %>%
-    mutate(season_open_date = as.Date(season_open_date),
-           season_close_date = as.Date(season_close_date),
-           diet_scat_date = as.Date(diet_scat_date))
+} else if (!dbIsValid(pool.remote.test)) {
+  stop("The Shiny app was unable to connect to the ", db.name.test, " database on the ",
+       db.server, " server via a trusted connection - are you logged in to VPN?")
 
-  # Used in displays/filters
-  season.list <- set_names(as.list(season.info$ID), season.info$season_name)
-  season.list.id.min <- min(unlist(season.list))
-  season.list.id.max <- max(unlist(season.list))
 }
 
 onStop(function() {
-  poolClose(pool)
+  poolClose(pool.remote.prod)
+  poolClose(pool.remote.test)
 })
 
+
+# TODO
+season.list <- NULL
+season.list.id.min <- NULL
+season.list.id.max <- NULL
 
 
 
 # ###############################################################################
 # ##### Assorted other stuff...
+
+source(file.path("app_modules.R"), local = TRUE, chdir = TRUE)
+
 # old <- options()
 # on.exit(options(old))
 #
@@ -107,6 +115,7 @@ ui <- dashboardPage(
     sidebarMenu(
       id = "tabs",
       menuItem("General info", tabName = "tab_info", icon = icon("th", lib = "font-awesome")),
+      menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
       menuItem("AFS Natality and Pup Fate", tabName = "tab_afs_natal", icon = icon("th")),
       menuItem("Census", tabName = "tab_census", icon = icon("th", lib = "font-awesome")),
       menuItem("Tag resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
@@ -136,6 +145,7 @@ ui <- dashboardPage(
 
     tabItems(
       ui_tab_info(),
+      ui_tab_afs_diet(),
       ui_tab_afs_natal(),
       ui_tab_census(),
       ui_tab_tr()
@@ -162,6 +172,17 @@ server <- function(input, output, session) {
   ### Reactive values
 
   # Make reactiveValues for tables, in case whole table has been brought into memory?
+  vals.db <- reactiveValues(
+    pool = NULL,
+    db.name = NULL
+  )
+
+  vals.si <- reactiveValues(
+    df = NULL,
+    season.list = list(),
+    season.id.min = NULL,
+    season.id.max = NULL
+  )
 
   # Catch-all reactiveValues
   vals <- reactiveValues(
@@ -170,28 +191,69 @@ server <- function(input, output, session) {
     census.warning.na.records = NULL
   )
 
+  #----------------------------------------------------------------------------
+  observeEvent(vals.db$pool, {
+    vals.si$df <- tbl(pool.remote.prod, "season_info") %>%
+      select(-ts) %>%
+      arrange(desc(season_open_date)) %>%
+      collect() %>%
+      mutate(season_open_date = as.Date(season_open_date),
+             season_close_date = as.Date(season_close_date),
+             diet_scat_date = as.Date(diet_scat_date))
+
+    # Used in displays/filters
+    vals.si$season.list <- set_names(as.list(vals.si$df$ID), vals.si$df$season_name)
+    vals.si$season.id.min <- min(unlist(vals.si$season.list))
+    vals.si$season.id.max <- max(unlist(vals.si$season.list))
+  })
+
 
   #----------------------------------------------------------------------------
   ### General info tab
 
+  # Which database to use?
+  observeEvent(input$info_db_name, {
+    if (input$info_db_name == "remote_prod") {
+      vals.db$pool <- pool.remote.prod
+      vals.db$db.name <- db.name.prod
+
+    } else if (input$info_db_name == "remote_test") {
+      vals.db$pool <- pool.remote.test
+      vals.db$db.name <- db.name.test
+
+    } else if (input$info_db_name == "local") {
+      vals.db$pool <- NULL
+      vals.db$db.name <- NULL
+
+    } else {
+      vals.db$pool <- NULL
+      vals.db$db.name <- NULL
+    }
+  })
+
+
   # Info about db connection
   output$pool_db_conn <- renderTable({
-    validate(
-      need(dbIsValid(pool),
-           paste("The amlrPinnipeds Shiny app was not able to connect to the database -",
+   validate(
+      need(inherits(vals.db$pool, "Pool"),
+           paste("The amlrPinnipeds Shiny app was not able to connect to the specified database -",
                  "are you connected to VPN?"))
     )
-    # pool.info <- dbGetInfo(pool) #None of this is useful atm
 
-    data.frame(
+    validate(
+      need(input$info_db_name != "local",
+           "Cannot connect to a local database at this time; please select another option")
+    )
+
+    data.frame( #dbGetInfo(pool) is not useful atm
       Label = c("Driver", "Server", "Database name"),
-      Value = c(db.driver, db.server, db.name)
+      Value = c(db.driver, db.server, vals.db$db.name)
     )
   })
 
   # Season info display table
   output$info_season_info <- renderTable({
-    season.info %>%
+    req(vals.si$df) %>%
       mutate(across(where(is.Date), as.character)) %>%
       select(`Season name` = season_name,
              `Opening date` = season_open_date,

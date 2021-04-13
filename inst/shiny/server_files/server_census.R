@@ -34,6 +34,8 @@ census.cols.phocid <- list(
 
 ###############################################################################
 # Observe events
+census_si <- seasoninfo_mod_server("census", reactive(vals.si))
+
 
 ### Store the selected beaches and column names
 observe(vals$census.beaches <- input$census_beach)
@@ -63,10 +65,22 @@ observe({
 })
 
 
+### Update season selection
+observe({
+  season.list <- vals.si$season.list
+  if (!identical(season.list, list())) {
+    updateSelectInput(session, "census_season_select", choices = season.list, selected = max(unlist(season.list)))
+  } else {
+    updateSelectInput(session, "census_season_select", choices = NULL)
+  }
+})
+
+
 ### Update the date range limits based on the selected field season
 observe({
   if (input$census_summary_level_1 == "fs_single") {
-    season.curr <- season.info %>% filter(ID == as.numeric(input$census_season_select))
+    season.curr <- vals.si$df %>% filter(ID == as.numeric(req(input$census_season_select)))
+
     stopifnot(nrow(season.curr) == 1)
     start <- min <- season.curr[["season_open_date"]]
     end <- max <- season.curr[["season_close_date"]]
@@ -78,6 +92,7 @@ observe({
   updateDateRangeInput(session, "census_date_range",
                        start = start, end = end, min = min, max = max)
 })
+
 
 
 ###############################################################################
@@ -104,7 +119,7 @@ output$census_beach_uiOut_selectize <- renderUI({
 output$census_age_sex_uiOut_selectize <- renderUI({
   req(input$census_summary_level_3 == "by_sp_age_sex")
 
-  tmp <- tbl(pool, "vCensus_Season") %>%
+  tmp <- tbl(vals.db$pool, "vCensus_Season") %>%
     head(1) %>%
     collect() %>%
     select(ad_female_count:unk_unk_count)
@@ -157,13 +172,16 @@ census_df_collect <- reactive({
     phocid = "Phocid"
   )
 
-  season.id.min <- as.integer(input$census_season_min)
-  season.id.max <- as.integer(input$census_season_max)
+
+  season.id.min <- census_si$minvar()
+  season.id.max <- census_si$maxvar()
+  # season.id.min <- as.integer(input$census_season_min)
+  # season.id.max <- as.integer(input$census_season_max)
   season.id.select <- as.integer(input$census_season_select)
 
   #----------------------------------------------
   # Generate base sql query
-  vcs.sql <- tbl(pool, "vCensus_Season") %>%
+  vcs.sql <- tbl(vals.db$pool, "vCensus_Season") %>%
     filter(census_type == census.type)
 
   # Add on season/date filters. Week num filtering done below to not requery whole thing (??)
@@ -264,7 +282,7 @@ census_df_summ <- reactive({
                 .groups = "drop") %>%
       complete(...) %>%
       mutate(across(where(is.numeric), ~replace_na(.x, 0))) %>%
-      arrange_season_info(species)
+      arrange_season_info(vals.si$df, species)
   }
 
   if (input$census_summary_level_2 == "by_capewide" && input$census_summary_level_1 == "fs_single") {
@@ -305,7 +323,7 @@ census_df <- reactive({
       group_by(!!!grp.syms) %>%
       summarise(count_value = sum(count_value),
                 .groups = "drop") %>%
-      arrange_season_info(!!!syms(dplyr::intersect(grp.names.all[-1], names(vcs.summ))))
+      arrange_season_info(vals.si$df, !!!syms(dplyr::intersect(grp.names.all[-1], names(vcs.summ))))
   }
 
   if (input$census_summary_level_1 == "fs_single" && input$census_cumsum) {
@@ -385,12 +403,12 @@ output$census_plot <- renderPlot({
   census.df <- if (input$census_summary_level_3 == "by_sp") {
     census_df() %>%
       as_factor_species() %>%
-      arrange_season_info(!!!grp.syms)
+      arrange_season_info(vals.si$df, !!!grp.syms)
   } else {
     census_df() %>%
       pivot_longer(cols = where(is.numeric), names_to = "count_class", values_to = "count_value") %>%
       as_factor_species() %>%
-      arrange_season_info(!!!grp.syms, count_class)
+      arrange_season_info(vals.si$df, !!!grp.syms, count_class)
   }
 
   validate(need(nrow(census.df) > 0, "No data to plot"))

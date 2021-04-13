@@ -1,12 +1,5 @@
 # Code for...
 
-# vpinniped_season <- reactive(pool %>% tbl("vPinniped_Season") %>% collect())
-# vtr_season <- reactive(pool %>% tbl("vTag_Resights_Season") %>% collect())
-
-# afs_natal_plot_df <- reactive({
-#
-# })
-
 
 
 output$afs_natal_plot <- renderPlot({
@@ -19,7 +12,7 @@ output$afs_natal_plot <- renderPlot({
   season.id.max <- as.integer(input$afs_natal_season_max)
 
   # Get pinniped_season info
-  vps <- tbl(pool, "vPinniped_Season") %>%
+  vps <- tbl(vals.db$pool, "vPinniped_Season") %>%
     filter(between(season_info_id, season.id.min, season.id.max)) %>%
     collect()
 
@@ -37,8 +30,8 @@ output$afs_natal_plot <- renderPlot({
                 .groups = "drop")
 
     # Get number of tag resights per field season
-    vtrs.summ <- tbl(pool, "vTag_Resights_Season") %>%
-      left_join(tbl(pool, "pinnipeds"), by = c("pinniped_id" = "ID")) %>%
+    vtrs.summ <- tbl(vals.db$pool, "vTag_Resights_Season") %>%
+      left_join(tbl(vals.db$pool, "pinnipeds"), by = c("pinniped_id" = "ID")) %>%
       filter(tolower(species) == "fur seal",
              between(season_info_id, season.id.min, season.id.max)) %>%
       group_by(season_info_id, season_name) %>%

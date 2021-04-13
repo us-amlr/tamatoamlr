@@ -3,11 +3,11 @@
 
 #------------------------------------------------------------------------------
 ### Sort x by corresponding season_open_date (descending), then other user-provided columns
-arrange_season_info <- function(x, ...) {
+arrange_season_info <- function(x, season.info, ...) {
   stopifnot(
     inherits(x, "data.frame"),
     "season_name" %in% names(x),
-    exists("season.info")
+    inherits(season.info, "data.frame")
   )
 
   season.info.sel <- season.info %>% select(season_name, season_open_date)
