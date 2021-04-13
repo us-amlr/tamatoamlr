@@ -6,13 +6,26 @@ ui_tab_info <- function() {
       box(
         title = "Database connection information", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         tableOutput("pool_db_conn"),
-        tags$br(), tags$br(),
-        tags$h5("Todo: allow the user to select the database connection themself")
+        tags$br(),
+        selectInput("info_db_name", tags$h5("Database..."), width = "200px",
+                    choices = list("***REMOVED***" = "remote_prod",
+                                   "***REMOVED***_Test" = "remote_test",
+                                   "Local database" = "local"),
+                    selected = "remote_prod")
       ),
       box(
         title = "Season information", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         tableOutput("info_season_info")
       )
+    )
+  )
+}
+
+#--------------------------------------------------------------------------
+ui_tab_afs_diet <- function() {
+  tabItem(
+    tabName = "tab_afs_diet",
+    fluidRow(
     )
   )
 }
@@ -132,21 +145,33 @@ ui_tab_census <- function() {
               conditionalPanel(
                 condition = "input.census_summary_level_1 != 'fs_single'",
                 column(
-                  width = 4,
-                  selectInput("census_season_min", label = tags$h5("Minimum season"),
-                              choices = season.list, selected = season.list.id.min),
-                  conditionalPanel(
-                    condition = "input.census_summary_level_1 == 'fs_multiple_week'",
-                    selectInput("census_week_num", tags$h5("Week number"), choices = list(), selected = NULL)
+                  width = 12,
+                  fluidRow(seasoninfo_mod_ui("census", 4)),
+                  # column(
+                  #   width = 4,
+                  #   selectInput("census_season_min", label = tags$h5("Minimum season"),
+                  #               choices = season.list, selected = season.list.id.min),
+                  #   conditionalPanel(
+                  #     condition = "input.census_summary_level_1 == 'fs_multiple_week'",
+                  #     selectInput("census_week_num", tags$h5("Week number"), choices = list(), selected = NULL)
+                  #   )
+                  # ),
+                  # column(4, selectInput("census_season_max", label = tags$h5("Maximum season"),
+                  #                       choices = season.list, selected = season.list.id.max))
+                  fluidRow(
+                    column(
+                      width = 4,
+                      conditionalPanel(
+                        condition = "input.census_summary_level_1 == 'fs_multiple_week'",
+                        selectInput("census_week_num", tags$h5("Week number"), choices = list(), selected = NULL)
+                      )
+                    )
                   )
-                ),
-                column(4, selectInput("census_season_max", label = tags$h5("Maximum season"),
-                                      choices = season.list, selected = season.list.id.max))
+                )
               ),
               conditionalPanel(
                 condition = "input.census_summary_level_1 == 'fs_single'",
-                column(4, selectInput("census_season_select", label = tags$h5("Select season"),
-                                      choices = season.list, selected = season.list.id.max)),
+                column(4, selectInput("census_season_select", label = tags$h5("Select season"), choices = NULL)),
                 column(4, dateRangeInput("census_date_range", label = tags$h5("Date range"))) #Updated in observe() based on selected season
               ),
 
@@ -202,10 +227,11 @@ ui_tab_tr <- function() {
           box(
             title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
             fluidRow(
-              column(4, selectInput("tr_season_min", label = tags$h5("Minimum season"),
-                                    choices = season.list, selected = season.list.id.min)),
-              column(4, selectInput("tr_season_max", label = tags$h5("Maximum season"),
-                                    choices = season.list, selected = season.list.id.max)),
+              seasoninfo_mod_ui("tag_resights", 4),
+              # column(4, selectInput("tr_season_min", label = tags$h5("Minimum season"),
+              #                       choices = season.list, selected = season.list.id.min)),
+              # column(4, selectInput("tr_season_max", label = tags$h5("Maximum season"),
+              #                       choices = season.list, selected = season.list.id.max)),
               column(4, checkboxGroupInput("tr_species", label = tags$h5("Species"),
                                            choices = pinniped.sp.list.tr,
                                            selected = "fur seal")),

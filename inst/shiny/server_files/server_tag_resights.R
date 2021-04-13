@@ -1,13 +1,22 @@
 ### Server code for tag resights tab
 
 tbl_pinnipeds_species <- reactive({
-  tbl(pool, "pinnipeds_species") %>% collect()
+  tbl(vals.db$pool, "pinnipeds_species") %>% collect()
 })
+
+
+tr_si <- seasoninfo_mod_server("tag_resights", reactive(vals.si))
+
+
 
 ### Data frame input for both plot and table
 tr_tbl_group_df <- reactive({
-  season.id.min <- as.integer(input$tr_season_min)
-  season.id.max <- as.integer(input$tr_season_max)
+  season.info <- vals.si$df
+  season.id.min <- tr_si$minvar()
+  season.id.max <- tr_si$maxvar()
+  validate(
+    need(!is.na(season.id.min) & !is.na(season.id.max), "Invalid season ID values")
+  )
 
   validate(
     need(input$tr_species, "Please select at least one species"),
@@ -17,9 +26,9 @@ tr_tbl_group_df <- reactive({
   tr.species.str <- tolower(input$tr_species)
   tr.species.df <- data.frame(species = tr.species.str, stringsAsFactors = FALSE)
 
-  vtrs.summ <- tbl(pool, "vTag_Resights_Season") %>%
+  vtrs.summ <- tbl(vals.db$pool, "vTag_Resights_Season") %>%
     filter(between(season_info_id, season.id.min, season.id.max)) %>%
-    left_join(tbl(pool, "pinnipeds"), by = c("pinniped_id" = "ID")) %>%
+    left_join(tbl(vals.db$pool, "pinnipeds"), by = c("pinniped_id" = "ID")) %>%
     mutate(species = tolower(species)) %>%
     filter(species %in% tr.species.str) %>%
     group_by(species, season_info_id) %>%
@@ -39,7 +48,7 @@ tr_tbl_group_df <- reactive({
     filter(!is.na(species), !is.na(season_info_id)) %>%
     left_join(select(season.info, season_info_id = ID, season_name), by = "season_info_id") %>%
     mutate(species = str_to_sentence(species)) %>%
-    arrange_season_info(species)
+    arrange_season_info(season.info, species)
 })
 
 
