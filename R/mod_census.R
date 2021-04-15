@@ -19,20 +19,7 @@ mod_census_ui <- function(id) {
     fluidRow(
       column(
         width = 6,
-        fluidRow(
-          box(
-            status = "primary", width = 12,
-            plotOutput(ns("plot")),
-            tags$br(), tags$br(),
-            uiOutput(ns("warning_na_records"))
-          ),
-          box(
-            status = "primary", width = 12,
-            tags$h5("This table shows the data displayed in the plot above.",
-                    "Note that all rows with only counts of zero for the selected columns have been filtered out."),
-            DTOutput(ns("tbl"))
-          )
-        )
+        mod_output_ui(ns("census_out"), tags$br(), uiOutput(ns("warning_na_records")))
       ),
       column(
         width = 6,
@@ -70,7 +57,7 @@ mod_census_ui <- function(id) {
               column(
                 width = 4,
                 radioButtons(ns("summary_level_3"), label = tags$h5("Summary level 3"),
-                             choices = list("By species and age+sex class" = "by_sp_age_sex",
+                             choices = list("By species and sex+age class" = "by_sp_age_sex",
                                             "By species" = "by_sp"),
                              selected = "by_sp_age_sex")
               )
@@ -88,35 +75,21 @@ mod_census_ui <- function(id) {
             fluidRow(
               conditionalPanel(
                 condition = "input.summary_level_1 != 'fs_single'", ns = ns,
+                # mod_season_range_ui(ns("census"), 4),
                 column(
-                  width = 12,
-                  fluidRow(mod_season_range_ui(ns("census"), 4)),
-                  # column(
-                  #   width = 4,
-                  #   selectInput("census_season_min", label = tags$h5("Minimum season"),
-                  #               choices = season.list, selected = season.list.id.min),
-                  #   conditionalPanel(
-                  #     condition = "input.census_summary_level_1 == 'fs_multiple_week'",
-                  #     selectInput("census_week_num", tags$h5("Week number"), choices = list(), selected = NULL)
-                  #   )
-                  # ),
-                  # column(4, selectInput("census_season_max", label = tags$h5("Maximum season"),
-                  #                       choices = season.list, selected = season.list.id.max))
-                  fluidRow(
-                    column(
-                      width = 4,
-                      conditionalPanel(
-                        condition = "input.summary_level_1 == 'fs_multiple_week'", ns = ns,
-                        selectInput(ns("week_num"), tags$h5("Week number"), choices = list(), selected = NULL)
-                      )
-                    )
+                  width = 4,
+                  selectInput(ns("season_min"), label = tags$h5("Minimum season"), choices = list()),
+                  conditionalPanel(
+                    condition = "input.summary_level_1 == 'fs_multiple_week'", ns = ns,
+                    selectInput(ns("week_num"), tags$h5("Week number"), choices = list())
                   )
-                )
+                ),
+                column(4, selectInput(ns("season_max"), label = tags$h5("Maximum season"), choices = list()))
               ),
               conditionalPanel(
                 condition = "input.summary_level_1 == 'fs_single'", ns = ns,
                 column(4, selectInput(ns("season_select"), label = tags$h5("Select season"), choices = NULL)),
-                column(4, dateRangeInput(ns("date_range"), label = tags$h5("Date range"))) #Updated in observe() based on selected season
+                column(4, dateRangeInput(ns("date_range"), label = tags$h5("Date range")))
               ),
 
               column(
@@ -164,8 +137,9 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
       # Census-specific common values
 
       vals <- reactiveValues(
-        beaches = NULL,
-        cols = NULL,
+        beaches_selected = NULL,
+        census_tbl_columns_selected = NULL,
+        census_tbl_columns_all = list(),
         warning.na.records = NULL
       )
 
@@ -181,6 +155,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
         "pup_dead_count", "pup_live_count",
         "unk_female_count", "unk_male_count", "unk_unk_count", "unknownMF_count"
       )
+
 
       census.cols.afs.pup <- list("pup_live_count", "pup_dead_count")
       census.cols.afs.study.beach <- list(
@@ -199,23 +174,29 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
       ###############################################################################
       # Observe events
-      census_si <- mod_season_range_server("census", season.id.list)
-
 
       ### Store the selected beaches and column names
-      observe(vals$beaches <- input$beach)
-      observe(vals$cols <- input$age_sex)
+      observe(vals$beaches_selected <- input$beach)
+      observe(vals$census_tbl_columns_selected <- input$age_sex)
 
       observe({
         input$tabs
         input$type
 
         isolate({
-          vals$beaches <- NULL
-          vals$cols <- NULL
+          vals$beaches_selected  <- NULL
+          vals$census_tbl_columns_selected <- NULL
         })
       })
 
+      observeEvent(input$type, {
+        vals$cols.list <- switch(
+          input$type,
+          afs_pup = census.cols.afs.pup,
+          afs_study_beach = census.cols.afs.study.beach,
+          phocid = census.cols.phocid
+        )
+      })
 
 
       ### Update week num dropdown depending on the currently filtered for data
@@ -230,13 +211,17 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
       })
 
 
-      ### Update season selection
+      ### Update season selection widgets
       observe({
         season.list <- season.id.list()
         if (!identical(season.list, list())) {
           updateSelectInput(session, "season_select", choices = season.list, selected = max(unlist(season.list)))
+          updateSelectInput(session, "season_min", choices = season.list, selected = min(unlist(season.list)))
+          updateSelectInput(session, "season_max", choices = season.list, selected = max(unlist(season.list)))
         } else {
           updateSelectInput(session, "season_select", choices = NULL)
+          updateSelectInput(session, "season_min", choices = NULL)
+          updateSelectInput(session, "season_max", choices = NULL)
         }
       })
 
@@ -274,7 +259,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
         selectInput(
           session$ns("beach"), tags$h5("Beach(es)"),
-          choices = beaches.list, selected = vals$beaches,
+          choices = beaches.list, selected = vals$beaches_selected ,
           multiple = TRUE, selectize = TRUE
         )
       })
@@ -283,28 +268,15 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
       output$age_sex_uiOut_selectize <- renderUI({
         req(input$summary_level_3 == "by_sp_age_sex")
 
-        tmp <- tbl(pool(), "vCensus_Season") %>%
-          head(1) %>%
-          collect() %>%
-          select(ad_female_count:unk_unk_count)
+        choices.list <- req(vals$cols.list)
 
-        choices.list <- switch(
-          input$type,
-          afs_pup = census.cols.afs.pup,
-          afs_study_beach = census.cols.afs.study.beach,
-          phocid = census.cols.phocid
-        )
         selected.vals <- switch(
           input$type,
-          afs_pup = census.cols.afs.pup,
-          census.cols.afs.study.beach[[1]]
+          afs_pup = choices.list,
+          choices.list[[1]]
         )
 
         validate(need(choices.list, "invalid input$summary_level_1 value"))
-        validate(
-          need(all(unlist(choices.list) %in% names(tmp)),
-               "Invalid column names, please report to Sam")
-        )
 
         selectInput(
           session$ns("age_sex"), tags$h5("Columns to plot"),
@@ -316,6 +288,8 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
       ###############################################################################
       # Generate SQL query, and collect data from census table
+      # census_si <- mod_season_range_server("census", season.id.list)
+
       census_df_collect <- reactive({
         vals$warning.na.records <- NULL
 
@@ -336,12 +310,11 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
           phocid = "Phocid"
         )
 
-
-        season.id.min <- census_si$minvar()
-        season.id.max <- census_si$maxvar()
-        # season.id.min <- as.integer(input$season_min)
-        # season.id.max <- as.integer(input$season_max)
-        season.id.select <- as.integer(input$season_select)
+        # season.id.min <- req(census_si$minvar())
+        # season.id.max <- req(census_si$maxvar())
+        season.id.min <- as.integer(req(input$season_min))
+        season.id.max <- as.integer(req(input$season_max))
+        season.id.select <- as.integer(req(input$season_select))
 
         #----------------------------------------------
         # Generate base sql query
@@ -356,7 +329,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
         } else if (input$summary_level_1 == "fs_single") {
           vcs.sql <- vcs.sql %>%
             filter(season_info_id == season.id.select,
-                   between(census_date, !!input$date_range[1], !!input$date_range[2]))
+                   between(census_date, !!req(input$date_range)[1], !!req(input$date_range[2])))
 
         } else {
           validate("invalid input$summary_level_1 value")
@@ -365,8 +338,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
         # Add on species filters, if applicable
         if (input$type == "phocid") {
-          vcs.sql <- vcs.sql %>%
-            filter(tolower(species) %in% !!input$species)
+          vcs.sql <- vcs.sql %>% filter(tolower(species) %in% !!input$species)
         }
 
         # Collect query
@@ -379,7 +351,6 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
         # For AFS Capewide pup census data, average across observer
         #   This feels like it should be in census_df(), but is here b/c of input$type reference
         if (input$type == "afs_pup") {
-          # validate("Cannot process Capewide pup census data yet") #TODO
           vcs %>%
             group_by(season_name, species, Beach, census_date, week_num) %>%
             summarise(across(pup_live_count:pup_dead_count, ~round(mean(.x, na.rm = TRUE), 0), na.rm = TRUE),
@@ -416,10 +387,6 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
             ifelse(vcs.nrow.diff == 1, "row was", "rows were"),
             "removed because of a NULL season_name, species, Beach, and/or census_date value"
           )
-
-          # warning("When processing census records, ", vcs.nrow.diff,
-          #         " rows were removed because of an NA species, Beach, and/or census_date value",
-          #         immediate. = TRUE)
         } else {
           NULL
         }
@@ -475,11 +442,13 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
                "Please select between one and six columns to plot")
         )
 
-        vcs.summ <- census_df_summ() %>%
-          select(where(is.character), where(is.Date), !!!as.list(input$age_sex))
-
+        # Get the names of the applicable census columns, and then summarize
+        grp.names.all <- c("season_name", "species", "Beach", "census_date")
         if (input$summary_level_3 == "by_sp") {
-          grp.names.all <- c("season_name", "species", "Beach", "census_date")
+          # Summarize by species only
+          vcs.summ <- census_df_summ() %>%
+            select(where(is.character), where(is.Date), !!!vals$cols.list)
+
           grp.syms <- syms(dplyr::intersect(grp.names.all, names(vcs.summ)))
 
           vcs.summ <- vcs.summ %>%
@@ -488,8 +457,33 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
             summarise(count_value = sum(count_value),
                       .groups = "drop") %>%
             arrange_season(season.df(), !!!syms(dplyr::intersect(grp.names.all[-1], names(vcs.summ))))
+
+        } else if (input$summary_level_3 == "by_sp_age_sex") {
+          # Summarize by species, sex, and age class
+          req(
+            all(input$age_sex %in% unlist(switch(
+              input$type,
+              afs_pup = census.cols.afs.pup,
+              afs_study_beach = census.cols.afs.study.beach,
+              phocid = census.cols.phocid
+            )))
+          )
+
+          vcs.summ <- census_df_summ() %>%
+            select(where(is.character), where(is.Date), !!!as.list(input$age_sex))
+
+          grp.syms <- syms(dplyr::intersect(grp.names.all, names(vcs.summ)))
+
+          vcs.summ <- vcs.summ %>%
+            arrange_season(season.df(), !!!syms(dplyr::intersect(grp.names.all[-1], names(vcs.summ))))
+
+        } else {
+          validate("Invalid input$summary_level_3 value")
         }
 
+
+
+        # If necessary, calculate cumsums of census columns
         if (input$summary_level_1 == "fs_single" && input$plot_cumsum) {
           grp.names.all <- c("season_name", "species", "Beach")
           grp.syms <- syms(dplyr::intersect(grp.names.all, names(vcs.summ)))
@@ -498,7 +492,6 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
             group_by(!!!grp.syms) %>%
             mutate(across(where(is.numeric), cumsum)) %>%
             ungroup()
-          # View(cbind(vcs.summ, vcs.summ2))
         }
 
         vcs.summ
@@ -510,19 +503,20 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
       #------------------------------------------------------------------------------
       ### Output table
-      output$tbl <- renderDT({
+      tbl_output <- reactive({
         census_df() %>%
           nest(data = where(is.numeric)) %>%
           mutate(flag0 = pmap_lgl(list(data), function(i) all(i == 0))) %>%
           filter(!flag0) %>%
           unnest(cols = c(data)) %>%
           select(-flag0)
-      }, options = list(scrollX = TRUE))
+      })
 
 
       #------------------------------------------------------------------------------
       ### Output plot
-      output$plot <- renderPlot({
+      # output$plot <- renderPlot({
+      plot_output <- reactive({
         #--------------------------------------------------------
         if (input$type == "phocid") {
           validate(
@@ -588,7 +582,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
             ggplot(aes(x = !!x.val, y = count_value, linetype = species_lty)) +
             guides(
               size = FALSE,
-              linetype = guide_legend(title = "species", order = 1)
+              linetype = guide_legend(title = "Species", order = 1)
             )
 
           validate(
@@ -602,7 +596,8 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
           } else {
             ggplot.out <- ggplot.out +
               geom_point(aes(shape = count_class, color = Beach, size = size.val)) +
-              geom_line(aes(group = interaction(Beach, count_class), color = Beach))
+              geom_line(aes(group = interaction(Beach, count_class), color = Beach)) +
+              guides(shape = guide_legend(title = "Age+sex class"))
           }
 
         } else {
@@ -617,8 +612,11 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
           } else {
             ggplot.out <- ggplot.out +
               geom_point(aes(shape = count_class, color = species, size = size.val)) +
-              geom_line(aes(group = interaction(species, count_class), color = species))
+              geom_line(aes(group = interaction(species, count_class), color = species)) +
+              guides(shape = guide_legend(title = "Sex+age class"))
           }
+          ggplot.out <- ggplot.out +
+            guides(color = guide_legend(title = "Species", order = 1))
         }
 
         # Add in more general parts of the plot
@@ -632,6 +630,10 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
         # Output
         ggplot.out
       })
+
+
+      ### Send off
+      observe(mod_output_server("census_out", id, tbl_output, plot_output))
     }
   )
 }

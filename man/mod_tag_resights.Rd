@@ -8,14 +8,7 @@
 \usage{
 mod_tag_resights_ui(id)
 
-mod_tag_resights_server(
-  id,
-  pool,
-  season.df,
-  season.id.list,
-  sp.levels,
-  sp.colors
-)
+mod_tag_resights_server(id, pool, season.df, season.id.list)
 }
 \arguments{
 \item{id, }{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
@@ -27,10 +20,6 @@ Intended to be the first element (\code{season.df}) of the (list) output of \cod
 
 \item{season.id.list}{reactive; the (named)list of the season info ID values.
 Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_server}}}
-
-\item{sp.levels}{character}
-
-\item{sp.colors}{character; colors to use for pinnipeds in the plot}
 }
 \description{
 Shiny module for Tag Resights tab

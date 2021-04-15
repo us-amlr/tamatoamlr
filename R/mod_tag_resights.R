@@ -19,16 +19,7 @@ mod_tag_resights_ui <- function(id) {
     fluidRow(
       column(
         width = 6,
-        fluidRow(
-          box(
-            status = "primary", width = 12,
-            plotOutput(ns("plot"))
-          ),
-          box(
-            status = "primary", width = 12,
-            DTOutput(ns("tbl"))
-          )
-        )
+        mod_output_ui(ns("tr_out"))
       ),
       column(
         width = 6,
@@ -67,19 +58,19 @@ mod_tag_resights_ui <- function(id) {
 #'   Intended to be the first element (\code{season.df}) of the (list) output of \code{\link{mod_season_server}}
 #' @param season.id.list reactive; the (named)list of the season info ID values.
 #'   Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_server}}
-#' @param sp.levels character
-#' @param sp.colors character; colors to use for pinnipeds in the plot
 #'
 #' @export
-mod_tag_resights_server <- function(id, pool, season.df, season.id.list, sp.levels, sp.colors) {
+mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
   stopifnot(
-    all(vapply(list(pool, season.df, season.id.list), is.reactive, as.logical(1))),
-    !any(vapply(list(sp.levels, sp.colors), is.reactive, as.logical(1)))
+    is.reactive(pool),
+    is.reactive(season.df),
+    is.reactive(season.id.list)
   )
 
   moduleServer(
     id,
     function(input, output, session) {
+      #########################################################################
       tbl_pinnipeds_species <- reactive({
         tbl(pool(), "pinnipeds_species") %>% collect()
       })
@@ -130,8 +121,9 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list, sp.leve
       })
 
 
+      #########################################################################
       ### Output plot
-      output$plot <- renderPlot({
+      plot_output <- reactive({
         if (input$type == "ind_by_year") {
           y.val <- "count_distinct_pinnipeds"
           y.lab <- "Resight count - distinct pinnipeds"
@@ -148,7 +140,7 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list, sp.leve
                aes(x = season_name, y = !!as.name(y.val), color = species, group = species)) +
           geom_point() +
           geom_line() +
-          scale_color_manual(values = sp.colors) +
+          scale_color_manual(values = amlrPinnipeds::pinniped.sp.colors) +
           expand_limits(y = 0) +
           xlab("Season") +
           ylab(y.lab) +
@@ -157,13 +149,16 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list, sp.leve
 
 
       ### Output table
-      output$tbl <- renderDT({
+      tbl_output <- reactive({
         tr_tbl_group_df() %>%
           select(Species = species, Season = season_name,
                  `Resight count - total` = count,
                  `Resight count - distinct pinnipeds` = count_distinct_pinnipeds)
       })
 
+
+      ### Send to output module
+      observe(mod_output_server("tr_out", id, tbl_output, plot_output))
     }
   )
 }

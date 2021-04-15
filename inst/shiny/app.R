@@ -60,11 +60,6 @@ onStop(function() {
 
 
 
-### Load modules
-# source(file.path("modules", "general_modules.R"), local = TRUE, chdir = TRUE)
-# source(file.path("modules", "tagresights_mod_server.R"), local = TRUE, chdir = TRUE)
-
-
 
 # ###############################################################################
 # ##### Assorted other stuff...
@@ -77,14 +72,6 @@ onStop(function() {
 
 jscode <- "shinyjs.closeWindow = function() { window.close(); }"
 
-
-pinniped.sp.levels <- names(amlrPinnipeds::pinniped.sp.list) #levels for factor
-
-
-# Colors for pinnipeds in plots
-pinniped.sp.colors <- purrr::set_names(
-  scales::hue_pal()(5), names(amlrPinnipeds::pinniped.sp.list)
-)
 
 
 ###############################################################################
@@ -164,10 +151,7 @@ server <- function(input, output, session) {
 
   mod_census_server("census", pool, si.list$season.df, si.list$season.id.list)
 
-  mod_tag_resights_server(
-    "tr", pool, si.list$season.df, si.list$season.id.list,
-    names(amlrPinnipeds::pinniped.sp.list), pinniped.sp.colors
-  )
+  mod_tag_resights_server("tr", pool, si.list$season.df, si.list$season.id.list)
 
 
 
