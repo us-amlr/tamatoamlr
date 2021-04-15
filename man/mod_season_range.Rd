@@ -13,7 +13,13 @@ mod_season_range_server(id, season.id.list)
 \arguments{
 \item{id, }{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
 
+\item{col.width}{integer; column width of each selectInput widget}
+
 \item{season.id.list, }{a reactive of season info data, including at least a season.list argument}
+
+\item{single.season}{logical; a boolean flag indicating...}
+
+\item{...}{}
 }
 \value{
 list with following components

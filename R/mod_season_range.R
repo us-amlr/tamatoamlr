@@ -6,6 +6,8 @@
 #'
 #' @param id, character used to specify namespace, see \code{shiny::\link[shiny]{NS}}
 #' @param col.width integer; column width of each selectInput widget
+#' @param single.season logical; a boolean flag indicating...
+#' @param ...
 #'
 #' @export
 mod_season_range_ui <- function(id, col.width) {
