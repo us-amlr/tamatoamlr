@@ -43,7 +43,8 @@ mod_database_server <- function(id, pool.remote.prod, pool.remote.test, db.drive
     function(input, output, session) {
       vals.db <- reactiveValues(
         pool = NULL,
-        db.name = NULL
+        db.name = "",
+        system.user = ""
       )
 
       #----------------------------------------------------------------------------
@@ -52,18 +53,22 @@ mod_database_server <- function(id, pool.remote.prod, pool.remote.test, db.drive
         if (input$db_name == "***REMOVED***") {
           vals.db$pool <- pool.remote.prod
           vals.db$db.name <- input$db_name
+          vals.db$system.user <- pool::dbGetQuery(vals.db$pool, "SELECT SYSTEM_USER")
 
         } else if (input$db_name == "***REMOVED***_Test") {
           vals.db$pool <- pool.remote.test
           vals.db$db.name <- input$db_name
+          vals.db$system.user <- pool::dbGetQuery(vals.db$pool, "SELECT SYSTEM_USER")
 
         } else if (input$db_name == "local") {
           vals.db$pool <- NULL
-          vals.db$db.name <- NULL
+          vals.db$db.name <- ""
+          vals.db$system.user <- ""
 
         } else {
           vals.db$pool <- NULL
-          vals.db$db.name <- NULL
+          vals.db$db.name <- ""
+          vals.db$system.user <- ""
         }
       })
 
@@ -83,8 +88,8 @@ mod_database_server <- function(id, pool.remote.prod, pool.remote.test, db.drive
 
         #dbGetInfo(pool) is not useful atm
         data.frame(
-          Label = c("Driver", "Server", "Database name"),
-          Value = c(db.driver, db.server, vals.db$db.name)
+          Label = c("Driver", "Server", "Username", "Database name"),
+          Value = unlist(c(db.driver, db.server, vals.db$system.user, vals.db$db.name))
         )
       })
 

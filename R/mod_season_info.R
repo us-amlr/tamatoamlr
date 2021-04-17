@@ -2,25 +2,26 @@
 #'
 #' Shiny module for season information
 #'
-#' @name mod_season
+#' @name mod_season_info
 #'
 #' @param id character used to specify namespace, see \code{\link[shiny]{NS}}
 #'
 #' @export
-mod_season_ui <- function(id) {
+mod_season_info_ui <- function(id) {
   ns <- NS(id)
 
   # assemble UI elements
   tagList(
     box(
       title = "Season information", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
-      tableOutput(ns("tbl_season"))
+      tableOutput(ns("tbl_season")),
+      downloadButton(ns("tbl_download"), "Download table as CSV")
     )
   )
 }
 
 
-#' @name mod_season
+#' @name mod_season_info
 #'
 #' @param pool reactive; a DBI database connection pool, intended to be the output of \code{\link{mod_database_server}}
 #' @param si.name character; name of season information table. Default is 'season_info'
@@ -32,7 +33,7 @@ mod_season_ui <- function(id) {
 #' with the 'season_name' values as names
 #'
 #' @export
-mod_season_server <- function(id, pool, si.name = "season_info") {
+mod_season_info_server <- function(id, pool, si.name = "season_info") {
   stopifnot(is.reactive(pool))
 
   moduleServer(
@@ -49,8 +50,7 @@ mod_season_server <- function(id, pool, si.name = "season_info") {
                  diet_scat_date = as.Date(diet_scat_date))
       })
 
-      # Season info display table
-      output$tbl_season <- renderTable({
+      season_info_out <- reactive({
         season_info() %>%
           mutate(across(where(is.Date), as.character)) %>%
           select(`Season name` = season_name,
@@ -59,6 +59,19 @@ mod_season_server <- function(id, pool, si.name = "season_info") {
                  `Season days` = season_days,
                  `Diet study start date` = diet_scat_date)
       })
+
+      # Season info display table
+      output$tbl_season <- renderTable(season_info_out())
+
+      # Download table
+      output$tbl_download <- downloadHandler(
+        filename = function() {
+          "season_info_table.csv"
+        },
+        content = function(file) {
+          write.csv(season_info_out(), file = file, row.names = FALSE, na = "")
+        }
+      )
 
       ### Return values
       list(

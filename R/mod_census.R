@@ -118,9 +118,9 @@ mod_census_ui <- function(id) {
 #'
 #' @param pool reactive; a DBI database connection pool. Intended to be the output of \code{\link{mod_database_server}}
 #' @param season.df reactive; the season info data frame.
-#'   Intended to be the first element (\code{season.df}) of the (list) output of \code{\link{mod_season_server}}
+#'   Intended to be the first element (\code{mod_season_info_server}) of the (list) output of \code{\link{mod_season_info_server}}
 #' @param season.id.list reactive; the (named)list of the season info ID values.
-#'   Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_server}}
+#'   Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_info_server}}
 #'
 #' @export
 mod_census_server <- function(id, pool, season.df, season.id.list) {
@@ -318,7 +318,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
         #----------------------------------------------
         # Generate base sql query
-        vcs.sql <- tbl(pool(), "vCensus_Season") %>%
+        vcs.sql <- tbl(req(pool()), "vCensus_Season") %>%
           filter(census_type == census.type)
 
         # Add on season/date filters. Week num filtering done below to not requery whole thing (??)
