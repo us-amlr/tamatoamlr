@@ -18,11 +18,15 @@ mod_output_ui <- function(id, ...) {
         plotOutput(ns("plot")),
         ...,
         tags$br(),
+        # div(class = "pull-right", downloadButton(ns("plot_download"), "Save plot as PNG")),
         downloadButton(ns("plot_download"), "Save plot as PNG")
       ),
       box(
         status = "primary", width = 12,
+        # div(class = "pull-right", downloadButton(ns("tbl_download"), "Download table as CSV")),
         downloadButton(ns("tbl_download"), "Download table as CSV"),
+        tags$br(),
+        tags$br(),
         tags$h5("TODO: change"),
         tags$h5("This table shows the data displayed in the plot above.",
                 "Note that all rows with only counts of zero for the selected columns have been filtered out."),
@@ -56,13 +60,13 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.res = 96)
       # Output table
       output$tbl <- renderDT(tbl.reac(), options = list(scrollX = TRUE))
 
-      # Download plot
+      # Download table
       output$tbl_download <- downloadHandler(
         filename = function() {
-          "table.csv"
+          paste0(id.parent, "_table.csv")
         },
         content = function(file) {
-          write.csv(tbl.reac(), file = file, row.names = FALSE)
+          write.csv(tbl.reac(), file = file, row.names = FALSE, na = "")
         }
       )
 
@@ -73,16 +77,21 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.res = 96)
       # Download plot
       output$plot_download <- downloadHandler(
         filename = function() {
-          "plot.png"
+          paste0(id.parent, "_plot.png")
         },
         content = function(file) {
-          # x <- req(session$clientData[[paste0("output_", id.parent, "-", id, "-plot_width")]]) / plot.res
-          # y <- req(session$clientData[[paste0("output_", id.parent, "-", id, "-plot_height")]]) / plot.res
+          x <- req(session$clientData[[paste0("output_", id.parent, "-", id, "-plot_width")]]) / plot.res
+          y <- req(session$clientData[[paste0("output_", id.parent, "-", id, "-plot_height")]]) / plot.res
 
-          # file.res <- 300
+          # file.res <- 300 #
           # plot.format <- "PNG"
 
-          ggsave(file, plot = plot.reac(), device = "png") #, height = y, width = x, units = "in")
+          # NOTE: if the user needs control over the resolution, must use png() device directly per https://github.com/tidyverse/ggplot2/issues/2276
+          # ggsave docs have an example of this (https://ggplot2.tidyverse.org/reference/ggsave.html),
+          #   basically just make sure to print the ggplot object
+
+          # ggsave by default uses the device dimensions, huzzah
+          ggsave(file, plot = plot.reac(), device = "png", height = y, width = x, units = "in")
         }
       )
     }

@@ -16,10 +16,6 @@ mod_season_range_server(id, season.id.list)
 \item{col.width}{integer; column width of each selectInput widget}
 
 \item{season.id.list, }{a reactive of season info data, including at least a season.list argument}
-
-\item{single.season}{logical; a boolean flag indicating...}
-
-\item{...}{}
 }
 \value{
 list with following components

@@ -32,26 +32,45 @@ pool.remote.prod <- try(pool::dbPool(
   idleTimeout = 3600000  # 1 hour
 ), silent = TRUE)
 
-pool.remote.test <- try(pool::dbPool(
-  drv = odbc::odbc(),
-  Driver = db.driver,
-  Server = db.server,
-  Database = db.name.test,
-  Trusted_Connection = "True",
-  idleTimeout = 3600000  # 1 hour
-), silent = TRUE)
+# TODO: make these nicer i.e. via NULLS + validates
+#   Really, this should all happen in mod_database_server, with NULLs being returned if it can't connect.
+#   That way everything would be self-contained
+#   HOWEVER, this then violates the dbPool call being outside of the server function..
 
-
-# Check for connection to db, then get/save broadly used data
-if (!dbIsValid(pool.remote.prod)) {
-  stop("The Shiny app was unable to connect to the ", db.name.prod, " database on the ",
-       db.server, " server via a trusted connection - are you logged in to VPN?")
-
-} else if (!dbIsValid(pool.remote.test)) {
-  stop("The Shiny app was unable to connect to the ", db.name.test, " database on the ",
-       db.server, " server via a trusted connection - are you logged in to VPN?")
-
+db_stop_txt <- function(x, y) {
+  paste0(
+    "The Shiny app was unable to connect to the ", x, " database on the ",
+    y, " server via a trusted connection - are you logged in to VPN?",
+    "Please close the app, log into VPN, and then open the app again"
+  )
 }
+
+# Test connection to the production db
+if (!isTruthy(pool.remote.prod)) {
+  stop(db_stop_txt(db.name.prod, db.server))
+} else if (!dbIsValid(pool.remote.prod)) {
+  stop(db_stop_txt(db.name.prod, db.server))
+
+
+} else {
+  # If there is a valid connection to the production database, connect to the test db as well.
+  pool.remote.test <- try(pool::dbPool(
+    drv = odbc::odbc(),
+    Driver = db.driver,
+    Server = db.server,
+    Database = db.name.test,
+    Trusted_Connection = "True",
+    idleTimeout = 3600000  # 1 hour
+  ), silent = TRUE)
+
+  # Check for connection to Test db
+  if (!isTruthy(pool.remote.test)) {
+    stop(db_stop_txt(db.name.test, db.server))
+  } else if (!dbIsValid(pool.remote.test)) {
+    stop(db_stop_txt(db.name.test, db.server))
+  }
+}
+
 
 onStop(function() {
   poolClose(pool.remote.prod)
@@ -88,7 +107,7 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       id = "tabs",
-      menuItem("General info", tabName = "tab_info", icon = icon("th", lib = "font-awesome")),
+      menuItem("Database and season info", tabName = "tab_info", icon = icon("th", lib = "font-awesome")),
       menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
       menuItem("AFS Natality and Pup Fate", tabName = "tab_afs_natal", icon = icon("th")),
       menuItem("Census", tabName = "tab_census", icon = icon("th", lib = "font-awesome")),
@@ -118,13 +137,11 @@ ui <- dashboardPage(
     "))),
 
     tabItems(
-      tabItem(tabName = "tab_info", fluidRow(mod_database_ui("db"), mod_season_ui("si"))),
-      tabItem(tabName = "tab_census", mod_census_ui("census")),
-      # ui_tab_afs_diet(),
+      tabItem(tabName = "tab_info", fluidRow(mod_database_ui("db"), mod_season_info_ui("si"))),
+      tabItem(tabName = "tab_afs_diet", mod_afs_diet_ui("afs_diet")),
       # ui_tab_afs_natal(),
-      # ui_tab_census()
-      tabItem(tabName = "tab_tr", mod_tag_resights_ui("tr"))
-      # ui_tab_tr()
+      tabItem(tabName = "tab_census", mod_census_ui("census")),
+      tabItem(tabName = "tab_tr", mod_tag_resights_ui("tag_resights"))
     )
   )
 )
@@ -147,21 +164,11 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------------
   ### Modules
   pool <- mod_database_server("db", pool.remote.prod, pool.remote.test, db.driver, db.server)
-  si.list <- mod_season_server("si", pool)
+  si.list <- mod_season_info_server("si", pool)
 
+  mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
   mod_census_server("census", pool, si.list$season.df, si.list$season.id.list)
-
-  mod_tag_resights_server("tr", pool, si.list$season.df, si.list$season.id.list)
-
-
-
-
-  #----------------------------------------------------------------------------
-  ### Server files
-  # source(file.path("server_files", "server_afs_natality_pup_fate.R"), local = TRUE, chdir = TRUE)
-  # source(file.path("server_files", "server_census.R"), local = TRUE, chdir = TRUE)
-  # source(file.path("server_files", "server_tag_resights.R"), local = TRUE, chdir = TRUE)
-  # source(file.path("server_files", "server_funcs.R"), local = TRUE, chdir = TRUE)
+  mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
 }
 
 shiny::shinyApp(ui = ui, server = server)
