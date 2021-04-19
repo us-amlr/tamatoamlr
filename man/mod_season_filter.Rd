@@ -6,12 +6,14 @@
 \alias{mod_season_filter_server}
 \title{Season filter selection}
 \usage{
-mod_season_filter_ui(id)
+mod_season_filter_ui(id, col.width = 4)
 
-mod_season_filter_server(id, summ.level, season.df, season.id.list, week.list)
+mod_season_filter_server(id, summ.level, season.df, season.id.list, tbl.df)
 }
 \arguments{
 \item{id, }{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
+
+\item{col.width}{integer; column width of column of UI widgets}
 
 \item{summ.level}{a reactive of the 'summary level one' selection. Value must be one of:
 "fs_multiple_total", "fs_multiple_week", "fs_single", or "raw"}
@@ -21,7 +23,7 @@ Intended to be the first element (\code{season.df}) of the (list) output of \cod
 
 \item{season.id.list}{a reactive of the season info list of season_info table IDs,  with names (season_info.season_name)}
 
-\item{week.list}{a reactive of the weeks in the dataset where this module was called from}
+\item{tbl.df}{a reactive ...}
 }
 \value{
 A list with following components:

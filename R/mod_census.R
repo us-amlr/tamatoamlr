@@ -73,25 +73,7 @@ mod_census_ui <- function(id) {
           box(
             title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
             fluidRow(
-              conditionalPanel(
-                condition = "input.summary_level_1 != 'fs_single'", ns = ns,
-                # mod_season_range_ui(ns("census"), 4),
-                column(
-                  width = 4,
-                  selectInput(ns("season_min"), label = tags$h5("Minimum season"), choices = list()),
-                  conditionalPanel(
-                    condition = "input.summary_level_1 == 'fs_multiple_week'", ns = ns,
-                    selectInput(ns("week_num"), tags$h5("Week number"), choices = list())
-                  )
-                ),
-                column(4, selectInput(ns("season_max"), label = tags$h5("Maximum season"), choices = list()))
-              ),
-              conditionalPanel(
-                condition = "input.summary_level_1 == 'fs_single'", ns = ns,
-                column(4, selectInput(ns("season_select"), label = tags$h5("Select season"), choices = NULL)),
-                column(4, dateRangeInput(ns("date_range"), label = tags$h5("Date range")))
-              ),
-
+              mod_season_filter_ui(ns("season_filter"), col.width = 4),
               column(
                 width = 3, offset = 1,
                 conditionalPanel(
@@ -140,7 +122,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
         beaches_selected = NULL,
         census_tbl_columns_selected = NULL,
         census_tbl_columns_all = list(),
-        warning.na.records = NULL
+        warning_na_records = NULL
       )
 
       ### Names of summary level 1 inputs for multiple seasons
@@ -199,57 +181,12 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
       })
 
 
-      ### Update week num dropdown depending on the currently filtered for data
-      observe({
-        week.list <- if (input$summary_level_1 == "fs_multiple_week") {
-          as.list(sort(unique(census_df_collect()$week_num)))
-        } else {
-          NULL
-        }
-
-        updateSelectInput(session, "week_num", choices = week.list)
-      })
-
-
-      ### Update season selection widgets
-      observe({
-        season.list <- season.id.list()
-        if (!identical(season.list, list())) {
-          updateSelectInput(session, "season_select", choices = season.list, selected = max(unlist(season.list)))
-          updateSelectInput(session, "season_min", choices = season.list, selected = min(unlist(season.list)))
-          updateSelectInput(session, "season_max", choices = season.list, selected = max(unlist(season.list)))
-        } else {
-          updateSelectInput(session, "season_select", choices = NULL)
-          updateSelectInput(session, "season_min", choices = NULL)
-          updateSelectInput(session, "season_max", choices = NULL)
-        }
-      })
-
-
-      ### Update the date range limits based on the selected field season
-      observe({
-        if (input$summary_level_1 == "fs_single") {
-          season.curr <- season.df() %>% filter(ID == as.numeric(req(input$season_select)))
-
-          stopifnot(nrow(season.curr) == 1)
-          start <- min <- season.curr[["season_open_date"]]
-          end <- max <- season.curr[["season_close_date"]]
-
-        } else {
-          start <- min <- end <- max <- NULL
-        }
-
-        updateDateRangeInput(session, "date_range", start = start, end = end, min = min, max = max)
-      })
-
-
-
       ###############################################################################
       # RenderUIs
 
       ### Warning messages
       output$warning_na_records <- renderUI({
-        span(req(vals$warning.na.records), style = "color:red")
+        span(req(vals$warning_na_records), style = "color:red")
       })
 
       ### Beaches dropdown
@@ -257,9 +194,15 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
         req(input$summary_level_2 == "by_beach")
         beaches.list <- as.list(sort(unique(census_df_collect()$Beach)))
 
+        beaches.sel <- if (is.null(vals$beaches_selected)) {
+          beaches.list[[1]]
+        } else {
+          vals$beaches_selected
+        }
+
         selectInput(
           session$ns("beach"), tags$h5("Beach(es)"),
-          choices = beaches.list, selected = vals$beaches_selected ,
+          choices = beaches.list, selected = beaches.sel,
           multiple = TRUE, selectize = TRUE
         )
       })
@@ -287,21 +230,14 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
 
       ###############################################################################
-      # Generate SQL query, and collect data from census table
-      # census_si <- mod_season_range_server("census", season.id.list)
+      # Generate base sql query, passed to future reactives and season_filter module
+      census_df_collect_pre <- reactive({
+        vals$warning_na_records <- NULL
 
-      census_df_collect <- reactive({
-        vals$warning.na.records <- NULL
+        # Validate checks - req() here and validate() in census_df_collect() so UIs don't get validate
+        req(!(input$type != "phocid" && input$summary_level_3 == "by_sp"))
+        req(!(input$type != "phocid" && input$summary_level_1 == "fs_multiple_week"))
 
-        # Validate checks
-        validate(
-          need(!(input$type != "phocid" && input$summary_level_3 == "by_sp"),
-               "You can only summarize phocid census data 'by species'"),
-          need(!(input$type != "phocid" && input$summary_level_1 == "fs_multiple_week"),
-               "You can only summarize phocid census data by 'multiple seasons - weekly' (by weeks across multiple seasons)")
-        )
-
-        #----------------------------------------------
         # Set values
         census.type <- switch(
           input$type,
@@ -310,26 +246,43 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
           phocid = "Phocid"
         )
 
-        # season.id.min <- req(census_si$minvar())
-        # season.id.max <- req(census_si$maxvar())
-        season.id.min <- as.integer(req(input$season_min))
-        season.id.max <- as.integer(req(input$season_max))
-        season.id.select <- as.integer(req(input$season_select))
-
-        #----------------------------------------------
-        # Generate base sql query
-        vcs.sql <- tbl(req(pool()), "vCensus_Season") %>%
+        # Generate base sql query, passed to future reactives and season_filter module
+        tbl(req(pool()), "vCensus_Season") %>%
           filter(census_type == census.type)
+      })
 
-        # Add on season/date filters. Week num filtering done below to not requery whole thing (??)
-        if (input$summary_level_1 %in% census.summ1.mult) {
-          vcs.sql <- vcs.sql %>%
-            filter(between(season_info_id, season.id.min, season.id.max))
+
+      ###############################################################################
+      ### Get season filter values
+      census_filter <- reactive({
+        mod_season_filter_server(
+          "season_filter",  reactive(input$summary_level_1), season.df, season.id.list, census_df_collect_pre
+        )
+      })
+
+
+      ### Generate the rest of the SQL query, and collect data from census table
+      census_df_collect <- reactive({
+        # Validate checks - these are here to stop the processing as soon as possible
+        validate(
+          need(!(input$type != "phocid" && input$summary_level_3 == "by_sp"),
+               "You can only summarize phocid census data 'by species'"),
+          need(!(input$type != "phocid" && input$summary_level_1 == "fs_multiple_week"),
+               "You can only summarize phocid census data by 'multiple seasons - weekly' (by weeks across multiple seasons)")
+        )
+
+        vcs.sql.pre <- census_df_collect_pre()
+        z <- census_filter()
+
+        # Add on season/date filters. Week num filtering done below to not requery whole thing
+        vcs.sql <- if (input$summary_level_1 %in% census.summ1.mult) {
+          vcs.sql.pre %>%
+            filter(between(season_info_id, !!req(z$season_min()), !!req(z$season_max())))
 
         } else if (input$summary_level_1 == "fs_single") {
-          vcs.sql <- vcs.sql %>%
-            filter(season_info_id == season.id.select,
-                   between(census_date, !!req(input$date_range)[1], !!req(input$date_range[2])))
+          vcs.sql.pre %>%
+            filter(season_info_id == !!req(z$season_select()),
+                   between(census_date, !!req(z$date_range())[1], !!req(z$date_range())[2]))
 
         } else {
           validate("invalid input$summary_level_1 value")
@@ -346,18 +299,15 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
           collect() %>%
           mutate(species = str_to_sentence(species),
                  week_num = lubridate::week(census_date))
+      })
 
-        #----------------------------------------------
-        # For AFS Capewide pup census data, average across observer
-        #   This feels like it should be in census_df(), but is here b/c of input$type reference
-        if (input$type == "afs_pup") {
-          vcs %>%
-            group_by(season_name, species, Beach, census_date, week_num) %>%
-            summarise(across(pup_live_count:pup_dead_count, ~round(mean(.x, na.rm = TRUE), 0), na.rm = TRUE),
-                      .groups = "drop")
 
+      ### Filter for week number. Separate because it is done after the collect call
+      census_df_collect_wk <- reactive({
+        if (input$summary_level_1 == "fs_multiple_week") {
+          census_df_collect() %>% filter(week_num == !!req(census_filter()$week_num()))
         } else {
-          vcs
+          census_df_collect()
         }
       })
 
@@ -369,19 +319,19 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
       #------------------------------------------------------------------------------
       census_df_summ <- reactive({
         stopifnot(
-          c("season_name", "species", "Beach", "census_date", "week_num") %in% names(census_df_collect())
+          c("season_name", "species", "Beach", "census_date", "week_num") %in% names(census_df_collect_wk())
         )
 
         #----------------------------------------------
         # Filter records, verbosely as appropriate
-        vcs <- census_df_collect() %>%
+        vcs <- census_df_collect_wk() %>%
           filter(!is.na(season_name),
                  !is.na(Beach),
                  !is.na(census_date),
                  !is.na(species))
 
-        vcs.nrow.diff <- nrow(census_df_collect()) - nrow(vcs)
-        vals$warning.na.records <- if (vcs.nrow.diff != 0) {
+        vcs.nrow.diff <- nrow(census_df_collect_wk()) - nrow(vcs)
+        vals$warning_na_records <- if (vcs.nrow.diff != 0) {
           paste(
             "When processing census records,", vcs.nrow.diff,
             ifelse(vcs.nrow.diff == 1, "row was", "rows were"),
@@ -391,9 +341,9 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
           NULL
         }
 
-        # Filter for week number
-        if (input$summary_level_1 == "fs_multiple_week")
-          vcs <- vcs %>% filter(week_num == input$week_num)
+        validate(
+          need(nrow(vcs) > 0, "No data to process after removing rows with NA values")
+        )
 
         # Filter for Beach
         if (input$summary_level_2 == "by_beach") {
@@ -401,6 +351,20 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
             need(input$beach, "Please select at least one beach name")
           )
           vcs <- vcs %>% filter(Beach %in% input$beach)
+        }
+
+
+        #----------------------------------------------
+        # For AFS Capewide pup census data, average across observer
+        #   This feels like it should be in census_df(), but is here before summary functions
+        if (input$type == "afs_pup") {
+          vcs %>%
+            group_by(season_name, species, Beach, census_date, week_num) %>%
+            summarise(across(pup_live_count:pup_dead_count, ~round(mean(.x, na.rm = TRUE), 0), na.rm = TRUE),
+                      .groups = "drop")
+
+        } else {
+          vcs
         }
 
 
@@ -518,6 +482,8 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
       # output$plot <- renderPlot({
       plot_output <- reactive({
         #--------------------------------------------------------
+        census_df() #This is here to 'get to' upstream validate() messages before any req() calls are hit
+
         if (input$type == "phocid") {
           validate(
             need(input$summary_level_2 != "by_beach" || length(input$species) == 1,
@@ -538,7 +504,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
         }
 
         if (input$summary_level_1 == "fs_multiple_week") {
-          x.lab <- paste("Season, for week number", input$week_num)
+          x.lab <- paste("Season, for week number", req(census_filter()$week_num()))
         }
 
         y.lab <- if (input$plot_cumsum) "Count (cumulative sum)" else "Count"

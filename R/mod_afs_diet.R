@@ -48,7 +48,7 @@ mod_afs_diet_ui <- function(id) {
             title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
             fluidRow(
               # mod_season_range_ui(ns("season"), 4)
-              mod_season_filter_ui(ns("season_filter"))
+              mod_season_filter_ui(ns("season_filter"), col.width = 4)
             )
           )
         )
@@ -88,14 +88,15 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list) {
 
       observe({
         diet_season_filter_val(mod_season_filter_server(
-          "season_filter",  reactive(input$summary_level_season), season.df, season.id.list, week_list
+          "season_filter",  reactive(input$summary_level_season), season.df, season.id.list,
+          reactive("vDiet_Scats_Season")
         ))
       })
 
 
       ### Data frame input for both plot and table
       diet_df <- reactive({
-        browser()
+        # browser()
         # Can't have req() here or else it stops the whole function; they need to be whenever that widget becomes relevant
         season.filter.list <- diet_season_filter_val()
         season.id.min <- req(season.filter.list$season_min())

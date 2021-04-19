@@ -35,12 +35,12 @@ pool.remote.prod <- try(pool::dbPool(
 # TODO: make these nicer i.e. via NULLS + validates
 #   Really, this should all happen in mod_database_server, with NULLs being returned if it can't connect.
 #   That way everything would be self-contained
-#   HOWEVER, this then violates the dbPool call being outside of the server function..
+#   HOWEVER, this then violates the dbPool call being outside of the server function.?
 
 db_stop_txt <- function(x, y) {
   paste0(
     "The Shiny app was unable to connect to the ", x, " database on the ",
-    y, " server via a trusted connection - are you logged in to VPN?",
+    y, " server via a trusted connection - are you logged in to VPN? ",
     "Please close the app, log into VPN, and then open the app again"
   )
 }
