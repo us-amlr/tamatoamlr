@@ -255,8 +255,12 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
       ###############################################################################
       ### Get season filter values
       census_filter <- reactive({
+        tbl.sql <- census_df_collect_pre() %>%
+          select(season_info_id, date_column = census_date)
+
         mod_season_filter_server(
-          "season_filter",  reactive(input$summary_level_1), season.df, season.id.list, census_df_collect_pre
+          "season_filter",  reactive(input$summary_level_1), season.df, season.id.list,
+          reactive(tbl.sql)
         )
       })
 
