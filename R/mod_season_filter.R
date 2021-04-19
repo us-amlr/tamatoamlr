@@ -32,17 +32,28 @@ mod_season_filter_ui <- function(id, col.width = 4) {
 
 #' @name mod_season_filter
 #'
-#' @param summ.level a reactive of the 'summary level one' selection. Value must be one of:
-#'   "fs_multiple_total", "fs_multiple_week", "fs_single", or "raw"
-#' @param season.df reactive; the season info data frame.
-#'   Intended to be the first element (\code{season.df}) of the (list) output of \code{\link{mod_season_info_server}}
-#' @param season.id.list a reactive of the season info list of season_info table IDs,  with names (season_info.season_name)
-#' @param tbl.df a reactive ...
+#' @param summ.level a reactive of the 'summary level one' selection. Value must
+#'   be one of: "fs_multiple_total", "fs_multiple_week", "fs_single", or "raw"
+#' @param season.df reactive; the season info data frame. Intended to be the
+#'   first element (\code{season.df}) of the (list) output of
+#'   \code{\link{mod_season_info_server}}
+#' @param season.id.list a reactive of the season info list of season_info table
+#'   IDs,  with names (season_info.season_name)
+#' @param tbl.df a reactive lazy data frame; see details for more info
+#'
+#' @details \code{tbl.df} should be a lazy data frame from a \code{\link[dplyr]{tbl}(pool, "table_name")} call.
+#'   This data frame is retrieved using \code{\link[dplyr:compute]{collect}} in this module.
+#'   The data frame must have a column named 'date_column',
+#'   from which the week numbers are calculated via
+#'   \code{week_num = lubridate::\link[lubridate]{week}(date_column)}
 #'
 #' @return A list with following components:
-#' \describe{
-#'   \item{season_min}{reactive character string indicating ID of minimum season selection}
-#'   \item{season_max}{reactive character string indicating ID of maximum season selection}
+#' \itemize{
+#'   \item{season_min: reactive integer, the ID of minimum season selection}
+#'   \item{season_max: reactive integer, the ID of maximum season selection}
+#'   \item{season_select: reactive integer, the ID of the single season selection}
+#'   \item{week_num: reactive integer, the week number to plot}
+#'   \item{date_range: reactive Date vector of length 2, the date range for a single season}
 #' }
 #'
 #' @export
@@ -95,9 +106,8 @@ mod_season_filter_server <- function(id, summ.level, season.df, season.id.list, 
 
         tbl.df <- tbl.df() %>%
           filter(between(season_info_id, !!input$season_min, !!input$season_max)) %>%
-          select(census_date) %>%
           collect() %>%
-          mutate(week_num = lubridate::week(census_date))
+          mutate(week_num = lubridate::week(date_column))
 
         wk.list <- as.list(sort(unique(tbl.df$week_num)))
 
