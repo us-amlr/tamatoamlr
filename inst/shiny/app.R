@@ -1,4 +1,4 @@
-# app.R for CruzPlot
+# app.R for amlrPinnipeds
 
 ###############################################################################
 # Check for and attach packages
@@ -97,7 +97,7 @@ jscode <- "shinyjs.closeWindow = function() { window.close(); }"
 ##### UI
 
 # Load files with UI code
-source(file.path("ui_tabs.R"), local = TRUE, chdir = TRUE)
+# source(file.path("ui_tabs.R"), local = TRUE, chdir = TRUE)
 # source(file.path("modules", "ui_modules.R"), local = TRUE, chdir = TRUE)
 
 # UI function
@@ -112,10 +112,10 @@ ui <- dashboardPage(
       menuItem("AFS Natality and Pup Fate", tabName = "tab_afs_natal", icon = icon("th")),
       menuItem("Census", tabName = "tab_census", icon = icon("th", lib = "font-awesome")),
       menuItem("Tag resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
-      tags$br(), tags$br(), tags$br(),
+      tags$br(), tags$br(),
       numericInput("plot_size", tags$h5("Plot height (pixels)"), value = 400, min = 0, step = 50),
       tags$br(),
-      column(12, actionButton("stop", "Close Shiny app"))
+      actionButton("stop", "Close Shiny app")
     ), width = "220"
   ),
 

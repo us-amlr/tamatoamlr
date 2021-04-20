@@ -178,22 +178,6 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list, plot.height
 
 
       #########################################################################
-      ### Select/rename columns depending on the data type.?
-      diet_df_select <- reactive({
-        # diet_df_collect_wk() %>%
-        #   select(season_name, site, species, diet_scat_id, week_num, collection_date, collector,
-        #          process_date, processor,
-        #          carapace_length = length, carapace_width = width, carapace_comments)
-
-
-
-        # select(season_name, site, species, diet_scat_id, carapace_id, collection_date,
-        #        carapace_length = length, carapace_width = width, carapace_comments) %>%
-      })
-
-
-
-      #########################################################################
       ### Process filtered data
       diet_df_proc <- reactive({
         #------------------------------------------------
@@ -400,26 +384,9 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list, plot.height
             x.axis <- NULL
           }
 
-          # if (input$plot_y_unit == "percentage") {
-          #   y.var <- as.name("type_present_perc")
-          #   y.lab <- "Percentage (%)"
-          #   y.axis.vals <- seq(0, 100, by = 10)
-          #
-          # } else {
-          #   y.var <- as.name("type_present")
-          #   y.lab <- "Count"
-          #
-          #   # The extra bits are to handle both single and multiple seasons
-          #   by.val <- ifelse(max(df.toplot$type_present) > 15, 10, 1)
-          #   y.max <- ceiling(max(10, df.toplot$type_present) / 10) * 10
-          #   # y.axis.vals <- seq(0, max(10,c df.toplot$type_present), by = by.val)
-          #   y.axis.vals <- seq(0, y.max, by = by.val)
-          # }
-
           ggplot(df.toplot, aes(!!x.var, color = !!grp.var)) +
             geom_point(aes(y = !!y.var)) +
             geom_path(aes(y = !!y.var, group = !!grp.var)) +
-            # expand_limits(y = 0) +
             xlab(x.lab) +
             ylab(y.lab) +
             ggtitle(plot.title) +
@@ -444,9 +411,7 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list, plot.height
 
       ### Output table
       tbl_output <- reactive({
-        # if (input$)
         diet_df_proc()
-        # diet_df()
       })
 
 
