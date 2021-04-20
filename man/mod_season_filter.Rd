@@ -8,7 +8,14 @@
 \usage{
 mod_season_filter_ui(id, col.width = 4)
 
-mod_season_filter_server(id, summ.level, season.df, season.id.list, tbl.df)
+mod_season_filter_server(
+  id,
+  summ.level,
+  season.df,
+  season.id.list,
+  tbl.df,
+  week.type = "temporal"
+)
 }
 \arguments{
 \item{id, }{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
@@ -26,6 +33,8 @@ first element (\code{season.df}) of the (list) output of
 IDs,  with names (season_info.season_name)}
 
 \item{tbl.df}{a reactive lazy data frame; see details for more info}
+
+\item{week.type}{a non-reactive character string; indicates how the week number should be calculated}
 }
 \value{
 A list with following components:
@@ -42,8 +51,9 @@ Module for filtering data by multiple seasons (total or by week) or a single sea
 }
 \details{
 \code{tbl.df} should be a lazy data frame from a \code{\link[dplyr]{tbl}(pool, "table_name")} call.
-This data frame is retrieved using \code{\link[dplyr:compute]{collect}} in this module.
-The data frame must have a column named 'date_column',
-from which the week numbers are calculated via
+This data frame is retrieved using \code{\link[dplyr:compute]{collect}} in this module,
+and must have a column named 'date_column',
+If \code{week.type} is 'temporal', then the week numbers are calculated via
 \code{week_num = lubridate::\link[lubridate]{week}(date_column)}
+If \code{week.type} is 'diet', then the week numbers are determined relative to the diet_scat_date value
 }

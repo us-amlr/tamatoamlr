@@ -103,9 +103,10 @@ mod_census_ui <- function(id) {
 #'   Intended to be the first element (\code{mod_season_info_server}) of the (list) output of \code{\link{mod_season_info_server}}
 #' @param season.id.list reactive; the (named)list of the season info ID values.
 #'   Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_info_server}}
+#' @param plot.height numeric, height of plot in pixels
 #'
 #' @export
-mod_census_server <- function(id, pool, season.df, season.id.list) {
+mod_census_server <- function(id, pool, season.df, season.id.list, plot.height) {
   stopifnot(
     is.reactive(pool),
     is.reactive(season.df),
@@ -603,7 +604,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
 
       ### Send off
-      observe(mod_output_server("census_out", id, tbl_output, plot_output))
+      observe(mod_output_server("census_out", id, tbl_output, plot_output, plot.height))
     }
   )
 }

@@ -8,16 +8,30 @@
 \usage{
 mod_output_ui(id, ...)
 
-mod_output_server(id, id.parent, tbl.reac, plot.reac, plot.res = 96)
+mod_output_server(
+  id,
+  id.parent,
+  tbl.reac,
+  plot.reac,
+  plot.height = 400,
+  plot.res = 96
+)
 }
 \arguments{
 \item{id}{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
 
-\item{tbl.reac}{reactive}
+\item{...}{UI elements to be displayed below the plot and above the 'download plot'save plot' button}
 
-\item{plot.reac}{reactive}
+\item{id.parent}{parent module ID; used to generate default filename and get plot window dimensions}
 
-\item{plot.res}{resolution}
+\item{tbl.reac}{reactive; data frame to be displayed in the table}
+
+\item{plot.reac}{reactive; \code{\link[ggplot2]{ggplot}} object to be plotted}
+
+\item{plot.height}{reactive; numeric set by the user}
+
+\item{plot.res}{numeric; plot resolution, passed to \code{\link[shiny]{renderPlot}} and
+used to determine output file dimensions}
 }
 \value{
 Nothing

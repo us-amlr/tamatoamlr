@@ -8,7 +8,7 @@
 \usage{
 mod_census_ui(id)
 
-mod_census_server(id, pool, season.df, season.id.list)
+mod_census_server(id, pool, season.df, season.id.list, plot.height)
 }
 \arguments{
 \item{id, }{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
@@ -20,6 +20,8 @@ Intended to be the first element (\code{mod_season_info_server}) of the (list) o
 
 \item{season.id.list}{reactive; the (named)list of the season info ID values.
 Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_info_server}}}
+
+\item{plot.height}{numeric, height of plot in pixels}
 }
 \description{
 Shiny module for the Census tab
