@@ -18,7 +18,6 @@ mod_season_filter_ui <- function(id, col.width = 4) {
       width = col.width,
       uiOutput(ns("season_min_uiOut_select")),
       uiOutput(ns("season_select_uiOut_select")),
-      # uiOutput(ns("season_max_uiOut_select2")),
       uiOutput(ns("week_num_uiOut_select"))
     ),
     column(
@@ -40,12 +39,14 @@ mod_season_filter_ui <- function(id, col.width = 4) {
 #' @param season.id.list a reactive of the season info list of season_info table
 #'   IDs,  with names (season_info.season_name)
 #' @param tbl.df a reactive lazy data frame; see details for more info
+#' @param week.type a non-reactive character string; indicates how the week number should be calculated
 #'
 #' @details \code{tbl.df} should be a lazy data frame from a \code{\link[dplyr]{tbl}(pool, "table_name")} call.
-#'   This data frame is retrieved using \code{\link[dplyr:compute]{collect}} in this module.
-#'   The data frame must have a column named 'date_column',
-#'   from which the week numbers are calculated via
+#'   This data frame is retrieved using \code{\link[dplyr:compute]{collect}} in this module,
+#'   and must have a column named 'date_column',
+#'   If \code{week.type} is 'temporal', then the week numbers are calculated via
 #'   \code{week_num = lubridate::\link[lubridate]{week}(date_column)}
+#'   If \code{week.type} is 'diet', then the week numbers are determined relative to the diet_scat_date value
 #'
 #' @return A list with following components:
 #' \itemize{
@@ -57,13 +58,15 @@ mod_season_filter_ui <- function(id, col.width = 4) {
 #' }
 #'
 #' @export
-mod_season_filter_server <- function(id, summ.level, season.df, season.id.list, tbl.df) {
+mod_season_filter_server <- function(id, summ.level, season.df, season.id.list, tbl.df, week.type = "temporal") {
   stopifnot(
     is.reactive(summ.level),
     summ.level() %in% c("fs_multiple_total", "fs_multiple_week", "fs_single", "raw"),
     is.reactive(season.df),
     is.reactive(season.id.list),
-    is.reactive(tbl.df)
+    is.reactive(tbl.df),
+    !is.reactive(week.type),
+    week.type %in% c("temporal", "diet")
   )
 
   moduleServer(
@@ -106,10 +109,16 @@ mod_season_filter_server <- function(id, summ.level, season.df, season.id.list, 
 
         tbl.df <- tbl.df() %>%
           filter(between(season_info_id, !!input$season_min, !!input$season_max)) %>%
-          collect() %>%
-          mutate(week_num = lubridate::week(date_column))
+          collect()
 
-        wk.list <- as.list(sort(unique(tbl.df$week_num)))
+        tbl.df.wk <- if (week.type == "diet") {
+          tbl.df %>%
+            amlrPinnipeds::afs_diet_week(diet_scat_date, date_column)
+        } else if (week.type == "temporal") {
+          tbl.df %>% mutate(week_num = lubridate::week(date_column))
+        }
+
+        wk.list <- as.list(sort(unique(tbl.df.wk$week_num)))
 
         selectInput(
           session$ns("week_num"), tags$h5("Week number"),

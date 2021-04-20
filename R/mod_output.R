@@ -5,6 +5,7 @@
 #' @name mod_output
 #'
 #' @param id character used to specify namespace, see \code{shiny::\link[shiny]{NS}}
+#' @param ... UI elements to be displayed below the plot and above the 'download plot'save plot' button
 #'
 #' @export
 mod_output_ui <- function(id, ...) {
@@ -15,7 +16,7 @@ mod_output_ui <- function(id, ...) {
     fluidRow(
       box(
         status = "primary", width = 12,
-        plotOutput(ns("plot")),
+        plotOutput(ns("plot"), height = "auto"),
         ...,
         tags$br(),
         # div(class = "pull-right", downloadButton(ns("plot_download"), "Save plot as PNG")),
@@ -26,9 +27,9 @@ mod_output_ui <- function(id, ...) {
         # div(class = "pull-right", downloadButton(ns("tbl_download"), "Download table as CSV")),
         downloadButton(ns("tbl_download"), "Download table as CSV"),
         tags$br(),
+        uiOutput("tbl_cols_uiOut_selectize"),
         tags$br(),
-        tags$h5("TODO: change"),
-        tags$h5("This table shows the data displayed in the plot above.",
+        tags$h5("This table (may) show the data displayed in the plot above.",
                 "Note that all rows with only counts of zero for the selected columns have been filtered out."),
         DTOutput(ns("tbl"))
       )
@@ -38,14 +39,17 @@ mod_output_ui <- function(id, ...) {
 
 #' @name mod_output
 #'
-#' @param tbl.reac reactive
-#' @param plot.reac reactive
-#' @param plot.res resolution
+#' @param id.parent parent module ID; used to generate default filename and get plot window dimensions
+#' @param tbl.reac reactive; data frame to be displayed in the table
+#' @param plot.reac reactive; \code{\link[ggplot2]{ggplot}} object to be plotted
+#' @param plot.height reactive; numeric set by the user
+#' @param plot.res numeric; plot resolution, passed to \code{\link[shiny]{renderPlot}} and
+#'   used to determine output file dimensions
 #'
 #' @returns Nothing
 #'
 #' @export
-mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.res = 96) {
+mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.height = 400, plot.res = 96) {
   stopifnot(
     is.reactive(tbl.reac),
     is.reactive(plot.reac),
@@ -57,8 +61,23 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.res = 96)
     id,
     function(input, output, session) {
       #----------------------------------------------------
+      # Columns to display in table
+      tbl_cols_uiOut_selectize <- renderUI({
+        tbl.names <- names(req(tbl.reac()))
+
+        selectInput(
+          session$ns("tbl_cols"), tags$h5("Columns to display in table"),
+          choices = as.list(tbl.names), selected = tbl.names,
+          multiple = TRUE, selectize = TRUE
+        )
+      })
+
+
       # Output table
-      output$tbl <- renderDT(tbl.reac(), options = list(scrollX = TRUE))
+      output$tbl <- renderDT({
+        tbl.reac()
+        browser()
+      }, options = list(scrollX = TRUE))
 
       # Download table
       output$tbl_download <- downloadHandler(
@@ -72,7 +91,7 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.res = 96)
 
       #----------------------------------------------------
       # Output plot
-      output$plot <- renderPlot(plot.reac(), res = plot.res)
+      output$plot <- renderPlot(plot.reac(), height = plot.height, units = "px", res = plot.res)
 
       # Download plot
       output$plot_download <- downloadHandler(
@@ -83,14 +102,10 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.res = 96)
           x <- req(session$clientData[[paste0("output_", id.parent, "-", id, "-plot_width")]]) / plot.res
           y <- req(session$clientData[[paste0("output_", id.parent, "-", id, "-plot_height")]]) / plot.res
 
-          # file.res <- 300 #
-          # plot.format <- "PNG"
-
           # NOTE: if the user needs control over the resolution, must use png() device directly per https://github.com/tidyverse/ggplot2/issues/2276
           # ggsave docs have an example of this (https://ggplot2.tidyverse.org/reference/ggsave.html),
           #   basically just make sure to print the ggplot object
 
-          # ggsave by default uses the device dimensions, huzzah
           ggsave(file, plot = plot.reac(), device = "png", height = y, width = x, units = "in")
         }
       )

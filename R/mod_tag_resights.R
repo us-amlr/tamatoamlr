@@ -58,9 +58,10 @@ mod_tag_resights_ui <- function(id) {
 #'   Intended to be the first element (\code{season.df}) of the (list) output of \code{\link{mod_season_filter_server}}
 #' @param season.id.list reactive; the (named)list of the season info ID values.
 #'   Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_filter_server}}
+#' @param plot.height numeric, height of plot in pixels
 #'
 #' @export
-mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
+mod_tag_resights_server <- function(id, pool, season.df, season.id.list, plot.height) {
   stopifnot(
     is.reactive(pool),
     is.reactive(season.df),
@@ -158,7 +159,7 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
 
 
       ### Send to output module
-      observe(mod_output_server("tr_out", id, tbl_output, plot_output))
+      observe(mod_output_server("tr_out", id, tbl_output, plot_output, plot.height))
     }
   )
 }

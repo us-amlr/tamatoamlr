@@ -8,7 +8,7 @@
 \usage{
 mod_tag_resights_ui(id)
 
-mod_tag_resights_server(id, pool, season.df, season.id.list)
+mod_tag_resights_server(id, pool, season.df, season.id.list, plot.height)
 }
 \arguments{
 \item{id, }{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
@@ -20,6 +20,8 @@ Intended to be the first element (\code{season.df}) of the (list) output of \cod
 
 \item{season.id.list}{reactive; the (named)list of the season info ID values.
 Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_filter_server}}}
+
+\item{plot.height}{numeric, height of plot in pixels}
 }
 \description{
 Shiny module for Tag Resights tab

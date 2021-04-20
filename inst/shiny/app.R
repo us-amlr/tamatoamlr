@@ -113,7 +113,9 @@ ui <- dashboardPage(
       menuItem("Census", tabName = "tab_census", icon = icon("th", lib = "font-awesome")),
       menuItem("Tag resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
       tags$br(), tags$br(), tags$br(),
-      actionButton("stop", "Close Shiny app")
+      numericInput("plot_size", tags$h5("Plot height (pixels)"), value = 400, min = 0, step = 50),
+      tags$br(),
+      column(12, actionButton("stop", "Close Shiny app"))
     ), width = "220"
   ),
 
@@ -160,15 +162,22 @@ server <- function(input, output, session) {
     js$closeWindow()
   })
 
+  plot_height <- reactive({
+    validate(
+      need(input$plot_size > 100, "The plot height must be at least 100")
+    )
+    input$plot_size
+  })
+
 
   #----------------------------------------------------------------------------
   ### Modules
   pool <- mod_database_server("db", pool.remote.prod, pool.remote.test, db.driver, db.server)
   si.list <- mod_season_info_server("si", pool)
 
-  mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
-  mod_census_server("census", pool, si.list$season.df, si.list$season.id.list)
-  mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
+  mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list, plot_height)
+  mod_census_server("census", pool, si.list$season.df, si.list$season.id.list, plot_height)
+  mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list, plot_height)
 }
 
 shiny::shinyApp(ui = ui, server = server)
