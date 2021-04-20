@@ -26,12 +26,14 @@ mod_output_ui <- function(id, ...) {
         status = "primary", width = 12,
         # div(class = "pull-right", downloadButton(ns("tbl_download"), "Download table as CSV")),
         downloadButton(ns("tbl_download"), "Download table as CSV"),
+        tags$br(), tags$br(),
+        tags$h5("Note that all rows with only counts of zero for the selected columns (may) have been filtered out.",
+                "See below the table to specify the column(s) to include in the output table/CSV file."),
         tags$br(),
-        uiOutput("tbl_cols_uiOut_selectize"),
+        DTOutput(ns("tbl")),
         tags$br(),
-        tags$h5("This table (may) show the data displayed in the plot above.",
-                "Note that all rows with only counts of zero for the selected columns have been filtered out."),
-        DTOutput(ns("tbl"))
+        uiOutput(ns("tbl_cols_uiOut_selectize")),
+        actionButton(ns("tbl_cols_reset"), "Re-select all columns")
       )
     )
   )
@@ -60,23 +62,28 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.height = 
   moduleServer(
     id,
     function(input, output, session) {
-      #----------------------------------------------------
+      #------------------------------------------------------------------------
       # Columns to display in table
-      tbl_cols_uiOut_selectize <- renderUI({
+      output$tbl_cols_uiOut_selectize <- renderUI({
         tbl.names <- names(req(tbl.reac()))
 
         selectInput(
-          session$ns("tbl_cols"), tags$h5("Columns to display in table"),
+          session$ns("tbl_cols"), "Columns to display in table and output CSV",
           choices = as.list(tbl.names), selected = tbl.names,
           multiple = TRUE, selectize = TRUE
         )
       })
 
+      observeEvent(input$tbl_cols_reset, {
+        updateSelectInput(session, "tbl_cols", selected = names(req(tbl.reac())))
+      })
 
       # Output table
       output$tbl <- renderDT({
-        tbl.reac()
-        browser()
+        validate(
+          need(input$tbl_cols, "Please select at least one column to display")
+        )
+        tbl.reac() %>% select(input$tbl_cols)
       }, options = list(scrollX = TRUE))
 
       # Download table
@@ -85,11 +92,13 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.height = 
           paste0(id.parent, "_table.csv")
         },
         content = function(file) {
-          write.csv(tbl.reac(), file = file, row.names = FALSE, na = "")
+          tbl.out <- tbl.reac() %>% select(req(input$tbl_cols))
+          write.csv(tbl.out, file = file, row.names = FALSE, na = "")
         }
       )
 
-      #----------------------------------------------------
+
+      #------------------------------------------------------------------------
       # Output plot
       output$plot <- renderPlot(plot.reac(), height = plot.height, units = "px", res = plot.res)
 
