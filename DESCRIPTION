@@ -1,5 +1,5 @@
 Package: amlrPinnipeds
-Title: Analyze and visualize data from the ***REMOVED***_Test database
+Title: Analyze and visualize data from the ***REMOVED*** database
 Version: 0.1.0.9000
 Authors@R: 
         person("Sam", "Woodman", email = "sam.woodman@noaa.gov", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6071-8186"))
@@ -16,8 +16,8 @@ Imports:
     odbc,
     pool,
     purrr,
-    scales,
-    shiny, 
+    rlang,
+    shiny (>= 1.5), 
     shinybusy,
     shinydashboard, 
     shinyjs, 
