@@ -16,7 +16,7 @@ if (!all(sapply(list.packages, require, character.only = TRUE, warn.conflicts = 
 
 
 ###############################################################################
-### Set up db connection, with error checking
+### Set up db connections, with error checking
 db.driver <- "SQL Server"
 db.server <- "swc-estrella-s"
 db.name.prod <- "AMLR_PINNIPEDS"
@@ -32,26 +32,45 @@ pool.remote.prod <- try(pool::dbPool(
   idleTimeout = 3600000  # 1 hour
 ), silent = TRUE)
 
-pool.remote.test <- try(pool::dbPool(
-  drv = odbc::odbc(),
-  Driver = db.driver,
-  Server = db.server,
-  Database = db.name.test,
-  Trusted_Connection = "True",
-  idleTimeout = 3600000  # 1 hour
-), silent = TRUE)
+# TODO: make these nicer i.e. via NULLS + validates
+#   Really, this should all happen in mod_database_server, with NULLs being returned if it can't connect.
+#   That way everything would be self-contained
+#   HOWEVER, this then violates the dbPool call being outside of the server function.?
 
-
-# Check for connection to db, then get/save broadly used data
-if (!dbIsValid(pool.remote.prod)) {
-  stop("The Shiny app was unable to connect to the ", db.name.prod, " database on the ",
-       db.server, " server via a trusted connection - are you logged in to VPN?")
-
-} else if (!dbIsValid(pool.remote.test)) {
-  stop("The Shiny app was unable to connect to the ", db.name.test, " database on the ",
-       db.server, " server via a trusted connection - are you logged in to VPN?")
-
+db_stop_txt <- function(x, y) {
+  paste0(
+    "The Shiny app was unable to connect to the ", x, " database on the ",
+    y, " server via a trusted connection - are you logged in to VPN? ",
+    "Please close the app, log into VPN, and then open the app again"
+  )
 }
+
+# Test connection to the production db
+if (!isTruthy(pool.remote.prod)) {
+  stop(db_stop_txt(db.name.prod, db.server))
+} else if (!dbIsValid(pool.remote.prod)) {
+  stop(db_stop_txt(db.name.prod, db.server))
+
+
+} else {
+  # If there is a valid connection to the production database, connect to the test db as well.
+  pool.remote.test <- try(pool::dbPool(
+    drv = odbc::odbc(),
+    Driver = db.driver,
+    Server = db.server,
+    Database = db.name.test,
+    Trusted_Connection = "True",
+    idleTimeout = 3600000  # 1 hour
+  ), silent = TRUE)
+
+  # Check for connection to Test db
+  if (!isTruthy(pool.remote.test)) {
+    stop(db_stop_txt(db.name.test, db.server))
+  } else if (!dbIsValid(pool.remote.test)) {
+    stop(db_stop_txt(db.name.test, db.server))
+  }
+}
+
 
 onStop(function() {
   poolClose(pool.remote.prod)
@@ -59,17 +78,10 @@ onStop(function() {
 })
 
 
-# TODO
-season.list <- NULL
-season.list.id.min <- NULL
-season.list.id.max <- NULL
-
 
 
 # ###############################################################################
 # ##### Assorted other stuff...
-
-source(file.path("app_modules.R"), local = TRUE, chdir = TRUE)
 
 # old <- options()
 # on.exit(options(old))
@@ -79,26 +91,6 @@ source(file.path("app_modules.R"), local = TRUE, chdir = TRUE)
 
 jscode <- "shinyjs.closeWindow = function() { window.close(); }"
 
-pinniped.sp.list.all <- list(
-  "Fur seal" = "fur seal",
-  "Crabeater seal" = "crabeater seal",
-  "Elephant seal" = "elephant seal",
-  "Leopard seal" = "leopard seal",
-  "Weddell seal" = "weddell seal"
-)
-pinniped.sp.levels <- names(pinniped.sp.list.all) #levels for factor
-
-pinniped.sp.list.tr <- pinniped.sp.list.all[
-  c("Fur seal", "Elephant seal", "Leopard seal", "Weddell seal")
-]
-pinniped.sp.list.phocid <- pinniped.sp.list.all[
-  c("Crabeater seal", "Elephant seal", "Leopard seal", "Weddell seal")
-]
-
-# Colors for pinnipeds in plots
-pinniped.sp.colors <- purrr::set_names(
-  scales::hue_pal()(5), names(pinniped.sp.list.all)
-)
 
 
 ###############################################################################
@@ -106,6 +98,7 @@ pinniped.sp.colors <- purrr::set_names(
 
 # Load files with UI code
 source(file.path("ui_tabs.R"), local = TRUE, chdir = TRUE)
+# source(file.path("modules", "ui_modules.R"), local = TRUE, chdir = TRUE)
 
 # UI function
 ui <- dashboardPage(
@@ -114,13 +107,15 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       id = "tabs",
-      menuItem("General info", tabName = "tab_info", icon = icon("th", lib = "font-awesome")),
+      menuItem("Database and season info", tabName = "tab_info", icon = icon("th", lib = "font-awesome")),
       menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
       menuItem("AFS Natality and Pup Fate", tabName = "tab_afs_natal", icon = icon("th")),
       menuItem("Census", tabName = "tab_census", icon = icon("th", lib = "font-awesome")),
       menuItem("Tag resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
       tags$br(), tags$br(), tags$br(),
-      actionButton("stop", "Close Shiny app")
+      numericInput("plot_size", tags$h5("Plot height (pixels)"), value = 400, min = 0, step = 50),
+      tags$br(),
+      column(12, actionButton("stop", "Close Shiny app"))
     ), width = "220"
   ),
 
@@ -144,11 +139,11 @@ ui <- dashboardPage(
     "))),
 
     tabItems(
-      ui_tab_info(),
-      ui_tab_afs_diet(),
-      ui_tab_afs_natal(),
-      ui_tab_census(),
-      ui_tab_tr()
+      tabItem(tabName = "tab_info", fluidRow(mod_database_ui("db"), mod_season_info_ui("si"))),
+      tabItem(tabName = "tab_afs_diet", mod_afs_diet_ui("afs_diet")),
+      # ui_tab_afs_natal(),
+      tabItem(tabName = "tab_census", mod_census_ui("census")),
+      tabItem(tabName = "tab_tr", mod_tag_resights_ui("tag_resights"))
     )
   )
 )
@@ -167,115 +162,22 @@ server <- function(input, output, session) {
     js$closeWindow()
   })
 
-
-  #----------------------------------------------------------------------------
-  ### Reactive values
-
-  # Make reactiveValues for tables, in case whole table has been brought into memory?
-  vals.db <- reactiveValues(
-    pool = NULL,
-    db.name = NULL
-  )
-
-  vals.si <- reactiveValues(
-    df = NULL,
-    season.list = list(),
-    season.id.min = NULL,
-    season.id.max = NULL
-  )
-
-  # Catch-all reactiveValues
-  vals <- reactiveValues(
-    census.beaches = NULL,
-    census.cols = NULL,
-    census.warning.na.records = NULL
-  )
-
-  #----------------------------------------------------------------------------
-  observeEvent(vals.db$pool, {
-    vals.si$df <- tbl(pool.remote.prod, "season_info") %>%
-      select(-ts) %>%
-      arrange(desc(season_open_date)) %>%
-      collect() %>%
-      mutate(season_open_date = as.Date(season_open_date),
-             season_close_date = as.Date(season_close_date),
-             diet_scat_date = as.Date(diet_scat_date))
-
-    # Used in displays/filters
-    vals.si$season.list <- set_names(as.list(vals.si$df$ID), vals.si$df$season_name)
-    vals.si$season.id.min <- min(unlist(vals.si$season.list))
-    vals.si$season.id.max <- max(unlist(vals.si$season.list))
-  })
-
-
-  #----------------------------------------------------------------------------
-  ### General info tab
-
-  # Which database to use?
-  observeEvent(input$info_db_name, {
-    if (input$info_db_name == "remote_prod") {
-      vals.db$pool <- pool.remote.prod
-      vals.db$db.name <- db.name.prod
-
-    } else if (input$info_db_name == "remote_test") {
-      vals.db$pool <- pool.remote.test
-      vals.db$db.name <- db.name.test
-
-    } else if (input$info_db_name == "local") {
-      vals.db$pool <- NULL
-      vals.db$db.name <- NULL
-
-    } else {
-      vals.db$pool <- NULL
-      vals.db$db.name <- NULL
-    }
-  })
-
-
-  # Info about db connection
-  output$pool_db_conn <- renderTable({
-   validate(
-      need(inherits(vals.db$pool, "Pool"),
-           paste("The amlrPinnipeds Shiny app was not able to connect to the specified database -",
-                 "are you connected to VPN?"))
-    )
-
+  plot_height <- reactive({
     validate(
-      need(input$info_db_name != "local",
-           "Cannot connect to a local database at this time; please select another option")
+      need(input$plot_size > 100, "The plot height must be at least 100")
     )
-
-    data.frame( #dbGetInfo(pool) is not useful atm
-      Label = c("Driver", "Server", "Database name"),
-      Value = c(db.driver, db.server, vals.db$db.name)
-    )
-  })
-
-  # Season info display table
-  output$info_season_info <- renderTable({
-    req(vals.si$df) %>%
-      mutate(across(where(is.Date), as.character)) %>%
-      select(`Season name` = season_name,
-             `Opening date` = season_open_date,
-             `Closing date` = season_close_date,
-             `Season days` = season_days,
-             `Diet study start date` = diet_scat_date)
+    input$plot_size
   })
 
 
   #----------------------------------------------------------------------------
-  ### Server files
-  source(file.path("server_files", "server_afs_natality_pup_fate.R"), local = TRUE, chdir = TRUE)
-  source(file.path("server_files", "server_census.R"), local = TRUE, chdir = TRUE)
-  source(file.path("server_files", "server_tag_resights.R"), local = TRUE, chdir = TRUE)
-  source(file.path("server_files", "server_funcs.R"), local = TRUE, chdir = TRUE)
+  ### Modules
+  pool <- mod_database_server("db", pool.remote.prod, pool.remote.test, db.driver, db.server)
+  si.list <- mod_season_info_server("si", pool)
 
-
-  #----------------------------------------------------------------------------
-  ### Other
-
-
-
+  mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list, plot_height)
+  mod_census_server("census", pool, si.list$season.df, si.list$season.id.list, plot_height)
+  mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list, plot_height)
 }
 
 shiny::shinyApp(ui = ui, server = server)

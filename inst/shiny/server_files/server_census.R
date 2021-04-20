@@ -4,6 +4,13 @@
 ###############################################################################
 # Census-specific common values
 
+# TODO:
+# vals <- reactiveValues(
+#   census.beaches = NULL,
+#   census.cols = NULL,
+#   census.warning.na.records = NULL
+# )
+
 ### Names of summary level 1 inputs for multiple seasons
 census.summ1.mult <- c("fs_multiple_total", "fs_multiple_week")
 
