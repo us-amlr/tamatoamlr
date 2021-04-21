@@ -64,7 +64,7 @@ mod_season_filter_server <- function(id, summ.level, season.df, season.id.list, 
     summ.level() %in% c("fs_multiple_total", "fs_multiple_week", "fs_single", "raw"),
     is.reactive(season.df),
     is.reactive(season.id.list),
-    is.reactive(tbl.df),
+    is.reactive(tbl.df) | is.null(tbl.df),
     !is.reactive(week.type),
     week.type %in% c("temporal", "diet")
   )

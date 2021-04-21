@@ -109,14 +109,14 @@ ui <- dashboardPage(
       id = "tabs",
       menuItem("Database and season info", tabName = "tab_info", icon = icon("th", lib = "font-awesome")),
       menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
-      menuItem("AFS Natality and Pup Fate", tabName = "tab_afs_natal", icon = icon("th")),
+      menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
       menuItem("Census", tabName = "tab_census", icon = icon("th", lib = "font-awesome")),
       menuItem("Tag resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
       tags$br(), tags$br(),
       numericInput("plot_size", tags$h5("Plot height (pixels)"), value = 400, min = 0, step = 50),
       tags$br(),
       actionButton("stop", "Close Shiny app")
-    ), width = "220"
+    ), width = "230"
   ),
 
   dashboardBody(
@@ -141,7 +141,7 @@ ui <- dashboardPage(
     tabItems(
       tabItem(tabName = "tab_info", fluidRow(mod_database_ui("db"), mod_season_info_ui("si"))),
       tabItem(tabName = "tab_afs_diet", mod_afs_diet_ui("afs_diet")),
-      # ui_tab_afs_natal(),
+      tabItem(tabName = "tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
       tabItem(tabName = "tab_census", mod_census_ui("census")),
       tabItem(tabName = "tab_tr", mod_tag_resights_ui("tag_resights"))
     )
@@ -176,6 +176,7 @@ server <- function(input, output, session) {
   si.list <- mod_season_info_server("si", pool)
 
   mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list, plot_height)
+  mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list, plot_height)
   mod_census_server("census", pool, si.list$season.df, si.list$season.id.list, plot_height)
   mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list, plot_height)
 }

@@ -83,6 +83,7 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.height = 
         validate(
           need(input$tbl_cols, "Please select at least one column to display")
         )
+        req(all(input$tbl_cols %in% names(tbl.reac())))
         tbl.reac() %>% select(input$tbl_cols)
       }, options = list(scrollX = TRUE))
 

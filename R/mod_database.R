@@ -20,7 +20,8 @@ mod_database_ui <- function(id) {
                   choices = list("AMLR_PINNIPEDS" = "AMLR_PINNIPEDS",
                                  "AMLR_PINNIPEDS_Test" = "AMLR_PINNIPEDS_Test",
                                  "Local database" = "local"),
-                  selected = "remote_prod")
+                  # TODO: change
+                  selected = "AMLR_PINNIPEDS_Test")
     )
   )
 }
