@@ -19,7 +19,6 @@ mod_output_ui <- function(id, ...) {
         plotOutput(ns("plot"), height = "auto"),
         ...,
         tags$br(),
-        # div(class = "pull-right", downloadButton(ns("plot_download"), "Save plot as PNG")),
         downloadButton(ns("plot_download"), "Save plot as PNG")
       ),
       box(
@@ -112,7 +111,8 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.height = 
           x <- req(session$clientData[[paste0("output_", id.parent, "-", id, "-plot_width")]]) / plot.res
           y <- req(session$clientData[[paste0("output_", id.parent, "-", id, "-plot_height")]]) / plot.res
 
-          # NOTE: if the user needs control over the resolution, must use png() device directly per https://github.com/tidyverse/ggplot2/issues/2276
+          # NOTE: if the user needs control over the resolution,
+          #   must use png() device directly per https://github.com/tidyverse/ggplot2/issues/2276
           # ggsave docs have an example of this (https://ggplot2.tidyverse.org/reference/ggsave.html),
           #   basically just make sure to print the ggplot object
 

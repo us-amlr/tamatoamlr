@@ -1,6 +1,6 @@
-#' Shiny module for AFS Natality and Pup Mortality tab
+#' Shiny module for AFS Natality and Pup Mortality (pinniped season) tab
 #'
-#' Shiny module for AFS Natality and Pup Mortality tab
+#' Shiny module for AFS Natality and Pup Mortality (pinniped season) tab
 #'
 #' @name mod_afs_pinniped_season
 #'
@@ -13,10 +13,7 @@ mod_afs_pinniped_season_ui <- function(id) {
   # assemble UI elements
   tagList(
     fluidRow(
-      column(
-        width = 6,
-        mod_output_ui(ns("output"))
-      ),
+      column(6, mod_output_ui(ns("output"))),
       column(
         width = 6,
         fluidRow(
@@ -58,7 +55,7 @@ mod_afs_pinniped_season_ui <- function(id) {
               )
             ),
             tags$h5("'Adult female' refers to females that have pupped in at least one previous season."),
-            textOutput(ns("type_desc"))
+            textOutput(ns("type_description"))
           ),
           box(
             title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
@@ -115,25 +112,31 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list, 
 
 
       #########################################################################
-      output$type_desc <- renderText({
-        # case_when(
-        #   input$type == "overview_raw" ~ "todo"
-        #   input$type == "return" ~ "todo"
-        #   input$type == "natality" ~ "todo"
-        #   input$type == "pup_mortality" && input$mortality_type == "rate" ~ "todo"
-        #   input$type == "pup_mortality" && input$mortality_type == "prop_loss" ~ "todo"
-        #   TRUE ~ "todo"
-        # )
+      ### Descriptive text depending on the user-selected data type
+      output$type_description <- renderText({
+        txt.overview <- paste(
+          "The raw data consists of all of the records from the pinniped_season table,",
+          "joined with season/pinniped/tag resight",
+          "data to get season names, pinniped cohort/age, and parturition beach (todo)."
+        )
+        txt.return <- "Return rate - by season, the percentage of adult females, resighted the previous year, that were resighted."
+        txt.natality <- paste(
+          "Natality rate - by season, the percentage of adult females, resighted the previous year,",
+          "that pupped in each season (todo: on study beaches)."
+        )
+        txt.mortality.rate <- "The plot shows, out of all the pups born, the percentage that died from each mortality type."
+        txt.mortality.prop <- paste(
+          "The plot shows, of the potential pups that did not survive to adulthood,",
+          "whether the loss was a) because an adult female did not pup or b) because of a type of mortality."
+        )
+
+
         switch(
           input$type,
-          "overview_raw" = "todo",
-          "return" = "Return rate - by season, the percentage of adult females, resighted the previous year, that were resighted",
-          "natality" = paste("Natality rate - by season, the percentage of adult females, resighted the previous year,",
-                             "that pupped in each season (todo: on study beaches)"),
-          "pup_mortality" = ifelse(input$mortality_type == "rate",
-                                   "The plot shows, out of all the pups born, the percentage that died from each mortality type",
-                                   paste("The plot shows, of the potential pups that did not survive to adulthood,",
-                                         "whether the loss was a) because an adult female did not pup or b) because of a type of mortality"))
+          "overview_raw" = txt.overview,
+          "return" = txt.return,
+          "natality" = txt.natality,
+          "pup_mortality" = ifelse(input$mortality_type == "rate", txt.mortality.rate, txt.mortality.prop)
         )
       })
 
@@ -346,7 +349,7 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list, 
 
 
       ### Predation - pup mortality percentages from total counts
-      mortality_total <- reactive({
+      mortality_rate <- reactive({
         mortality() %>%
           mutate(mortality_predation_perc = round((mortality_leop_total_count / total_count), 4),
                  mortality_neonate_perc = round((mortality_neonate_count / total_count), 4),
@@ -372,8 +375,24 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list, 
       plot_output <- reactive({
         #--------------------------------------------------
         if (input$type == "overview_raw") {
-          validate("There is currently no plot for the raw data")
+          df.toplot <- ps_collect_pinniped() %>%
+            group_by(season_name) %>%
+            summarise(total = n(),
+                      fem_with_pup = sum(parturition),
+                      fem_no_pup = sum(!parturition)) %>%
+            pivot_longer(cols = total:fem_no_pup, names_to = "type", values_to = "count") %>%
+            mutate(type = factor(type, levels = c("total", "fem_with_pup", "fem_no_pup")))
 
+          ggplot(df.toplot, aes(season_name, count, color = type, group = type)) +
+            geom_line() +
+            geom_path() +
+            xlab("Season") +
+            ylab("Count") +
+            ggtitle("All females tracked") +
+            theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+          #------------------------------------------------
         } else if (input$type == "return") {
           ggplot(return_rate(), aes(season_name, return_rate)) +
             geom_point() +
@@ -414,6 +433,7 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list, 
 
           #------------------------------------------------
         } else if (input$type == "pup_mortality") {
+          ### Plot two different types of pup mortality
           mortality_long <- function(x) {
             x %>%
               select(season_name,
@@ -427,15 +447,14 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list, 
 
           if (input$mortality_type == "rate") {
             # Prep for plotting mortality rates
-            df.toplot <- mortality_total() %>%
+            df.toplot <- mortality_rate() %>%
               mutate(natality_loss_perc = NA) %>%
               mortality_long() %>%
-              filter(type != "natality") %>%
-              mutate(type = factor(type, levels = c("predation", "neonate", "other"))) #not rally necessary, meh
+              filter(type != "natality")
 
             y.lab <- "Mortality rate"
             plot.title <- "Pup mortality - percentage of pups that died, by mortality type"
-            y.cols <- scales::hue_pal()(4)[c(1, 3, 4)]
+            y.cols <- scales::hue_pal()(4)[c(1, 3, 4)] #to make types the same color
 
           } else if (input$mortality_type == "prop_loss") {
             # Prep for plotting proportional loss
@@ -468,7 +487,7 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list, 
 
 
       ### Output table
-      tbl_output <- reactive({
+       tbl_output <- reactive({
         if (input$type == "overview_raw") {
           ps_collect_pinniped()
         } else if (input$type == "return") {
@@ -476,9 +495,13 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list, 
         } else if (input$type == "natality") {
           natality_rate()
         } else if (input$type == "pup_mortality") {
-          mortality_total()
-        } else if (input$type == "prop_loss") {
-          mortality_prop_loss()
+          if (input$mortality_type == "rate") {
+            mortality_rate()
+          } else if (input$mortality_type == "prop_loss") {
+            mortality_prop_loss()
+          } else {
+            validate("invalid input$mortality_type value")
+          }
         } else {
           validate("Nope nada nein")
         }

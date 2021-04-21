@@ -17,10 +17,7 @@ mod_census_ui <- function(id) {
   # assemble UI elements
   tagList(
     fluidRow(
-      column(
-        width = 6,
-        mod_output_ui(ns("census_out"), tags$br(), uiOutput(ns("warning_na_records")))
-      ),
+      column(6, mod_output_ui(ns("census_out"), tags$br(), uiOutput(ns("warning_na_records")))),
       column(
         width = 6,
         fluidRow(

@@ -4,7 +4,7 @@
 \alias{mod_afs_pinniped_season}
 \alias{mod_afs_pinniped_season_ui}
 \alias{mod_afs_pinniped_season_server}
-\title{Shiny module for AFS Natality and Pup Mortality tab}
+\title{Shiny module for AFS Natality and Pup Mortality (pinniped season) tab}
 \usage{
 mod_afs_pinniped_season_ui(id)
 
@@ -30,5 +30,5 @@ Intended to be the second element (\code{season.id.list}) of the (list) output o
 \item{plot.height}{numeric, height of plot in pixels}
 }
 \description{
-Shiny module for AFS Natality and Pup Mortality tab
+Shiny module for AFS Natality and Pup Mortality (pinniped season) tab
 }
