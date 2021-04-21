@@ -8,13 +8,7 @@
 \usage{
 mod_afs_pinniped_season_ui(id)
 
-mod_afs_pinniped_season_server(
-  id,
-  pool,
-  season.df,
-  season.id.list,
-  plot.height
-)
+mod_afs_pinniped_season_server(id, pool, season.df, season.id.list)
 }
 \arguments{
 \item{id, }{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}

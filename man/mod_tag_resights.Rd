@@ -8,7 +8,7 @@
 \usage{
 mod_tag_resights_ui(id)
 
-mod_tag_resights_server(id, pool, season.df, season.id.list, plot.height)
+mod_tag_resights_server(id, pool, season.df, season.id.list)
 }
 \arguments{
 \item{id, }{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}

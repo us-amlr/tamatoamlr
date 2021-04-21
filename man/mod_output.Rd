@@ -8,14 +8,7 @@
 \usage{
 mod_output_ui(id, ...)
 
-mod_output_server(
-  id,
-  id.parent,
-  tbl.reac,
-  plot.reac,
-  plot.height = 400,
-  plot.res = 96
-)
+mod_output_server(id, id.parent, tbl.reac, plot.reac, plot.res = 96)
 }
 \arguments{
 \item{id}{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
@@ -28,10 +21,10 @@ mod_output_server(
 
 \item{plot.reac}{reactive; \code{\link[ggplot2]{ggplot}} object to be plotted}
 
-\item{plot.height}{reactive; numeric set by the user}
-
 \item{plot.res}{numeric; plot resolution, passed to \code{\link[shiny]{renderPlot}} and
 used to determine output file dimensions}
+
+\item{plot.height}{reactive; numeric set by the user}
 }
 \value{
 Nothing
