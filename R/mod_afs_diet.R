@@ -13,10 +13,7 @@ mod_afs_diet_ui <- function(id) {
   # assemble UI elements
   tagList(
     fluidRow(
-      column(
-        width = 6,
-        mod_output_ui(ns("output"))
-      ),
+      column(6, mod_output_ui(ns("output"))),
       column(
         width = 6,
         fluidRow(

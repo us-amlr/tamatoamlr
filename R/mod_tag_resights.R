@@ -17,10 +17,7 @@ mod_tag_resights_ui <- function(id) {
   # assemble UI elements
   tagList(
     fluidRow(
-      column(
-        width = 6,
-        mod_output_ui(ns("tr_out"))
-      ),
+      column(6, mod_output_ui(ns("tr_out"))),
       column(
         width = 6,
         fluidRow(
