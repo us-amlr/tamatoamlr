@@ -103,7 +103,7 @@ mod_census_ui <- function(id) {
 #' @param plot.height numeric, height of plot in pixels
 #'
 #' @export
-mod_census_server <- function(id, pool, season.df, season.id.list, plot.height) {
+mod_census_server <- function(id, pool, season.df, season.id.list) {
   stopifnot(
     is.reactive(pool),
     is.reactive(season.df),
@@ -518,7 +518,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list, plot.height) 
           phocid = "Weekly Phocid Census"
         )
 
-        size.val <- 1.2
+        # size.val <- 1.2
 
 
         #--------------------------------------------------------
@@ -559,11 +559,11 @@ mod_census_server <- function(id, pool, season.df, season.id.list, plot.height) 
           )
           if (input$summary_level_3 == "by_sp") {
             ggplot.out <- ggplot.out +
-              geom_point(aes(color = Beach, size = size.val)) +
+              geom_point(aes(color = Beach)) + #, size = size.val)) +
               geom_line(aes(group = Beach, color = Beach))
           } else {
             ggplot.out <- ggplot.out +
-              geom_point(aes(shape = count_class, color = Beach, size = size.val)) +
+              geom_point(aes(shape = count_class, color = Beach)) + #, size = size.val)) +
               geom_line(aes(group = interaction(Beach, count_class), color = Beach)) +
               guides(shape = guide_legend(title = "Age+sex class"))
           }
@@ -575,11 +575,11 @@ mod_census_server <- function(id, pool, season.df, season.id.list, plot.height) 
 
           if (input$summary_level_3 == "by_sp") {
             ggplot.out <- ggplot.out +
-              geom_point(aes(color = species, size = size.val)) +
+              geom_point(aes(color = species)) + #, size = size.val)) +
               geom_line(aes(group = species, color = species))
           } else {
             ggplot.out <- ggplot.out +
-              geom_point(aes(shape = count_class, color = species, size = size.val)) +
+              geom_point(aes(shape = count_class, color = species)) + #, size = size.val)) +
               geom_line(aes(group = interaction(species, count_class), color = species)) +
               guides(shape = guide_legend(title = "Sex+age class"))
           }
@@ -601,7 +601,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list, plot.height) 
 
 
       ### Send off
-      observe(mod_output_server("census_out", id, tbl_output, plot_output, plot.height))
+      observe(mod_output_server("census_out", id, tbl_output, plot_output))
     }
   )
 }

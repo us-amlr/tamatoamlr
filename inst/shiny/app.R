@@ -113,8 +113,9 @@ ui <- dashboardPage(
       menuItem("Census", tabName = "tab_census", icon = icon("th", lib = "font-awesome")),
       menuItem("Tag resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
       tags$br(), tags$br(),
-      numericInput("plot_size", tags$h5("Plot height (pixels)"), value = 400, min = 0, step = 50),
-      tags$br(),
+      # numericInput("plot_height", tags$h5("Plot height (pixels)"), value = 400, min = 0, step = 50),
+      # sliderInput("plot_width", tags$h5("Plot width"), value = 6, min = 1, max = 12),
+      # tags$br(),
       actionButton("stop", "Close Shiny app")
     ), width = "230"
   ),
@@ -162,12 +163,12 @@ server <- function(input, output, session) {
     js$closeWindow()
   })
 
-  plot_height <- reactive({
-    validate(
-      need(input$plot_size > 100, "The plot height must be at least 100")
-    )
-    input$plot_size
-  })
+  # plot_height <- reactive({
+  #   validate(
+  #     need(input$plot_height > 100, "The plot height must be at least 100")
+  #   )
+  #   c(input$plot_height, input$plot_width)
+  # })
 
 
   #----------------------------------------------------------------------------
@@ -175,10 +176,10 @@ server <- function(input, output, session) {
   pool <- mod_database_server("db", pool.remote.prod, pool.remote.test, db.driver, db.server)
   si.list <- mod_season_info_server("si", pool)
 
-  mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list, plot_height)
-  mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list, plot_height)
-  mod_census_server("census", pool, si.list$season.df, si.list$season.id.list, plot_height)
-  mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list, plot_height)
+  mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
+  mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
+  mod_census_server("census", pool, si.list$season.df, si.list$season.id.list)
+  mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
 }
 
 shiny::shinyApp(ui = ui, server = server)

@@ -58,7 +58,7 @@ mod_tag_resights_ui <- function(id) {
 #' @param plot.height numeric, height of plot in pixels
 #'
 #' @export
-mod_tag_resights_server <- function(id, pool, season.df, season.id.list, plot.height) {
+mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
   stopifnot(
     is.reactive(pool),
     is.reactive(season.df),
@@ -156,7 +156,7 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list, plot.he
 
 
       ### Send to output module
-      observe(mod_output_server("tr_out", id, tbl_output, plot_output, plot.height))
+      observe(mod_output_server("tr_out", id, tbl_output, plot_output))
     }
   )
 }

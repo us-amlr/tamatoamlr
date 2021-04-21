@@ -8,7 +8,7 @@
 \usage{
 mod_afs_diet_ui(id)
 
-mod_afs_diet_server(id, pool, season.df, season.id.list, plot.height)
+mod_afs_diet_server(id, pool, season.df, season.id.list)
 }
 \arguments{
 \item{id, }{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}

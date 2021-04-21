@@ -19,7 +19,10 @@ mod_output_ui <- function(id, ...) {
         plotOutput(ns("plot"), height = "auto"),
         ...,
         tags$br(),
-        downloadButton(ns("plot_download"), "Save plot as PNG")
+        fluidRow(
+          column(8, tags$br(), tags$br(), downloadButton(ns("plot_download"), "Save plot as PNG")),
+          column(4, div(class = "pull-right", numericInput(ns("plot_height"), tags$h5("Plot height (pixels)"), value = 400, min = 0, step = 50)))
+        )
       ),
       box(
         status = "primary", width = 12,
@@ -32,7 +35,7 @@ mod_output_ui <- function(id, ...) {
         DTOutput(ns("tbl")),
         tags$br(),
         uiOutput(ns("tbl_cols_uiOut_selectize")),
-        actionButton(ns("tbl_cols_reset"), "Re-select all columns")
+        actionButton(ns("tbl_cols_reset"), "Re-select all columns in original order")
       )
     )
   )
@@ -50,7 +53,7 @@ mod_output_ui <- function(id, ...) {
 #' @returns Nothing
 #'
 #' @export
-mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.height = 400, plot.res = 96) {
+mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.res = 96) {
   stopifnot(
     is.reactive(tbl.reac),
     is.reactive(plot.reac),
@@ -99,8 +102,15 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.height = 
 
 
       #------------------------------------------------------------------------
+      plot_height <- reactive({
+        validate(
+          need(input$plot_height > 100, "The plot height must be at least 100")
+        )
+        input$plot_height
+      })
+
       # Output plot
-      output$plot <- renderPlot(plot.reac(), height = plot.height, units = "px", res = plot.res)
+      output$plot <- renderPlot(plot.reac(), height = plot_height, units = "px", res = plot.res)
 
       # Download plot
       output$plot_download <- downloadHandler(

@@ -86,7 +86,7 @@ mod_afs_diet_ui <- function(id) {
 #' @param plot.height numeric, height of plot in pixels
 #'
 #' @export
-mod_afs_diet_server <- function(id, pool, season.df, season.id.list, plot.height) {
+mod_afs_diet_server <- function(id, pool, season.df, season.id.list) {
   stopifnot(
     is.reactive(pool),
     is.reactive(season.df),
@@ -399,7 +399,7 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list, plot.height
 
 
       ### Send to output module
-      observe(mod_output_server("output", id, tbl_output, plot_output, plot.height))
+      observe(mod_output_server("output", id, tbl_output, plot_output))
     }
   )
 }
