@@ -15,7 +15,7 @@
 #' @import shiny
 #'
 #' @importFrom DT DTOutput renderDT
-#' @importFrom lubridate days is.Date week ymd
+#' @importFrom lubridate days is.Date month week year ymd
 #' @importFrom purrr pmap_dbl pmap_lgl set_names
 #' @importFrom rlang .data enquo
 #' @importFrom shinydashboard box

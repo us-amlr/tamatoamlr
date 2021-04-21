@@ -23,8 +23,8 @@ Calculate the age of a pinniped based on a given date and cohort year
 \code{event.date} (event date) and \code{cohort} must be the same length.
 
 The age of the pinniped is calculated by taking the year of the event date,
-subtracting the cohort year, and subtracting an additional 1 if the month of
-the event date is less than 10 (before October).
+subtracting the cohort year, and subtracting an additional 1 if the month is before October
+(i.e., if the month of the event date is less than 10).
 For instance, if the event date is 15 Nov 2010 and the cohort is 2005, the pinniped age is 2010 - 2005 - 0 = 5
 If the event date is 15 Feb 2010 and the cohort is 2005, then the pinniped age is 2010 - 2005 - 1 = 4.
 

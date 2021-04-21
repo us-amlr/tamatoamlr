@@ -3,8 +3,10 @@ Title: Analyze and visualize data from the ***REMOVED*** database
 Version: 0.1.0.9000
 Authors@R: 
         person("Sam", "Woodman", email = "sam.woodman@noaa.gov", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6071-8186"))
-Description: This package contains a Shiny app that connects to the ***REMOVED***_Test database, 
+Description: This package contains a Shiny app that connects to the ***REMOVED*** database, 
     and allows users to analyze and visualize data from said database.
+    There are some exported functions that are helpful for processing certain AMLR Pinniped data,
+    but the intent is for the Shiny app to provide the majority of the functionality for this package.
 Depends: R (>= 3.5.0)
 Imports: 
     DBI, 

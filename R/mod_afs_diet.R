@@ -1,6 +1,6 @@
-#' Shiny module for Tag Resights tab
+#' Shiny module for AFS Diet tab
 #'
-#' Shiny module for Tag Resights tab
+#' Shiny module for AFS Diet tab
 #'
 #' @name mod_afs_diet
 #'
@@ -69,8 +69,7 @@ mod_afs_diet_ui <- function(id) {
             title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
             fluidRow(
               mod_season_filter_ui(ns("season_filter"), col.width = 4)
-            ),
-            uiOutput(ns("raw_columns_uiOut_selectize"))
+            )
           )
         )
       )
@@ -100,19 +99,6 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list, plot.height
   moduleServer(
     id,
     function(input, output, session) {
-      #########################################################################
-      ### RenderUIs
-      raw_columns_uiOut_selectize <- renderUI({
-        req(input$summary_level_season == "raw")
-        cols.list <- as.list(sort(unique(names(diet_df_collect()))))
-
-        selectInput(
-          session$ns("raw_columns"), tags$h5("Columns to include in table"),
-          choices = cols.list, selected = unlist(cols.list),
-          multiple = TRUE, selectize = TRUE
-        )
-      })
-
       #########################################################################
       ### Get filter values
       diet_filter <- reactive({

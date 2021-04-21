@@ -20,7 +20,8 @@ mod_database_ui <- function(id) {
                   choices = list("***REMOVED***" = "***REMOVED***",
                                  "***REMOVED***_Test" = "***REMOVED***_Test",
                                  "Local database" = "local"),
-                  selected = "remote_prod")
+                  # TODO: change
+                  selected = "***REMOVED***_Test")
     )
   )
 }
