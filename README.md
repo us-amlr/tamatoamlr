@@ -17,7 +17,7 @@ devtools::install_github("smwoodman/amlrPinnipeds")
 
 ## Shiny app
 
-To run the amlrPinnipeds Shiny app locally, install amlrPinnipeds as described above and then run the following code in your RStudio console:
+To run the amlrPinnipeds Shiny app locally, you currently must have [RStudio](https://www.rstudio.com/products/rstudio/download/#download) installed. From within RStudio, install amlrPinnipeds as described above, and then run the following code in your RStudio console:
 
 ``` r
 amlrPinnipeds::amlr_pinnipeds_gui()
