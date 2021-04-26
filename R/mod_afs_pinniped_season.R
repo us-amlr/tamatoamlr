@@ -1,11 +1,4 @@
-#' Shiny module for AFS Natality and Pup Mortality (pinniped season) tab
-#'
-#' Shiny module for AFS Natality and Pup Mortality (pinniped season) tab
-#'
-#' @name mod_afs_pinniped_season
-#'
-#' @param id, character used to specify namespace, see \code{shiny::\link[shiny]{NS}}
-#'
+#' @name shiny_modules
 #' @export
 mod_afs_pinniped_season_ui <- function(id) {
   ns <- NS(id)
@@ -13,77 +6,64 @@ mod_afs_pinniped_season_ui <- function(id) {
   # assemble UI elements
   tagList(
     fluidRow(
-      column(6, mod_output_ui(ns("output"))),
-      column(
-        width = 6,
+      box(
+        title = "Filters", status = "warning", solidHeader = FALSE, width = 5, collapsible = TRUE,
         fluidRow(
-          box(
-            title = "User selections", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
-            fluidRow(
-              column(4, radioButtons(ns("type"), label = tags$h5("Data type"),
-                                     choices = list("Overview - raw data" = "overview_raw",
-                                                    "Return rate" = "return",
-                                                    "Natality rate" = "natality",
-                                                    # "Proportional loss type" = "prop_loss",
-                                                    "Pup mortality" = "pup_mortality"),
-                                     selected = "overview_raw")),
-              # column(4, radioButtons(ns("summ_season"), label = tags$h5("Summary level"),
-              #                        choices = list("Multiple seasons - total" = "fs_multiple_total",
-              #                                       # "Multiple seasons - weekly" = "fs_multiple_week",
-              #                                       "Single season" = "fs_single",
-              #                                       "Raw data" = "raw"),
-              #                        selected = "fs_multiple_total")),
-              column(
-                width = 4,
-                conditionalPanel(
-                  condition = "input.type == 'pup_mortality'", ns = ns,
-                  radioButtons(ns("mortality_type"), tags$h5("Plot by:"),
-                               choices = list("Mortality rate" = "rate",
-                                              "Proportional loss" = "prop_loss"),
-                               selected = "rate")
-                ),
-                conditionalPanel(
-                  condition = "input.type == 'natality'", ns = ns,
-                  radioButtons(ns("plot_x_axis"), tags$h5("Plot by:"),
-                               choices = list("Season" = "season", "Age" = "age"),
-                               selected = "season"),
-                  conditionalPanel(
-                    condition = "input.plot_x_axis == 'season'", ns = ns,
-                    checkboxInput(ns("prime"), "Plot prime age", value = TRUE)
-                  )
-                )
-              )
-            ),
-            tags$h5("'Adult female' refers to females that have pupped in at least one previous season."),
-            textOutput(ns("type_description"))
-          ),
-          box(
-            title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
-            fluidRow(
-              mod_season_filter_ui(ns("season_filter"), col.width = 4)
+          mod_season_filter_ui(ns("season_filter"), col.width = 6)
+        ),
+        conditionalPanel(
+          condition = "input.type == 'natality' && input.plot_x_axis == 'age'", ns = ns,
+          sliderInput(ns("filter_age"), tags$h5("Ages to plot"), min = 1, max = 25, value = c(4, 20))
+        )
+      ),
+      box(
+        title = "User selections", status = "warning", solidHeader = FALSE, width = 7, collapsible = TRUE,
+        fluidRow(
+          column(4, radioButtons(ns("type"), label = tags$h5("Data type"),
+                                 choices = list("Overview - raw data" = "overview_raw",
+                                                "Return rate" = "return",
+                                                "Natality rate" = "natality",
+                                                # "Proportional loss type" = "prop_loss",
+                                                "Pup mortality" = "pup_mortality"),
+                                 selected = "overview_raw")),
+          # column(4, radioButtons(ns("summ_season"), label = tags$h5("Summary level"),
+          #                        choices = list("Multiple seasons - total" = "fs_multiple_total",
+          #                                       # "Multiple seasons - weekly" = "fs_multiple_week",
+          #                                       "Single season" = "fs_single",
+          #                                       "Raw data" = "raw"),
+          #                        selected = "fs_multiple_total")),
+          column(
+            width = 4,
+            conditionalPanel(
+              condition = "input.type == 'pup_mortality'", ns = ns,
+              radioButtons(ns("mortality_type"), tags$h5("Plot by:"),
+                           choices = list("Mortality rate" = "rate",
+                                          "Proportional loss" = "prop_loss"),
+                           selected = "rate")
             ),
             conditionalPanel(
-              condition = "input.type == 'natality' && input.plot_x_axis == 'age'", ns = ns,
-              sliderInput(ns("filter_age"), tags$h5("Ages to plot"), min = 1, max = 25, value = c(4, 20))
+              condition = "input.type == 'natality'", ns = ns,
+              radioButtons(ns("plot_x_axis"), tags$h5("Plot by:"),
+                           choices = list("Season" = "season", "Age" = "age"),
+                           selected = "season"),
+              conditionalPanel(
+                condition = "input.plot_x_axis == 'season'", ns = ns,
+                checkboxInput(ns("prime"), "Plot prime age", value = TRUE)
+              )
             )
           )
-        )
+        ),
+        tags$h5("'Adult female' refers to females that have pupped in at least one previous season."),
+        textOutput(ns("type_description"))
       )
-    )
+    ),
+    mod_output_ui(ns("output"))
   )
 }
 
 
 
-#' @name mod_afs_pinniped_season
-#'
-#' @param pool reactive; a DBI database connection pool. Intended to be the output of \code{\link{mod_database_server}}
-#' @param season.df reactive; the season info data frame.
-#'   Intended to be the first element (\code{season.df}) of the (list) output of \code{\link{mod_season_filter_server}}
-#' @param season.id.list reactive; the (named)list of the season info ID values.
-#'   Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_filter_server}}
-#' @param plot.height numeric, height of plot in pixels
-#'
+#' @name shiny_modules
 #' @export
 mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list) {
   stopifnot(
@@ -183,7 +163,7 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list) 
       pinnipeds_ps_df <- reactive({
         tbl(req(pool()), "vPinnipeds_Primary_Tag") %>%
           filter(tolower(species) == "fur seal",
-                 Pinniped_ID %in% !!ps_collect()$pinniped_id) %>%
+                 Pinniped_ID %in% !!req(ps_collect()$pinniped_id)) %>%
           select(pinniped_id = Pinniped_ID, cohort, tag_primary = Tag_Display, tag_type) %>%
           collect()
       })
@@ -373,6 +353,11 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list) 
       #########################################################################
       ### Output plot
       plot_output <- reactive({
+        validate(
+          need(nrow(ps_collect()) > 0, "The database contains no pinniped_season data")
+        )
+
+
         #--------------------------------------------------
         if (input$type == "overview_raw") {
           df.toplot <- ps_collect_pinniped() %>%
@@ -487,7 +472,9 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list) 
 
 
       ### Output table
-       tbl_output <- reactive({
+      tbl_output <- reactive({
+        req(nrow(ps_collect()) > 0)
+
         if (input$type == "overview_raw") {
           ps_collect_pinniped()
         } else if (input$type == "return") {

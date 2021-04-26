@@ -4,9 +4,9 @@
 \alias{mod_database}
 \alias{mod_database_ui}
 \alias{mod_database_server}
-\title{Shiny module for database connection}
+\title{Database module for the amlrPinnipeds shiny app}
 \usage{
-mod_database_ui(id)
+mod_database_ui(id, col.width = 5)
 
 mod_database_server(
   id,
@@ -18,6 +18,8 @@ mod_database_server(
 }
 \arguments{
 \item{id}{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
+
+\item{col.width}{integer; column width of column of UI widgets}
 
 \item{pool.remote.prod}{output of a \code{\link[pool]{dbPool}} call.
 A DBI database connection pool connected to the remote PRODUCTION database, e.g. '***REMOVED***'}
@@ -33,5 +35,5 @@ A DBI database connection pool connected to the remote TEST database, e.g. '***R
 \code{mod_database_server} returns a reactive of the pool connection specified by the user
 }
 \description{
-Shiny module for database connection
+Database module for the amlrPinnipeds shiny app
 }

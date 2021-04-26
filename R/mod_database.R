@@ -1,27 +1,27 @@
-#' Shiny module for database connection
+#' Database module for the amlrPinnipeds shiny app
 #'
-#' Shiny module for database connection
+#' Database module for the amlrPinnipeds shiny app
 #'
 #' @name mod_database
 #'
 #' @param id character used to specify namespace, see \code{shiny::\link[shiny]{NS}}
+#' @param col.width integer; column width of column of UI widgets
 #'
 #' @export
-mod_database_ui <- function(id) {
+mod_database_ui <- function(id, col.width = 5) {
   ns <- NS(id)
 
   # assemble UI elements
   tagList(
     box(
-      title = "Database connection information", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
+      title = "Database connection information", status = "warning", solidHeader = FALSE, width = col.width, collapsible = TRUE,
       tableOutput(ns("pool_db_conn")),
       tags$br(),
       selectInput(ns("db_name"), tags$h5("Database..."), width = "200px",
                   choices = list("***REMOVED***" = "***REMOVED***",
                                  "***REMOVED***_Test" = "***REMOVED***_Test",
                                  "Local database" = "local"),
-                  # TODO: change
-                  selected = "***REMOVED***_Test")
+                  selected = "***REMOVED***")
     )
   )
 }
@@ -87,7 +87,6 @@ mod_database_server <- function(id, pool.remote.prod, pool.remote.test, db.drive
                      "are you connected to VPN?"))
         )
 
-        #dbGetInfo(pool) is not useful atm
         data.frame(
           Label = c("Driver", "Server", "Username", "Database name"),
           Value = unlist(c(db.driver, db.server, vals.db$system.user, vals.db$db.name))
@@ -96,6 +95,7 @@ mod_database_server <- function(id, pool.remote.prod, pool.remote.test, db.drive
 
       ### Return values
       return(reactive(vals.db$pool))
+      # return(reactive(reactiveValuesToList(vals.db)))
     }
   )
 }

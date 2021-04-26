@@ -23,8 +23,6 @@ mod_output_server(id, id.parent, tbl.reac, plot.reac, plot.res = 96)
 
 \item{plot.res}{numeric; plot resolution, passed to \code{\link[shiny]{renderPlot}} and
 used to determine output file dimensions}
-
-\item{plot.height}{reactive; numeric set by the user}
 }
 \value{
 Nothing
