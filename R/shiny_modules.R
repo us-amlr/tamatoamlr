@@ -1,0 +1,14 @@
+#' Modules for the different tabs of the amlrPinnipeds Shiny app
+#'
+#' Modules for the different tabs of the amlrPinnipeds Shiny app
+#'
+#' @name shiny_modules
+#'
+#' @param id character used to specify namespace, see \code{shiny::\link[shiny]{NS}}
+#' @param pool reactive; a DBI database connection pool. Intended to be the output of \code{\link{mod_database_server}}
+#' @param season.df reactive; the season info data frame.
+#'   Intended to be the first element (\code{season.df}) of the (list) output of \code{\link{mod_season_filter_server}}
+#' @param season.id.list reactive; the (named)list of the season info ID values.
+#'   Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_filter_server}}
+#'
+NULL

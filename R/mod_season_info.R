@@ -5,15 +5,16 @@
 #' @name mod_season_info
 #'
 #' @param id character used to specify namespace, see \code{\link[shiny]{NS}}
+#' @param col.width integer; column width of column of UI widgets
 #'
 #' @export
-mod_season_info_ui <- function(id) {
+mod_season_info_ui <- function(id, col.width = 7) {
   ns <- NS(id)
 
   # assemble UI elements
   tagList(
     box(
-      title = "Season information", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
+      title = "Season information", status = "warning", solidHeader = FALSE, width = col.width, collapsible = TRUE,
       tableOutput(ns("tbl_season")),
       downloadButton(ns("tbl_download"), "Download table as CSV")
     )

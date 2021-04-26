@@ -16,26 +16,31 @@ mod_output_ui <- function(id, ...) {
     fluidRow(
       box(
         status = "primary", width = 12,
-        plotOutput(ns("plot"), height = "auto"),
-        ...,
-        tags$br(),
         fluidRow(
-          column(8, tags$br(), tags$br(), downloadButton(ns("plot_download"), "Save plot as PNG")),
-          column(4, div(class = "pull-right", numericInput(ns("plot_height"), tags$h5("Plot height (pixels)"), value = 400, min = 0, step = 50)))
+          column(
+            width = 10,
+            plotOutput(ns("plot"), height = "auto", width = "auto"),
+            ...
+          ),
+          column(
+            width = 2,
+            numericInput(ns("plot_height"), tags$h5("Plot height (pixels)"), value = 450, min = 0, step = 50, width = "200px"),
+            numericInput(ns("plot_width"), tags$h5("Plot width (pixels)"), value = 900, min = 0, step = 50, width = "200px"),
+            tags$br(),
+            downloadButton(ns("plot_download"), "Save plot as PNG")
+          )
         )
       ),
       box(
         status = "primary", width = 12,
-        # div(class = "pull-right", downloadButton(ns("tbl_download"), "Download table as CSV")),
-        downloadButton(ns("tbl_download"), "Download table as CSV"),
-        tags$br(), tags$br(),
-        tags$h5("Note that all rows with only counts of zero for the selected columns (may) have been filtered out.",
-                "See below the table to specify the column(s) to include in the output table/CSV file."),
-        tags$br(),
+        # tags$h5("Note that all rows with only counts of zero for the selected columns (may) have been filtered out.",
+        #         "See below the table to specify the column(s) to include in the output table/CSV file."),
+        # tags$br(),
         DTOutput(ns("tbl")),
         tags$br(),
         uiOutput(ns("tbl_cols_uiOut_selectize")),
-        actionButton(ns("tbl_cols_reset"), "Re-select all columns in original order")
+        actionButton(ns("tbl_cols_reset"), "Re-select all columns in original order"),
+        downloadButton(ns("tbl_download"), "Download table as CSV")
       )
     )
   )
@@ -46,7 +51,6 @@ mod_output_ui <- function(id, ...) {
 #' @param id.parent parent module ID; used to generate default filename and get plot window dimensions
 #' @param tbl.reac reactive; data frame to be displayed in the table
 #' @param plot.reac reactive; \code{\link[ggplot2]{ggplot}} object to be plotted
-#' @param plot.height reactive; numeric set by the user
 #' @param plot.res numeric; plot resolution, passed to \code{\link[shiny]{renderPlot}} and
 #'   used to determine output file dimensions
 #'
@@ -109,8 +113,17 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.res = 96)
         input$plot_height
       })
 
+      plot_width <- reactive({
+        validate(
+          need(input$plot_width > 100, "The plot height must be at least 100")
+        )
+        input$plot_width
+      })
+
       # Output plot
-      output$plot <- renderPlot(plot.reac(), height = plot_height, units = "px", res = plot.res)
+      output$plot <- renderPlot({
+        plot.reac()
+      }, height = plot_height, width = plot_width, units = "px", res = plot.res)
 
       # Download plot
       output$plot_download <- downloadHandler(

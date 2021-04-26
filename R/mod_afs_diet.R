@@ -1,11 +1,4 @@
-#' Shiny module for AFS Diet tab
-#'
-#' Shiny module for AFS Diet tab
-#'
-#' @name mod_afs_diet
-#'
-#' @param id, character used to specify namespace, see \code{shiny::\link[shiny]{NS}}
-#'
+#' @name shiny_modules
 #' @export
 mod_afs_diet_ui <- function(id) {
   ns <- NS(id)
@@ -13,78 +6,65 @@ mod_afs_diet_ui <- function(id) {
   # assemble UI elements
   tagList(
     fluidRow(
-      column(6, mod_output_ui(ns("output"))),
-      column(
-        width = 6,
+      box(
+        title = "Filters", status = "warning", solidHeader = FALSE, width = 5, collapsible = TRUE,
         fluidRow(
-          box(
-            title = "Top level...", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
-            fluidRow(
-              column(4, radioButtons(ns("type"), label = tags$h5("Data type"),
-                                     choices = list("Scat samples" = "scat",
-                                                    "Carapaces" = "carapace",
-                                                    "Non-krill (fish and squid)" = "nonkrill"),
-                                     selected = "scat")),
-              column(4, radioButtons(ns("summary_level_season"), label = tags$h5("Summary level"),
-                                     choices = list("Multiple seasons - total" = "fs_multiple_total",
-                                                    "Multiple seasons - weekly" = "fs_multiple_week",
-                                                    "Single season" = "fs_single",
-                                                    "Raw data" = "raw"),
-                                     selected = "fs_multiple_total")),
-              column(
-                width = 4,
-                conditionalPanel(
-                  condition = "input.summary_level_season != 'raw'", ns = ns,
-                  conditionalPanel(
-                    condition = "input.type == 'carapace'", ns = ns,
-                    radioButtons(ns("carapace_toplot"), tags$h5("Krill data to plot"),
-                                 choices = list("Measurements" = "measurements",
-                                                "Sexes" = "sexes"),
-                                 selected = "measurements")
-                  ),
-                  conditionalPanel(
-                    condition = "(input.type == 'carapace' && input.carapace_toplot == 'sexes') || input.type == 'scat'", ns = ns,
-                    radioButtons(ns("plot_y_unit"), tags$h5("Y-axis unit"),
-                                 choices = list("Count" = "count", "Percentage" = "percentage"),
-                                 selected = "count")
-                  ),
-                  conditionalPanel(
-                    condition = "(input.type == 'carapace' && input.carapace_toplot == 'measurements')", ns = ns,
-                    checkboxGroupInput(ns("plot_measurements"), tags$h5("Measurements to plot"),
-                                       choices = list("Carapace length" = "carapace_length",
-                                                      "Carapace width" = "carapace_width",
-                                                      "Krill length" = "krill_length"),
-                                       selected = c("carapace_length", "carapace_width", "krill_length"))
-                  )
-                )
+          mod_season_filter_ui(ns("season_filter"), col.width = 6)
+        )
+      ),
+      box(
+        title = "Top level...", status = "warning", solidHeader = FALSE, width = 7, collapsible = TRUE,
+        fluidRow(
+          column(4, radioButtons(ns("type"), label = tags$h5("Data type"),
+                                 choices = list("Scat samples" = "scat",
+                                                "Carapaces" = "carapace",
+                                                "Non-krill (fish and squid)" = "nonkrill"),
+                                 selected = "scat")),
+          column(4, radioButtons(ns("summary_level_season"), label = tags$h5("Summary level"),
+                                 choices = list("Multiple seasons - total" = "fs_multiple_total",
+                                                "Multiple seasons - weekly" = "fs_multiple_week",
+                                                "Single season" = "fs_single",
+                                                "Raw data" = "raw"),
+                                 selected = "fs_multiple_total")),
+          column(
+            width = 4,
+            conditionalPanel(
+              condition = "input.summary_level_season != 'raw'", ns = ns,
+              conditionalPanel(
+                condition = "input.type == 'carapace'", ns = ns,
+                radioButtons(ns("carapace_toplot"), tags$h5("Krill data to plot"),
+                             choices = list("Measurements" = "measurements",
+                                            "Sexes" = "sexes"),
+                             selected = "measurements")
+              ),
+              conditionalPanel(
+                condition = "(input.type == 'carapace' && input.carapace_toplot == 'sexes') || input.type == 'scat'", ns = ns,
+                radioButtons(ns("plot_y_unit"), tags$h5("Y-axis unit"),
+                             choices = list("Count" = "count", "Percentage" = "percentage"),
+                             selected = "count")
+              ),
+              conditionalPanel(
+                condition = "(input.type == 'carapace' && input.carapace_toplot == 'measurements')", ns = ns,
+                checkboxGroupInput(ns("plot_measurements"), tags$h5("Measurements to plot"),
+                                   choices = list("Carapace length" = "carapace_length",
+                                                  "Carapace width" = "carapace_width",
+                                                  "Krill length" = "krill_length"),
+                                   selected = c("carapace_length", "carapace_width", "krill_length"))
               )
-            ),
-            tags$h5("For AFS Diet data, 'weekly' refers to the diet/scat week for that particular season.",
-                    "See the 'Database and season info' tab for the AFS Diet study start date for each season with data")
-          ),
-          box(
-            title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
-            fluidRow(
-              mod_season_filter_ui(ns("season_filter"), col.width = 4)
             )
           )
-        )
+        ),
+        tags$h5("For AFS Diet data, 'weekly' refers to the diet/scat week for that particular season.",
+                "See the 'Database and season info' tab for the AFS Diet study start date for each season with data")
       )
-    )
+    ),
+    mod_output_ui(ns("output"))
   )
 }
 
 
 
-#' @name mod_afs_diet
-#'
-#' @param pool reactive; a DBI database connection pool. Intended to be the output of \code{\link{mod_database_server}}
-#' @param season.df reactive; the season info data frame.
-#'   Intended to be the first element (\code{season.df}) of the (list) output of \code{\link{mod_season_filter_server}}
-#' @param season.id.list reactive; the (named)list of the season info ID values.
-#'   Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_filter_server}}
-#' @param plot.height numeric, height of plot in pixels
-#'
+#' @name shiny_modules
 #' @export
 mod_afs_diet_server <- function(id, pool, season.df, season.id.list) {
   stopifnot(

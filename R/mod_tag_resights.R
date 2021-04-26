@@ -1,11 +1,4 @@
-#' Shiny module for Tag Resights tab
-#'
-#' Shiny module for Tag Resights tab
-#'
-#' @name mod_tag_resights
-#'
-#' @param id, character used to specify namespace, see \code{shiny::\link[shiny]{NS}}
-#'
+#' @name shiny_modules
 #' @export
 mod_tag_resights_ui <- function(id) {
   ns <- NS(id)
@@ -17,46 +10,33 @@ mod_tag_resights_ui <- function(id) {
   # assemble UI elements
   tagList(
     fluidRow(
-      column(6, mod_output_ui(ns("tr_out"))),
-      column(
-        width = 6,
+      box(
+        title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         fluidRow(
-          box(
-            title = "Plot info", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
-            fluidRow(
-              column(4, radioButtons(ns("type"), label = tags$h5("Data to plot"),
-                                     choices = list("Individuals by year" = "ind_by_year",
-                                                    "Total resights by year" = "tot_by_year"),
-                                     selected = NULL))
-            )
-          ),
-          box(
-            title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
-            fluidRow(
-              mod_season_range_ui(ns("season_info"), 4),
-              column(4, checkboxGroupInput(ns("species"), label = tags$h5("Species"),
-                                           choices = pinniped.sp.list.tr,
-                                           selected = "fur seal")),
+          mod_season_range_ui(ns("season_info"), 4),
+          column(4, checkboxGroupInput(ns("species"), label = tags$h5("Species"),
+                                       choices = pinniped.sp.list.tr,
+                                       selected = "fur seal")),
 
-            )
-          )
+        )
+      ),
+      box(
+        title = "Plot info", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
+        fluidRow(
+          column(4, radioButtons(ns("type"), label = tags$h5("Data to plot"),
+                                 choices = list("Individuals by year" = "ind_by_year",
+                                                "Total resights by year" = "tot_by_year"),
+                                 selected = NULL))
         )
       )
-    )
+    ),
+    mod_output_ui(ns("tr_out"))
   )
 }
 
 
 
-#' @name mod_tag_resights
-#'
-#' @param pool reactive; a DBI database connection pool. Intended to be the output of \code{\link{mod_database_server}}
-#' @param season.df reactive; the season info data frame.
-#'   Intended to be the first element (\code{season.df}) of the (list) output of \code{\link{mod_season_filter_server}}
-#' @param season.id.list reactive; the (named)list of the season info ID values.
-#'   Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_filter_server}}
-#' @param plot.height numeric, height of plot in pixels
-#'
+#' @name shiny_modules
 #' @export
 mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
   stopifnot(
@@ -134,10 +114,12 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
           validate("tag resights - Sam has not made this plot yet")
         }
 
+        pd <- position_dodge2(width = 0.15)
+
         ggplot(factor_species(tr_tbl_group_df()),
                aes(x = season_name, y = !!as.name(y.val), color = species, group = species)) +
-          geom_point() +
-          geom_line() +
+          geom_point(position = pd) +
+          geom_line(position = pd) +
           scale_color_manual(values = amlrPinnipeds::pinniped.sp.colors) +
           expand_limits(y = 0) +
           xlab("Season") +

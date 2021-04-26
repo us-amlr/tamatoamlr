@@ -1,11 +1,4 @@
-#' Shiny module for the Census tab
-#'
-#' Shiny module for the Census tab
-#'
-#' @name mod_census
-#'
-#' @param id, character used to specify namespace, see \code{shiny::\link[shiny]{NS}}
-#'
+#' @name shiny_modules
 #' @export
 mod_census_ui <- function(id) {
   ns <- NS(id)
@@ -17,91 +10,76 @@ mod_census_ui <- function(id) {
   # assemble UI elements
   tagList(
     fluidRow(
-      column(6, mod_output_ui(ns("census_out"), tags$br(), uiOutput(ns("warning_na_records")))),
-      column(
-        width = 6,
+      box(
+        title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         fluidRow(
-          box(
-            title = "Summary ...", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
-            tags$h5("This tab allows you to summarize and visualize census data. Select your census type and ",
-                    "how you wish to summarize this data, and then any filters you would like to apply"),
-            fluidRow(
-              column(
-                width = 4,
-                radioButtons(ns("type"), label = NULL, #tags$h5("Census type"),
-                             choices = list("AFS pup census" = "afs_pup",
-                                            "AFS study beach census" = "afs_study_beach",
-                                            "Phocid census" = "phocid")
-                )
-              )
-            ),
-            fluidRow(
-              column(
-                width = 4,
-                radioButtons(ns("summary_level_1"), label = tags$h5("Summary level 1"),
-                             choices = list("Multiple seasons - total" = "fs_multiple_total",
-                                            "Multiple seasons - weekly" = "fs_multiple_week",
-                                            "Single season" = "fs_single"),
-                             selected = "fs_multiple_total")
-              ),
-              column(
-                width = 4,
-                radioButtons(ns("summary_level_2"), label = tags$h5("Summary level 2"),
-                             choices = list("By beach" = "by_beach",
-                                            "Cape - wide" = "by_capewide"),
-                             selected = "by_capewide")
-              ),
-              column(
-                width = 4,
-                radioButtons(ns("summary_level_3"), label = tags$h5("Summary level 3"),
-                             choices = list("By species and sex+age class" = "by_sp_age_sex",
-                                            "By species" = "by_sp"),
-                             selected = "by_sp_age_sex")
-              )
-            ),
+          mod_season_filter_ui(ns("season_filter"), col.width = 4),
+          column(
+            width = 3, offset = 1,
             conditionalPanel(
-              condition = "input.summary_level_1 == 'fs_single'", ns = ns,
-              checkboxInput(ns("plot_cumsum"), "Plot cumulative sum", value = FALSE)
-            ),
-            tags$br(), tags$br(),
-            tags$h5("Todo?: descriptive text about what the above choices 'mean' in terms of what is plotted"),
-          ),
-
-          box(
-            title = "Filters", status = "warning", solidHeader = FALSE, width = 12, collapsible = TRUE,
-            fluidRow(
-              mod_season_filter_ui(ns("season_filter"), col.width = 4),
-              column(
-                width = 3, offset = 1,
-                conditionalPanel(
-                  condition = "input.type == 'phocid'", ns = ns,
-                  checkboxGroupInput(ns("species"), label = tags$h5("Species"),
-                                     choices = pinniped.sp.list.phocid,
-                                     selected = unname(unlist(pinniped.sp.list.phocid)))
-                )
-              )
-            ),
-            uiOutput(ns("age_sex_uiOut_selectize")),
-            uiOutput(ns("beach_uiOut_selectize"))
+              condition = "input.type == 'phocid'", ns = ns,
+              checkboxGroupInput(ns("species"), label = tags$h5("Species"),
+                                 choices = pinniped.sp.list.phocid,
+                                 selected = unname(unlist(pinniped.sp.list.phocid)))
+            )
           )
+        ),
+        uiOutput(ns("age_sex_uiOut_selectize")),
+        uiOutput(ns("beach_uiOut_selectize"))
+      ),
+      box(
+        title = "Summary ...", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
+        tags$h5("This tab allows you to summarize and visualize census data. Select your census type and ",
+                "how you wish to summarize this data, and then any filters you would like to apply"),
+        fluidRow(
+          column(
+            width = 4,
+            radioButtons(ns("type"), label = NULL, #tags$h5("Census type"),
+                         choices = list("AFS pup census" = "afs_pup",
+                                        "AFS study beach census" = "afs_study_beach",
+                                        "Phocid census" = "phocid"),
+                         selected = "afs_pup")
+          )
+        ),
+        fluidRow(
+          column(
+            width = 4,
+            radioButtons(ns("summary_level_1"), label = tags$h5("Summary level 1"),
+                         choices = list("Multiple seasons - total" = "fs_multiple_total",
+                                        "Multiple seasons - weekly" = "fs_multiple_week",
+                                        "Single season" = "fs_single"),
+                         selected = "fs_multiple_total")
+          ),
+          column(
+            width = 4,
+            radioButtons(ns("summary_level_2"), label = tags$h5("Summary level 2"),
+                         choices = list("By beach" = "by_beach",
+                                        "Cape - wide" = "by_capewide"),
+                         selected = "by_capewide")
+          ),
+          column(
+            width = 4,
+            radioButtons(ns("summary_level_3"), label = tags$h5("Summary level 3"),
+                         choices = list("By species and sex+age class" = "by_sp_age_sex",
+                                        "By species" = "by_sp"),
+                         selected = "by_sp_age_sex")
+          )
+        ),
+        conditionalPanel(
+          condition = "input.summary_level_1 == 'fs_single'", ns = ns,
+          checkboxInput(ns("plot_cumsum"), "Plot cumulative sum", value = FALSE)
         )
+        # tags$br(), tags$br(),
+        # tags$h5("Todo?: descriptive text about what the above choices 'mean' in terms of what is plotted"),
       )
-    )
-
+    ),
+    mod_output_ui(ns("census_out"), tags$br(), uiOutput(ns("warning_na_records")))
   )
 }
 
 
 
-#' @name mod_census
-#'
-#' @param pool reactive; a DBI database connection pool. Intended to be the output of \code{\link{mod_database_server}}
-#' @param season.df reactive; the season info data frame.
-#'   Intended to be the first element (\code{mod_season_info_server}) of the (list) output of \code{\link{mod_season_info_server}}
-#' @param season.id.list reactive; the (named)list of the season info ID values.
-#'   Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_info_server}}
-#' @param plot.height numeric, height of plot in pixels
-#'
+#' @name shiny_modules
 #' @export
 mod_census_server <- function(id, pool, season.df, season.id.list) {
   stopifnot(

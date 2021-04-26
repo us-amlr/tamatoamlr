@@ -112,10 +112,9 @@ ui <- dashboardPage(
       menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
       menuItem("Census", tabName = "tab_census", icon = icon("th", lib = "font-awesome")),
       menuItem("Tag resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
+      menuItem("Pinnipeds + Tags", tabName = "tab_pt", icon = icon("th", lib = "font-awesome")),
       tags$br(), tags$br(),
-      # numericInput("plot_height", tags$h5("Plot height (pixels)"), value = 400, min = 0, step = 50),
-      # sliderInput("plot_width", tags$h5("Plot width"), value = 6, min = 1, max = 12),
-      # tags$br(),
+      uiOutput("tabs_warning"),
       actionButton("stop", "Close Shiny app")
     ), width = "230"
   ),
@@ -144,7 +143,8 @@ ui <- dashboardPage(
       tabItem(tabName = "tab_afs_diet", mod_afs_diet_ui("afs_diet")),
       tabItem(tabName = "tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
       tabItem(tabName = "tab_census", mod_census_ui("census")),
-      tabItem(tabName = "tab_tr", mod_tag_resights_ui("tag_resights"))
+      tabItem(tabName = "tab_tr", mod_tag_resights_ui("tag_resights")),
+      tabItem(tabName = "tab_pt", mod_pinnipeds_tags_ui("pinnipeds_tags"))
     )
   )
 )
@@ -163,12 +163,21 @@ server <- function(input, output, session) {
     js$closeWindow()
   })
 
-  # plot_height <- reactive({
-  #   validate(
-  #     need(input$plot_height > 100, "The plot height must be at least 100")
-  #   )
-  #   c(input$plot_height, input$plot_width)
-  # })
+  output$tabs_warning <- renderUI({
+    req(pool())
+    df <- dbGetQuery(pool(), "SELECT DB_NAME() AS db_name")
+    if (df$db_name == "AMLR_PINNIPEDS_Test") {
+      tags$h5(
+        tags$span(
+          "Warning: app is connected to the", tags$br(), "Test database",
+          style = "color: red;"
+        ),
+        tags$br()
+      )
+    } else {
+      NULL
+    }
+  })
 
 
   #----------------------------------------------------------------------------
@@ -180,6 +189,7 @@ server <- function(input, output, session) {
   mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
   mod_census_server("census", pool, si.list$season.df, si.list$season.id.list)
   mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
+  mod_pinnipeds_tags_server("pinnipeds_tags", pool)
 }
 
 shiny::shinyApp(ui = ui, server = server)
