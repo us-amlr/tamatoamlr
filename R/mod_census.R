@@ -13,7 +13,7 @@ mod_census_ui <- function(id) {
       box(
         title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         fluidRow(
-          mod_season_filter_ui(ns("season_filter"), col.width = 4),
+          mod_filter_season_ui(ns("filter_season"), col.width = 4),
           column(
             width = 3, offset = 1,
             conditionalPanel(
@@ -206,7 +206,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
 
       ###############################################################################
-      # Generate base sql query, passed to future reactives and season_filter module
+      # Generate base sql query, passed to future reactives and filter_season module
       census_df_collect_pre <- reactive({
         vals$warning_na_records <- NULL
 
@@ -222,7 +222,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
           phocid = "Phocid"
         )
 
-        # Generate base sql query, passed to future reactives and season_filter module
+        # Generate base sql query, passed to future reactives and filter_season module
         tbl(req(pool()), "vCensus_Season") %>%
           filter(census_type == census.type)
       })
@@ -234,8 +234,8 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
         tbl.sql <- census_df_collect_pre() %>%
           select(season_info_id, date_column = census_date)
 
-        mod_season_filter_server(
-          "season_filter",  reactive(input$summary_level_1), season.df, season.id.list,
+        mod_filter_season_server(
+          "filter_season",  reactive(input$summary_level_1), season.df, season.id.list,
           reactive(tbl.sql)
         )
       })

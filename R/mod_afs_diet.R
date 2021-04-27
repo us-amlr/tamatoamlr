@@ -9,7 +9,7 @@ mod_afs_diet_ui <- function(id) {
       box(
         title = "Filters", status = "warning", solidHeader = FALSE, width = 5, collapsible = TRUE,
         fluidRow(
-          mod_season_filter_ui(ns("season_filter"), col.width = 6)
+          mod_filter_season_ui(ns("filter_season"), col.width = 6)
         )
       ),
       box(
@@ -78,12 +78,12 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list) {
     function(input, output, session) {
       #########################################################################
       ### Get filter values
-      diet_filter <- reactive({
+      filter_season <- reactive({
         tbl.sql <- tbl(req(pool()), "vDiet_Scats_Season") %>%
           select(season_info_id, diet_scat_date, date_column = collection_date)
 
-        mod_season_filter_server(
-          "season_filter",  reactive(input$summary_level_season), season.df, season.id.list,
+        mod_filter_season_server(
+          "filter_season",  reactive(input$summary_level_season), season.df, season.id.list,
           reactive(tbl.sql), week.type = "diet"
         )
       })
@@ -98,7 +98,7 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list) {
           "nonkrill" = "vDiet_Scats_Season_NonKrills"
         )
 
-        z <- diet_filter()
+        z <- filter_season()
         validate(
           need(input$type != "nonkrill", "Not ready to process nonkrill data yet")
         )
@@ -133,7 +133,7 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list) {
       ### Filter by week number
       diet_df_collect_wk <- reactive({
         if (input$summary_level_season == "fs_multiple_week") {
-          diet_df_collect() %>% filter(week_num == !!req(diet_filter()$week_num()))
+          diet_df_collect() %>% filter(week_num == !!req(filter_season()$week_num()))
         } else {
           diet_df_collect()
         }
@@ -231,7 +231,7 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list) {
 
         # Set labels, etc, based on user inputs
         x.lab <- if (input$summary_level_season == "fs_multiple_week") {
-          paste("Season, for week number", req(diet_filter()$week_num()))
+          paste("Season, for week number", req(filter_season()$week_num()))
         } else {
           "Season"
         }
@@ -330,7 +330,7 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list) {
           }
 
           x.lab <- if (input$summary_level_season == "fs_multiple_week") {
-            paste("Season, for week number", req(diet_filter()$week_num()))
+            paste("Season, for week number", req(filter_season()$week_num()))
           } else {
             "Season"
           }

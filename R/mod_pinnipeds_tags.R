@@ -29,10 +29,10 @@ mod_pinnipeds_tags_ui <- function(id) {
       box(
         title = "User selections", status = "warning", solidHeader = FALSE, width = 7, collapsible = TRUE,
         fluidRow(
-          column(4, selectInput(ns("plot_type"), tags$h5("Plot type"),
-                                choices = list("Number of tagged pinnipeds" = "pinnipeds",
-                                               "Number of tags deployed" = "tags"),
-                                selected = "pinnipeds"))
+          column(4, radioButtons(ns("plot_type"), tags$h5("Plot type"),
+                                 choices = list("Number of tagged pinnipeds" = "pinnipeds",
+                                                "Number of tags deployed" = "tags"),
+                                 selected = "pinnipeds"))
         )
       )
     ),
@@ -56,7 +56,7 @@ mod_pinnipeds_tags_server <- function(id, pool) {
       output$cohort_vals_uiOut_selectize <- renderUI({
         cohort.list <- req(cohort_list())
 
-        selectizeInput(
+        selectInput(
           session$ns("cohort_vals"), tags$h5("Cohorts to include"),
           choices = cohort.list, selected = unlist(cohort.list),
           selectize = TRUE, multiple = TRUE
@@ -146,23 +146,20 @@ mod_pinnipeds_tags_server <- function(id, pool) {
 
         if (input$plot_type == "pinnipeds") {
           y.name <- sym("count")
+          fill.name <- sym("type")
           plot.title <- "Number of tagged pinnipeds"
-
-          ggplot.out <- ggplot(df.summ, aes(species, !!y.name, fill = type, color = species)) +
-            scale_fill_manual(values = c("orange", "dodgerblue"))
 
         } else if (input$plot_type == "tags") {
           y.name <- sym("tag_count")
+          fill.name <- sym("species")
           plot.title <- "Number of deployed tags"
-
-          ggplot.out <- ggplot(df.summ, aes(species, !!y.name, fill = species))
 
         } else {
           validate("invalid input$plot_type value")
         }
 
 
-        ggplot.out +
+        ggplot(df.summ, aes(species, !!y.name, fill = !!fill.name)) +
           geom_bar(stat = "identity", position = "stack") +
           xlab("Species") +
           ylab("Count") +
