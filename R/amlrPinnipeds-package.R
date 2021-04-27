@@ -20,7 +20,7 @@
 #' @importFrom rlang .data enquo
 #' @importFrom shinydashboard box
 #' @importFrom stringr str_to_sentence
-#' @importFrom tidyr nest pivot_longer unnest
+#' @importFrom tidyr nest pivot_longer pivot_wider unnest
 #' @importFrom utils write.csv
 #'
 #' @keywords package
