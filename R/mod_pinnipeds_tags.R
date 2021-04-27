@@ -132,7 +132,7 @@ mod_pinnipeds_tags_server <- function(id, pool) {
             summarise(total = n(),
                       anonymous = sum(!known_age),
                       known_age = sum(known_age)) %>%
-            factor_species() %>%
+            mutate_factor_species() %>%
             pivot_longer(cols = anonymous:known_age, names_to = "type", values_to = "count")
 
         } else {
@@ -141,7 +141,7 @@ mod_pinnipeds_tags_server <- function(id, pool) {
             group_by(species) %>%
             summarise(pinniped_count = n_distinct(pinniped_ID),
                       tag_count = n_distinct(tag_ID)) %>%
-            factor_species()
+            mutate_factor_species()
         }
 
         if (input$plot_type == "pinnipeds") {

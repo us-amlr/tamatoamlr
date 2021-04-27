@@ -162,7 +162,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
       ### Warning messages
       output$warning_na_records <- renderUI({
-        span(req(vals$warning_na_records), style = "color:red")
+        span(req(vals$warning_na_records), style = "color:red;")
       })
 
       ### Beaches dropdown
@@ -506,12 +506,12 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
         census.df <- if (input$summary_level_3 == "by_sp") {
           census_df() %>%
-            factor_species() %>%
+            mutate_factor_species() %>%
             arrange_season(season.df(), !!!grp.syms)
         } else {
           census_df() %>%
             pivot_longer(cols = where(is.numeric), names_to = "count_class", values_to = "count_value") %>%
-            factor_species() %>%
+            mutate_factor_species() %>%
             arrange_season(season.df(), !!!grp.syms, count_class)
         }
 
