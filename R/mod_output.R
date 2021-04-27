@@ -115,7 +115,7 @@ mod_output_server <- function(id, id.parent, tbl.reac, plot.reac, plot.res = 96)
 
       plot_width <- reactive({
         validate(
-          need(input$plot_width > 100, "The plot height must be at least 100")
+          need(input$plot_width > 100, "The plot width must be at least 100")
         )
         input$plot_width
       })
