@@ -42,10 +42,10 @@ mod_tag_resights_server(id, pool, season.df, season.id.list)
 \item{pool}{reactive; a DBI database connection pool. Intended to be the output of \code{\link{mod_database_server}}}
 
 \item{season.df}{reactive; the season info data frame.
-Intended to be the first element (\code{season.df}) of the (list) output of \code{\link{mod_season_filter_server}}}
+Intended to be the first element (\code{season.df}) of the (list) output of \code{\link{mod_filter_season_server}}}
 
 \item{season.id.list}{reactive; the (named)list of the season info ID values.
-Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_season_filter_server}}}
+Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_filter_season_server}}}
 }
 \description{
 Modules for the different tabs of the amlrPinnipeds Shiny app

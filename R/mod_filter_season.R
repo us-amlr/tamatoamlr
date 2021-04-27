@@ -2,13 +2,13 @@
 #'
 #' Module for filtering data by multiple seasons (total or by week) or a single season
 #'
-#' @name mod_season_filter
+#' @name mod_filter_season
 #'
-#' @param id, character used to specify namespace, see \code{shiny::\link[shiny]{NS}}
+#' @param id character used to specify namespace, see \code{shiny::\link[shiny]{NS}}
 #' @param col.width integer; column width of column of UI widgets
 #'
 #' @export
-mod_season_filter_ui <- function(id, col.width = 4) {
+mod_filter_season_ui <- function(id, col.width = 4) {
   ns <- NS(id)
 
   # assemble UI elements
@@ -29,7 +29,7 @@ mod_season_filter_ui <- function(id, col.width = 4) {
 }
 
 
-#' @name mod_season_filter
+#' @name mod_filter_season
 #'
 #' @param summ.level a reactive of the 'summary level one' selection. Value must
 #'   be one of: "fs_multiple_total", "fs_multiple_week", "fs_single", or "raw"
@@ -58,7 +58,7 @@ mod_season_filter_ui <- function(id, col.width = 4) {
 #' }
 #'
 #' @export
-mod_season_filter_server <- function(id, summ.level, season.df, season.id.list, tbl.df, week.type = "temporal") {
+mod_filter_season_server <- function(id, summ.level, season.df, season.id.list, tbl.df, week.type = "temporal") {
   stopifnot(
     is.reactive(summ.level),
     summ.level() %in% c("fs_multiple_total", "fs_multiple_week", "fs_single", "raw"),

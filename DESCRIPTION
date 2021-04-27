@@ -13,6 +13,7 @@ Imports:
     dbplyr,
     dplyr (>= 1.0),
     DT, 
+    glue,
     ggplot2,
     lubridate, 
     odbc,

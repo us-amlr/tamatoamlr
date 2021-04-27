@@ -13,7 +13,7 @@ mod_tag_resights_ui <- function(id) {
       box(
         title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         fluidRow(
-          mod_season_filter_ui(ns("season_filter"), col.width = 4),
+          mod_filter_season_ui(ns("filter_season"), col.width = 4),
           column(4, checkboxGroupInput(ns("species"), label = tags$h5("Species"),
                                        choices = pinniped.sp.list.tr,
                                        selected = "fur seal")),
@@ -53,12 +53,13 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
       #########################################################################
       val.warning.na.records <- reactiveVal()
 
+      ### Message about records filtered out
       output$warning_na_records <- renderUI({
         span(req(val.warning.na.records()), style = "color:red;")
       })
 
 
-      # RenderUI For plot type
+      ### Generate plot type widget
       output$type_uiOut_radio <- renderUI({
         choices.list <- if (input$summary_level_1 == "fs_multiple_total") {
           list("Total individuals by year" = "tot_ind_by_year",
@@ -79,29 +80,13 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
       })
 
       #########################################################################
-      # tbl_pinnipeds_species <- reactive({
-      #   tbl(pool(), "pinnipeds_species") %>% collect()
-      # })
-
-      # Get dates
-      tr_df_collect_pre <- reactive({
-        # Validate checks - req() here and validate() in census_df_collect() so UIs don't get validate
-        req(input$species)
-
-        # Generate base sql query, passed to future reactives and season_filter module
-        tbl(req(pool()), "vTag_Resights_Season") %>%
-          filter(species %in% input$species)
-      })
-
-      tr_filter <- reactive({
-        tbl.sql <- tr_df_collect_pre() %>%
-          select(season_info_id, date_column = resight_date)
-
-        mod_season_filter_server(
-          "season_filter",  reactive(input$summary_level_1), season.df, season.id.list,
-          reactive(tbl.sql)
+      filter_season <- reactive({
+        mod_filter_season_server(
+          "filter_season",  reactive(input$summary_level_1), season.df, season.id.list,
+          tbl.df = NULL #b/c we aren't doing any week number stuff
         )
       })
+
 
       #########################################################################
       #------------------------------------------------------------------------
@@ -113,7 +98,7 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
           need(!("leopard seal" %in% input$species), "Have not incorporated leop tag resights")
         )
 
-        z <- tr_filter()
+        z <- filter_season()
 
 
         # Start putting together tag_resights query
@@ -142,8 +127,10 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
           val.warning.na.records(NULL)
         } else {
           val.warning.na.records(
-            paste("There were", nrow(tr.na),
-                  "rows removed because of a NULL 'season_info_id' and/or 'pinniped_id' column")
+            glue::glue(
+              "There were {nrow(tr.na)} rows removed because of ",
+              "a NULL 'season_info_id' and/or 'pinniped_id' column"
+            )
           )
         }
 
@@ -164,7 +151,7 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
       #------------------------------------------------------------------------
       ### Reactive with season info to use to complete data frame
       season_info_tojoin <- reactive({
-        z <- tr_filter()
+        z <- filter_season()
 
         season.info.tojoin <- season.df() %>%
           arrange(season_open_date) %>%

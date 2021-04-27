@@ -9,7 +9,7 @@ mod_afs_pinniped_season_ui <- function(id) {
       box(
         title = "Filters", status = "warning", solidHeader = FALSE, width = 5, collapsible = TRUE,
         fluidRow(
-          mod_season_filter_ui(ns("season_filter"), col.width = 6)
+          mod_filter_season_ui(ns("filter_season"), col.width = 6)
         ),
         conditionalPanel(
           condition = "input.type == 'natality' && input.plot_x_axis == 'age'", ns = ns,
@@ -79,9 +79,9 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list) 
       x_in_y <- function(i, j) {i %in% j}
 
       #########################################################################
-      season_filter <- reactive({
-        mod_season_filter_server(
-          "season_filter",  reactive("fs_multiple_total"), season.df, season.id.list,
+      filter_season <- reactive({
+        mod_filter_season_server(
+          "filter_season",  reactive("fs_multiple_total"), season.df, season.id.list,
           NULL
         )
       })
@@ -125,7 +125,7 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list) 
       ### Get 'base' pinniped_season info
       ps_collect <- reactive({
         ps.sql.pre <- tbl(req(pool()), "pinniped_season")  #TODO: use some view
-        z <- season_filter()
+        z <- filter_season()
 
         ps.sql <- if (input$type == "overview_raw") {
           ps.sql.pre

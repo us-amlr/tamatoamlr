@@ -5,7 +5,7 @@
 list.packages <- list(
   "DBI", "odbc", "pool",
   "DT", "shiny", "shinybusy", "shinydashboard", "shinyjs",
-  "dbplyr", "dplyr", "ggplot2", "lubridate", "purrr", "stringr", "tidyr"
+  "dbplyr", "dplyr", "glue", "ggplot2", "lubridate", "purrr", "stringr", "tidyr"
 )
 
 if (!require(amlrPinnipeds))
