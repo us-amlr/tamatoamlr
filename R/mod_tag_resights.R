@@ -28,7 +28,8 @@ mod_tag_resights_ui <- function(id) {
                                                 # "Multiple seasons - weekly" = "fs_multiple_week",
                                                 "Single season" = "fs_single"),
                                  selected = "fs_multiple_total")),
-          column(4, uiOutput(ns("type_uiOut_radio")))
+          column(4, uiOutput(ns("type_uiOut_radio"))),
+          column(4, uiOutput(ns("fill_zero_uiOut_check")))
         )
       )
     ),
@@ -79,6 +80,13 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
                      choices = choices.list)
       })
 
+      ### Generate plot type widget
+      output$fill_zero_uiOut_check <- renderUI({
+        # req(input$type)
+        req(input$type == "ind_by_year")
+        checkboxInput(session$ns("fill_zero"), "Fill blanks with zeros", value = FALSE)
+      })
+
       #########################################################################
       filter_season <- reactive({
         mod_filter_season_server(
@@ -89,7 +97,6 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
 
 
       #########################################################################
-      #------------------------------------------------------------------------
       ### Generate base sql query
       tr_sql <- reactive({
         validate(
@@ -134,8 +141,7 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
           )
         }
 
-
-        # Generate queries for other tables that will be joined in
+        # Get pinniped info, to use to filter by species
         pinniped.tbl <- tbl(req(pool()), "pinnipeds") %>%
           select(pinniped_id = ID, species, cohort, pinniped_sex = sex) %>%
           mutate(species = tolower(species))
@@ -148,6 +154,7 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
       })
 
 
+      #########################################################################
       #------------------------------------------------------------------------
       ### Reactive with season info to use to complete data frame
       season_info_tojoin <- reactive({
@@ -155,17 +162,23 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
 
         season.info.tojoin <- season.df() %>%
           arrange(season_open_date) %>%
-          select(season_info_id = ID, season_name) %>%
-          filter(between(season_info_id, !!req(z$season_min()), !!req(z$season_max())))
+          select(season_info_id = ID, season_name)
+
+        if (input$summary_level_1 == "fs_multiple_total") {
+          season.info.tojoin %>%
+            filter(between(season_info_id, !!req(z$season_min()), !!req(z$season_max())))
+
+        } else if (input$summary_level_1 == "fs_single") {
+          season.info.tojoin %>%
+            filter(season_info_id == !!req(z$season_select()))
+
+        } else {
+          validate("invalid input$summary_level_1")
+        }
       })
 
-
-      ### Collect grouped data frame, depending on input type
-      tr_collect <- reactive({
-        req(input$type)
-        # season.info.tojoin <- season_info_tojoin()
-
-        # Generate queries for other tables that will be joined in
+      ### Reactive with tags info to join to tag resights output
+      tags_tojoin <- reactive({
         tags.tbl <- tbl(req(pool()), "tags") %>%
           mutate(tag_info = tag_type + ISNULL(' | ' + color_f + '/' + color_m, ''))
 
@@ -178,56 +191,90 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
           select(Tag_ID = ID, resight_tag = tag, resight_tag_info = tag_info) %>%
           collect()
 
+        list(primary_df = tags.df.primary, other_df = tags.df.other)
+      })
+
+
+      #------------------------------------------------------------------------
+      ### Collect and process 'total' summaries
+      tr_collect_tot <- reactive({
+        tr_sql() %>%
+          group_by(species, season_name) %>%
+          summarise(count = n(),
+                    count_distinct_pinnipeds = n_distinct(pinniped_id),
+                    .groups = "drop") %>%
+          collect() %>%
+          mutate(season_name = factor(season_name, levels = season_info_tojoin()$season_name),
+                 species = str_to_sentence(species)) %>%
+          mutate_factor_species(levels = str_to_sentence(input$species)) %>%
+          complete(species, season_name, fill = list(count = 0, count_distinct_pinnipeds = 0)) %>%
+          arrange(season_name)
+      })
+
+
+      ### Collect and process summary of individual resights by year
+      tr_collect_ind_by_year <- reactive({
+        # For an unclear (to Sam) reason, this code runs much faster with this collect() order
+        tr_sql() %>%
+          collect() %>%
+          left_join(tags_tojoin()$primary_df, by = "pinniped_id") %>%
+          group_by(species, pinniped_id, primary_tag, primary_tag_info, season_name) %>%
+          summarise(count = n(), .groups = "drop") %>%
+          # collect() %>%
+          mutate(season_name = factor(season_name, levels = season_info_tojoin()$season_name),
+                 species = str_to_sentence(species)) %>%
+          complete(season_name, fill = list(count = 0)) %>%
+          arrange_season(season.df(), .desc = FALSE) %>%
+          pivot_wider(id_cols = species:primary_tag_info, names_from = season_name,
+                      values_from = count) %>%
+          filter(!is.na(species)) %>%
+          #^ to get rid of NA from complete()
+          arrange(species, primary_tag)
+      })
+
+
+      ### Collect and process raw data
+      tr_collect_raw <- reactive({
+        # For an unclear (to Sam) reason, this code runs much faster with this collect() order
+        tr_sql() %>%
+          collect() %>%
+          left_join(tags_tojoin()$primary_df, by = "pinniped_id") %>%
+          left_join(tags_tojoin()$other_df, by = "Tag_ID") %>%
+          # collect() %>%
+          select(-season_open_date, season_close_date) %>%
+          select(season_name, species, pinniped_id, cohort, pinniped_sex, primary_tag, primary_tag_info,
+                 Tag_ID, resight_tag, resight_tag_info, everything())
+      })
+
+
+      #########################################################################
+      ### Collect grouped data frame, depending on input type
+      tr_df <- reactive({
+        req(input$type)
+
         # Summarize and collect, depending on user selections
-        tr.sql <- tr_sql()
-
-        # browser()
-        if (input$type %in% c("tot_ind_by_year", "tot_by_year")) {
-          # Number of resights, summarized by season
-          tr.sql %>%
-            group_by(species, season_name) %>%
-            summarise(count = n(),
-                      count_distinct_pinnipeds = n_distinct(pinniped_id),
-                      .groups = "drop") %>%
-            collect() %>%
-            mutate(season_name = factor(season_name, levels = season_info_tojoin()$season_name),
-                   species = str_to_sentence(species)) %>%
-            mutate_factor_species(levels = str_to_sentence(input$species)) %>%
-            complete(species, season_name, fill = list(count = 0, count_distinct_pinnipeds = 0)) %>%
-            arrange(season_name)
-
-
+        if (req(input$type) %in% c("tot_ind_by_year", "tot_by_year")) {
+          tr_collect_tot()
         } else if (input$type == "ind_by_year") {
-          # For an unclear (to Sam) reason, this code runs much faster with this collect() order
-          tr.sql %>%
-            collect() %>%
-            left_join(tags.df.primary, by = "pinniped_id") %>%
-            group_by(species, pinniped_id, primary_tag, primary_tag_info, season_name) %>%
-            summarise(count = n(), .groups = "drop") %>%
-            # collect() %>%
-            mutate(season_name = factor(season_name, levels = season_info_tojoin()$season_name),
-                   species = str_to_sentence(species)) %>%
-            complete(season_name, fill = list(count = 0)) %>%
-            arrange_season(season.df(), .desc = FALSE) %>%
-            pivot_wider(id_cols = species:primary_tag_info, names_from = season_name,
-                        values_from = count, values_fill = 0) %>%
-            filter(!is.na(species)) %>% #get rid of NA from complete()
-            arrange(species, primary_tag)
-
-
+          tr_collect_ind_by_year()
         } else if (input$type == "raw") {
-          # For an unclear (to Sam) reason, this code runs much faster with this collect() order
-          tr.sql %>%
-            collect() %>%
-            left_join(tags.df.primary, by = "pinniped_id") %>%
-            left_join(tags.df.other, by = "Tag_ID") %>%
-            # collect() %>%
-            select(-season_open_date, season_close_date) %>%
-            select(season_name, species, pinniped_id, cohort, pinniped_sex, primary_tag, primary_tag_info,
-                   Tag_ID, resight_tag, resight_tag_info, everything())
-
+          tr_collect_raw()
         } else {
           validate("invalid input$type")
+        }
+      })
+
+
+      ### Replace NAs with 0s, if specified by the user. Done here for efficiency
+      tr_df_fill_zero <- reactive({
+        if (!is.null(input$fill_zero)) {
+          if (input$fill_zero) {
+            tr_df() %>% mutate(across(where(is.numeric), ~replace_na(.x, 0)))
+          } else {
+            tr_df()
+          }
+        } else {
+          tr_df()
         }
       })
 
@@ -249,7 +296,7 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
 
         pd <- position_dodge2(width = 0.15)
 
-        ggplot(mutate_factor_species(tr_collect()),
+        ggplot(mutate_factor_species(tr_df()),
                aes(x = season_name, y = !!as.name(y.val), color = species, group = species)) +
           geom_point(position = pd) +
           geom_line(position = pd) +
@@ -264,13 +311,13 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
       ### Output table
       tbl_output <- reactive({
         if (req(input$type) %in% c("tot_ind_by_year", "tot_by_year")) {
-          tr_collect() %>%
+          tr_df() %>%
             select(Species = species, Season = season_name,
                    `Resight count - total` = count,
                    `Resight count - distinct pinnipeds` = count_distinct_pinnipeds)
 
         } else {
-          tr_collect()
+          tr_df_fill_zero()
         }
       })
 
