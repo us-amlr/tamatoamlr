@@ -17,7 +17,6 @@ Imports:
     glue,
     ggplot2,
     lubridate, 
-    odbc,
     pool,
     purrr,
     rlang,

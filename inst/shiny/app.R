@@ -3,7 +3,7 @@
 ###############################################################################
 # Check for and attach packages
 list.packages <- list(
-  "DBI", "odbc", "pool",
+  "amlrDatabases", "DBI", "odbc", "pool",
   "DT", "shiny", "shinybusy", "shinydashboard", "shinyjs",
   "dbplyr", "dplyr", "glue", "ggplot2", "lubridate", "purrr", "stringr", "tidyr"
 )
@@ -22,18 +22,11 @@ db.server <- "swc-estrella-s"
 db.name.prod <- "AMLR_PINNIPEDS"
 db.name.test <- "AMLR_PINNIPEDS_Test"
 
-# Based on https://github.com/rstudio/pool
-pool.remote.prod <- try(pool::dbPool(
-  drv = odbc::odbc(),
-  Driver = db.driver,
-  Server = db.server,
-  Database = db.name.prod,
-  Trusted_Connection = "True",
-  idleTimeout = 3600000  # 1 hour
-), silent = TRUE)
+pool.remote.prod <- amlr_dbPool(db.name.prod, db.driver, db.server)
 
 # TODO: make these nicer i.e. via NULLS + validates
-#   Really, this should all happen in mod_database_server, with NULLs being returned if it can't connect.
+#   Really, this should all happen in mod_database_server,
+#   with NULLs being returned if it can't connect.
 #   That way everything would be self-contained
 #   HOWEVER, this then violates the dbPool call being outside of the server function.?
 
@@ -53,15 +46,8 @@ if (!isTruthy(pool.remote.prod)) {
 
 
 } else {
-  # If there is a valid connection to the production database, connect to the test db as well.
-  pool.remote.test <- try(pool::dbPool(
-    drv = odbc::odbc(),
-    Driver = db.driver,
-    Server = db.server,
-    Database = db.name.test,
-    Trusted_Connection = "True",
-    idleTimeout = 3600000  # 1 hour
-  ), silent = TRUE)
+  # If there is a valid connection to the prod db, connect to the test db as well.
+  pool.remote.test <- amlr_dbPool(db.name.test, db.driver, db.server)
 
   # Check for connection to Test db
   if (!isTruthy(pool.remote.test)) {
