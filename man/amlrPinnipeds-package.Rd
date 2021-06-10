@@ -6,12 +6,13 @@
 \alias{amlrPinnipeds}
 \title{AMLR Pinniped Program data processing and analysis}
 \description{
-amlrPinnipeds: A to to analyze and visualize data from the ***REMOVED*** database
+amlrPinnipeds: A package and Shiny app to analyze and visualize data from the ***REMOVED*** database
 }
 \details{
 This package contains a Shiny app that connects to the ***REMOVED*** database,
 and allows users to analyze and visualize data from said database.
-This can be done manually in R, or using the built-in R Shiny app opened through \code{\link{amlr_pinnipeds_gui}}
+This can be done manually in R,
+or using the built-in R Shiny app opened through \code{\link{amlr_pinnipeds_gui}}
 }
 \author{
 Sam Woodman \email{sam.woodman@noaa.gov}

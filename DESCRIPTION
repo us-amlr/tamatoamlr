@@ -9,6 +9,7 @@ Description: This package contains a Shiny app that connects to the ***REMOVED**
     but the intent is for the Shiny app to provide the majority of the functionality for this package.
 Depends: R (>= 3.5.0)
 Imports: 
+    amlrDatabases, 
     DBI, 
     dbplyr,
     dplyr (>= 1.0),
@@ -20,12 +21,15 @@ Imports:
     pool,
     purrr,
     rlang,
+    scales, 
     shiny (>= 1.5), 
     shinybusy,
     shinydashboard, 
     shinyjs, 
     stringr, 
     tidyr
+Remotes:
+    us-amlr/amlrDatabases
 License: CC0
 Encoding: UTF-8
 LazyData: true
