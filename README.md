@@ -4,7 +4,7 @@
 
 <!-- badges: end -->
 
-amlrPinnipeds and its accompanying Shiny app are for analyzing and visualizing data collected by the AERD Pinniped Research Program.
+amlrPinnipeds and its accompanying Shiny app are for analyzing and visualizing data collected by the [AERD](https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center) [Pinniped Research Program](https://www.fisheries.noaa.gov/international/science-data/pinniped-research-antarctic).
 
 ## Installation
 
