@@ -163,8 +163,8 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list) 
       pinnipeds_ps_df <- reactive({
         tbl(req(pool()), "vPinnipeds_Primary_Tag") %>%
           filter(tolower(species) == "fur seal",
-                 Pinniped_ID %in% !!req(ps_collect()$pinniped_id)) %>%
-          select(pinniped_id = Pinniped_ID, cohort, tag_primary = Tag_Display, tag_type) %>%
+                 pinniped_id %in% !!req(ps_collect()$pinniped_id)) %>%
+          select(pinniped_id, cohort, tag_primary = tag_display, tag_type) %>%
           collect()
       })
 

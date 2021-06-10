@@ -4,12 +4,14 @@
 \alias{mod_database}
 \alias{mod_database_ui}
 \alias{mod_database_server}
-\title{Database module for the amlrPinnipeds shiny app}
+\title{Database module for AMLR shiny apps}
 \usage{
-mod_database_ui(id, col.width = 5)
+mod_database_ui(id, name.prod, name.test, col.width = 5)
 
 mod_database_server(
   id,
+  name.prod,
+  name.test,
   pool.remote.prod,
   pool.remote.test,
   db.driver,
@@ -18,6 +20,10 @@ mod_database_server(
 }
 \arguments{
 \item{id}{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
+
+\item{name.prod}{character; name of production database on SWFSC server}
+
+\item{name.test}{character; name of test database on SWFSC server}
 
 \item{col.width}{integer; column width of column of UI widgets}
 
@@ -35,5 +41,5 @@ A DBI database connection pool connected to the remote TEST database, e.g. 'AMLR
 \code{mod_database_server} returns a reactive of the pool connection specified by the user
 }
 \description{
-Database module for the amlrPinnipeds shiny app
+Database module for AMLR shiny apps
 }

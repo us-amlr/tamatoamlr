@@ -172,8 +172,8 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list) {
           carapace.df <- diet_df_collect_wk() %>%
             select(season_name, site, species, week_num, week_start_date, diet_scat_id, carapace_id,
                    collection_date, collector, process_date, processor, tag, carapace_save,
-                   diet_scat_comments, carapace_num,
-                   carapace_length = length, carapace_width = width, carapace_comments) %>%
+                   diet_scat_notes, carapace_num,
+                   carapace_length = length, carapace_width = width, carapace_notes) %>%
             krill_length_regression(carapace_length, carapace_width) %>%
             arrange(as.Date(collection_date), diet_scat_id, carapace_id)
 
