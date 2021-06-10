@@ -67,21 +67,21 @@ mod_pinnipeds_tags_server <- function(id, pool) {
       ### Generate base SQL query
       tags_pinnipeds_tbl <- reactive({
         req(pool())
-        tbl.tags <- tbl(pool(), "tags") %>%
-          select(pinniped_ID = Pinniped_ID, tag_ID = ID, tag, tag_type, tag_species, color, color_f, color_m, Primary_Tag, tag_notes = notes)
+        tbl.tags <- tbl(pool(), "vTags") %>%
+          select(pinniped_id, primary_tag, tag_id = ID,
+                 tag, tag_type, tag_species, color, tag_notes = notes, tag_sort)
 
         tbl.pinnipeds <- tbl(pool(), "pinnipeds") %>%
-          select(pinniped_ID = ID, species, sex, cohort, pinniped_notes = notes)
+          select(pinniped_id = ID, species, sex, cohort, mothers_id, pinniped_notes = notes)
 
         validate(
           need(input$species, "Please select at least one species")
         )
 
-        tbl.sql <- full_join(tbl.tags, tbl.pinnipeds, by = "pinniped_ID") %>%  #TODO: use view
+        tbl.sql <- full_join(tbl.tags, tbl.pinnipeds, by = "pinniped_id") %>%  #TODO: use view
           filter(tolower(species) %in% !!input$species) %>%
-          select(pinniped_ID, tag_ID, species, sex, cohort,
-                 tag, tag_type, color, color_f, color_m, Primary_Tag,
-                 pinniped_notes, tag_notes)
+          select(pinniped_id, tag_id, species, sex, cohort,
+                 primary_tag, tag, tag_type, color, pinniped_notes, tag_notes, tag_sort)
       })
 
 
@@ -112,9 +112,7 @@ mod_pinnipeds_tags_server <- function(id, pool) {
 
         tbl.sql %>%
           collect() %>%
-          mutate(tag_sort = case_when(is.numeric(tag) ~ str_pad(tag, width = 10, pad = "0"),
-                                      TRUE ~ tag)) %>%
-          arrange(species, pinniped_ID, Primary_Tag, tag_type, tag_sort) %>%
+          arrange(species, pinniped_id, primary_tag, tag_type, tag_sort) %>%
           select(-tag_sort)
       })
 
@@ -126,7 +124,7 @@ mod_pinnipeds_tags_server <- function(id, pool) {
 
         if (input$plot_type == "pinnipeds") {
           df.summ <- tags_pinnipeds() %>%
-            distinct(pinniped_ID, .keep_all = TRUE) %>%
+            distinct(pinniped_id, .keep_all = TRUE) %>%
             mutate(known_age = !is.na(cohort)) %>%
             group_by(species) %>%
             summarise(total = n(),
@@ -139,8 +137,8 @@ mod_pinnipeds_tags_server <- function(id, pool) {
           df.summ <- tags_pinnipeds() %>%
             # mutate(known_age = !is.na(cohort)) %>%
             group_by(species) %>%
-            summarise(pinniped_count = n_distinct(pinniped_ID),
-                      tag_count = n_distinct(tag_ID)) %>%
+            summarise(pinniped_count = n_distinct(pinniped_id),
+                      tag_count = n_distinct(tag_id)) %>%
             mutate_factor_species()
         }
 

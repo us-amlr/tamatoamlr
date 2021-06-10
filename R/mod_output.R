@@ -1,6 +1,6 @@
-#' Shiny module for output plot and table
+#' Shiny module for output plot and table for AMLR shiny apps
 #'
-#' Shiny module for output plot and table
+#' Shiny module for output plot and table for AMLR shiny apps
 #'
 #' @name mod_output
 #'
