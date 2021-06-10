@@ -3,7 +3,7 @@
 ###############################################################################
 # Check for and attach packages
 list.packages <- list(
-  "amlrDatabases", "DBI", "odbc", "pool",
+  "amlrDatabases", "DBI", "pool",
   "DT", "shiny", "shinybusy", "shinydashboard", "shinyjs",
   "dbplyr", "dplyr", "glue", "ggplot2", "lubridate", "purrr", "stringr", "tidyr"
 )
@@ -41,7 +41,7 @@ db_stop_txt <- function(x, y) {
 # Test connection to the production db
 if (!isTruthy(pool.remote.prod)) {
   stop(db_stop_txt(db.name.prod, db.server))
-} else if (!dbIsValid(pool.remote.prod)) {
+} else if (!DBI::dbIsValid(pool.remote.prod)) {
   stop(db_stop_txt(db.name.prod, db.server))
 
 
@@ -52,7 +52,7 @@ if (!isTruthy(pool.remote.prod)) {
   # Check for connection to Test db
   if (!isTruthy(pool.remote.test)) {
     stop(db_stop_txt(db.name.test, db.server))
-  } else if (!dbIsValid(pool.remote.test)) {
+  } else if (!DBI::dbIsValid(pool.remote.test)) {
     stop(db_stop_txt(db.name.test, db.server))
   }
 }
