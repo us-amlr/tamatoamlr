@@ -18,11 +18,14 @@ if (!all(sapply(list.packages, require, character.only = TRUE, warn.conflicts = 
 ###############################################################################
 ### Set up db connections, with error checking
 db.driver <- "SQL Server"
-db.server <- "swc-estrella-s"
+db.server.remote <- "swc-estrella-s"
+db.server.local <- paste0(Sys.info()[["nodename"]], "\\SQLEXPRESS")
+
 db.name.prod <- "AMLR_PINNIPEDS"
 db.name.test <- "AMLR_PINNIPEDS_Test"
 
-pool.remote.prod <- amlr_dbPool(db.name.prod, db.driver, db.server)
+pool.remote.prod <- amlr_dbPool(db.name.prod, db.driver, db.server.remote)
+pool.local.prod <- amlr_dbPool(db.name.prod, db.driver, db.server.local)
 
 # TODO: make these nicer i.e. via NULLS + validates
 #   Really, this should all happen in mod_database_server,
@@ -30,37 +33,55 @@ pool.remote.prod <- amlr_dbPool(db.name.prod, db.driver, db.server)
 #   That way everything would be self-contained
 #   HOWEVER, this then violates the dbPool call being outside of the server function.?
 
-db_stop_txt <- function(x, y) {
-  paste0(
-    "The Shiny app was unable to connect to the ", x, " database on the ",
-    y, " server via a trusted connection - are you logged in to VPN? ",
-    "Please close the app, log into VPN, and then open the app again"
-  )
-}
+remote.prod.valid <- isTruthy(pool.remote.prod)
+local.prod.valid  <- isTruthy(pool.local.prod)
 
-# Test connection to the production db
-if (!isTruthy(pool.remote.prod)) {
-  stop(db_stop_txt(db.name.prod, db.server))
-} else if (!DBI::dbIsValid(pool.remote.prod)) {
-  stop(db_stop_txt(db.name.prod, db.server))
-
-
+if (remote.prod.valid) {
+  pool.remote.test <- amlr_dbPool(db.name.test, db.driver, db.server.remote)
+  remote.prod.valid <- DBI::dbIsValid(pool.remote.prod)
 } else {
-  # If there is a valid connection to the prod db, connect to the test db as well.
-  pool.remote.test <- amlr_dbPool(db.name.test, db.driver, db.server)
-
-  # Check for connection to Test db
-  if (!isTruthy(pool.remote.test)) {
-    stop(db_stop_txt(db.name.test, db.server))
-  } else if (!DBI::dbIsValid(pool.remote.test)) {
-    stop(db_stop_txt(db.name.test, db.server))
-  }
+  pool.remote.test <- NULL
 }
+
+if (local.prod.valid) {
+  pool.local.test <- amlr_dbPool(db.name.test, db.driver, db.server.local)
+  local.prod.valid <- DBI::dbIsValid(pool.local.prod)
+} else {
+  pool.local.test <- NULL
+}
+
+# db_stop_txt <- function(x, y) {
+#   paste0(
+#     "The Shiny app was unable to connect to the ", x, " database on the ",
+#     y, " server via a trusted connection - are you logged in to VPN? ",
+#     "Please close the app, log into VPN, and then open the app again"
+#   )
+# }
+
+# # Test connection to the production db
+# if (!(isTruthy(pool.remote.prod) | isTruthy(pool.local.prod))) {
+#   stop(db_stop_txt(db.name.prod, db.server.server))
+# } else if (!(DBI::dbIsValid(pool.remote.prod) | DBI::dbIsValid(pool.local.prod))) {
+#   stop(db_stop_txt(db.name.prod, db.server.server))
+#
+#
+# } else {
+#   # If there is a valid connection to the prod db, connect to the test db as well.
+#   pool.remote.test <- amlr_dbPool(db.name.test, db.driver, db.server.server)
+#
+#   # Check for connection to Test db
+#   if (!isTruthy(pool.remote.test)) {
+#     stop(db_stop_txt(db.name.test, db.server.server))
+#   } else if (!DBI::dbIsValid(pool.remote.test)) {
+#     stop(db_stop_txt(db.name.test, db.server.server))
+#   }
+# }
 
 
 onStop(function() {
-  poolClose(pool.remote.prod)
-  poolClose(pool.remote.test)
+  if (isTruthy(pool.remote.prod)) poolClose(pool.remote.prod)
+  if (isTruthy(pool.remote.test)) poolClose(pool.remote.test)
+  if (isTruthy(pool.local.prod)) poolClose(pool.local.prod)
 })
 
 
@@ -125,7 +146,7 @@ ui <- dashboardPage(
     "))),
 
     tabItems(
-      tabItem("tab_info", fluidRow(mod_database_ui("db", db.name.prod, db.name.test),
+      tabItem("tab_info", fluidRow(mod_database_ui("db", db.name.prod, db.name.test, remote.prod.valid),
                                    mod_season_info_ui("si"))),
       tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
       tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
@@ -170,8 +191,14 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------------
   ### Modules
   pool <- mod_database_server(
-    "db", db.name.prod, db.name.test, pool.remote.prod, pool.remote.test, db.driver, db.server
+    "db", db.name.prod, db.name.test,
+    pool.remote.prod, pool.remote.test, pool.local.prod, pool.local.test,
+    db.driver, db.server.remote, db.server.local
   )
+  # pool <- mod_database_server(
+  #   "db", db.name.prod, db.name.test, pool.remote.prod, pool.remote.test, db.driver, db.server
+  # )
+
   si.list <- mod_season_info_server("si", pool)
 
   mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
