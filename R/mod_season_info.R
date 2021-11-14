@@ -31,7 +31,8 @@ mod_season_info_ui <- function(id, col.width = 7) {
 #' \code{mod_season_server} returns a list of two reactives:
 #' 1) \code{season.df}, the season information data frame and
 #' 2) \code{season.id.list}, a list of the ID values from the season information table,
-#' with the 'season_name' values as names
+#' with the 'season_name' values as names.
+#' Intended for use in season selection dropdown widgets
 #'
 #' @export
 mod_season_info_server <- function(id, pool, si.name = "season_info") {
@@ -42,13 +43,23 @@ mod_season_info_server <- function(id, pool, si.name = "season_info") {
     function(input, output, session) {
       # Get data from table
       season_info <- reactive({
-        tbl(req(pool()), si.name) %>%
-          select(-ts) %>%
-          arrange(desc(season_open_date)) %>%
-          collect() %>%
-          mutate(season_open_date = as.Date(season_open_date),
-                 season_close_date = as.Date(season_close_date),
-                 diet_scat_date = as.Date(diet_scat_date))
+        df.out <- try(
+          tbl(req(pool()), si.name) %>%
+            select(-ts) %>%
+            arrange(desc(season_open_date)) %>%
+            collect() %>%
+            mutate(season_open_date = as.Date(season_open_date),
+                   season_close_date = as.Date(season_close_date),
+                   diet_scat_date = as.Date(diet_scat_date),
+                   date_median_pupping = as.Date(date_median_pupping)),
+          silent = TRUE
+        )
+
+        validate(
+          need(df.out, "Error processing season_info table - pleae contact the database manager")
+        )
+
+        df.out
       })
 
       season_info_out <- reactive({
@@ -58,7 +69,8 @@ mod_season_info_server <- function(id, pool, si.name = "season_info") {
                  `Opening date` = season_open_date,
                  `Closing date` = season_close_date,
                  `Season days` = season_days,
-                 `Diet study start date` = diet_scat_date)
+                 `Diet study start date` = diet_scat_date,
+                 `Date of median pupping` = date_median_pupping)
       })
 
       # Season info display table

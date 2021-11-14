@@ -148,10 +148,10 @@ ui <- dashboardPage(
     tabItems(
       tabItem("tab_info", fluidRow(mod_database_ui("db", db.name.prod, db.name.test, remote.prod.valid),
                                    mod_season_info_ui("si"))),
-      tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
-      tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
-      tabItem("tab_census", mod_census_ui("census")),
-      tabItem("tab_tr", mod_tag_resights_ui("tag_resights")),
+      # tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
+      # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
+      # tabItem("tab_census", mod_census_ui("census")),
+      # tabItem("tab_tr", mod_tag_resights_ui("tag_resights")),
       tabItem("tab_pt", mod_pinnipeds_tags_ui("pinnipeds_tags"))
     )
   )
@@ -172,8 +172,12 @@ server <- function(input, output, session) {
   })
 
   output$tabs_warning <- renderUI({
-    req(pool())
-    df <- dbGetQuery(pool(), "SELECT DB_NAME() AS db_name")
+    validate(
+      need(inherits(pool(), "Pool"),
+           "The Shiny app is not connected to a database")
+    )
+
+    df <- dbGetQuery(req(pool()), "SELECT DB_NAME() AS db_name")
     if (df$db_name == "***REMOVED***_Test") {
       tags$h5(
         tags$span(
@@ -201,11 +205,11 @@ server <- function(input, output, session) {
 
   si.list <- mod_season_info_server("si", pool)
 
-  mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
-  mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
-  mod_census_server("census", pool, si.list$season.df, si.list$season.id.list)
-  mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
-  mod_pinnipeds_tags_server("pinnipeds_tags", pool)
+  #   mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
+  #   mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
+  #   mod_census_server("census", pool, si.list$season.df, si.list$season.id.list)
+  #   mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
+    mod_pinnipeds_tags_server("pinnipeds_tags", pool)
 }
 
 shiny::shinyApp(ui = ui, server = server)

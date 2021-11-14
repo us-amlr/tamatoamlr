@@ -24,7 +24,8 @@ mod_season_info_server(id, pool, si.name = "season_info")
 \enumerate{
 \item \code{season.df}, the season information data frame and
 \item \code{season.id.list}, a list of the ID values from the season information table,
-with the 'season_name' values as names
+with the 'season_name' values as names.
+Intended for use in season selection dropdown widgets
 }
 }
 \description{
