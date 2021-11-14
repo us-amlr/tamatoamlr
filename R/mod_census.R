@@ -28,7 +28,7 @@ mod_census_ui <- function(id) {
         uiOutput(ns("beach_uiOut_selectize"))
       ),
       box(
-        title = "Summary ...", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
+        title = "Summary options", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         tags$h5("This tab allows you to summarize and visualize census data. Select your census type and ",
                 "how you wish to summarize this data, and then any filters you would like to apply"),
         fluidRow(
@@ -60,7 +60,7 @@ mod_census_ui <- function(id) {
           column(
             width = 4,
             radioButtons(ns("summary_level_3"), label = tags$h5("Summary level 3"),
-                         choices = list("By species and sex+age class" = "by_sp_age_sex",
+                         choices = list("By species and sex and age class" = "by_sp_age_sex",
                                         "By species" = "by_sp"),
                          selected = "by_sp_age_sex")
           )
@@ -223,7 +223,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
         )
 
         # Generate base sql query, passed to future reactives and filter_season module
-        tbl(req(pool()), "vCensus_Season") %>%
+        tbl(req(pool()), "vCensus") %>%
           filter(census_type == census.type)
       })
 
@@ -305,10 +305,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
         #----------------------------------------------
         # Filter records, verbosely as appropriate
         vcs <- census_df_collect_wk() %>%
-          filter(!is.na(season_name),
-                 !is.na(Beach),
-                 !is.na(census_date),
-                 !is.na(species))
+          filter(!is.na(season_name), !is.na(Beach), !is.na(census_date), !is.na(species))
 
         vcs.nrow.diff <- nrow(census_df_collect_wk()) - nrow(vcs)
         vals$warning_na_records <- if (vcs.nrow.diff != 0) {
@@ -527,7 +524,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
             mutate(species_lty = as.character(unique(species))) %>%
             ggplot(aes(x = !!x.val, y = count_value, linetype = species_lty)) +
             guides(
-              size = FALSE,
+              size = "none",
               linetype = guide_legend(title = "Species", order = 1)
             )
 
@@ -549,7 +546,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
         } else {
           ### Color-code lines and points by species
           ggplot.out <- ggplot(census.df, aes(x = !!x.val, y = count_value)) +
-            guides(size = FALSE)
+            guides(size = "none")
 
           if (input$summary_level_3 == "by_sp") {
             ggplot.out <- ggplot.out +

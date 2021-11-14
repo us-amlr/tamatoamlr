@@ -41,7 +41,7 @@ mod_afs_diet_ui <- function(id) {
                 condition = "(input.type == 'carapace' && input.carapace_toplot == 'sexes') || input.type == 'scat'", ns = ns,
                 radioButtons(ns("plot_y_unit"), tags$h5("Y-axis unit"),
                              choices = list("Count" = "count", "Percentage" = "percentage"),
-                             selected = "count")
+                             selected = "percentage")
               ),
               conditionalPanel(
                 condition = "(input.type == 'carapace' && input.carapace_toplot == 'measurements')", ns = ns,
@@ -55,7 +55,7 @@ mod_afs_diet_ui <- function(id) {
           )
         ),
         tags$h5("For AFS Diet data, 'weekly' refers to the diet/scat week for that particular season.",
-                "See the 'Database and season info' tab for the AFS Diet study start date for each season with data")
+                "See the 'Database and season info' tab for the AFS Diet study start date for each season")
       )
     ),
     mod_output_ui(ns("output"))
@@ -79,7 +79,7 @@ mod_afs_diet_server <- function(id, pool, season.df, season.id.list) {
       #########################################################################
       ### Get filter values
       filter_season <- reactive({
-        tbl.sql <- tbl(req(pool()), "vDiet_Scats_Season") %>%
+          tbl.sql <- tbl(req(pool()), "vDiet_Scats_Season") %>%
           select(season_info_id, diet_scat_date, date_column = collection_date)
 
         mod_filter_season_server(

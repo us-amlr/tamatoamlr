@@ -183,7 +183,7 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list) 
       #########################################################################
       ### Get the first season in which each female pupped, to use to ID 'adult' females
       ps_adult_female_date <- reactive({
-        tbl(req(pool()), "vPinniped_Season_Season") %>%
+        tbl(req(pool()), "vPinniped_Season") %>%
           filter(parturition == 1) %>%
           group_by(pinniped_id) %>%
           summarise(season_open_date_first_pup = min(season_open_date, na.rm = TRUE)) %>%
@@ -216,7 +216,9 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list) 
         pinniped.id.ad.fem <- unique(ps.ad.fem$pinniped_id)
 
         # Get tag resights, grouped by season_name and pinniped_id
-        tr.df <- tbl(req(pool()), "vTag_Resights_Season_Summary") %>%
+        tr.df <- tbl(req(pool()), "vTag_Resights") %>%
+          group_by(season_name, pinniped_id) %>%
+          summarise(resight_count = n(), .groups = "drop") %>%
           # Initial filter, for efficiency
           filter(pinniped_id %in% !!pinniped.id.ad.fem) %>%
           collect() %>%

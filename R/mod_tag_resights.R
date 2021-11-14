@@ -109,7 +109,7 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
 
 
         # Start putting together tag_resights query
-        tr.sql.pre <- tbl(req(pool()), "vTag_Resights_Season")
+        tr.sql.pre <- tbl(req(pool()), "vTag_Resights")
 
         # Filter by season
         tr.sql <- if (input$summary_level_1 == "fs_multiple_total") {
@@ -141,14 +141,14 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
           )
         }
 
-        # Get pinniped info, to use to filter by species
-        pinniped.tbl <- tbl(req(pool()), "pinnipeds") %>%
-          select(pinniped_id = ID, species, cohort, pinniped_sex = sex) %>%
-          mutate(species = tolower(species))
+        # # Get pinniped info, to use to filter by species
+        # pinniped.tbl <- tbl(req(pool()), "pinnipeds") %>%
+        #   select(pinniped_id = ID, species, cohort, pinniped_sex = sex) %>%
+        #   mutate(species = tolower(species))
 
         # Filters, join in pinnipeds table
         tr.sql %>%
-          left_join(pinniped.tbl, by = "pinniped_id") %>%
+          # left_join(pinniped.tbl, by = "pinniped_id") %>%
           filter(!is.na(season_info_id), !is.na(pinniped_id),
                  tolower(species) %in% !!input$species)
       })
@@ -184,11 +184,11 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
 
         tags.df.primary <- tags.tbl %>%
           filter(Primary_Tag == 1) %>%
-          select(pinniped_id = Pinniped_ID, primary_tag = tag, primary_tag_info = tag_info) %>%
+          select(pinniped_id, primary_tag = tag, primary_tag_info = tag_info) %>%
           collect()
 
         tags.df.other <- tags.tbl %>%
-          select(Tag_ID = ID, resight_tag = tag, resight_tag_info = tag_info) %>%
+          select(tag_id = ID, resight_tag = tag, resight_tag_info = tag_info) %>%
           collect()
 
         list(primary_df = tags.df.primary, other_df = tags.df.other)
@@ -239,11 +239,10 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
         tr_sql() %>%
           collect() %>%
           left_join(tags_tojoin()$primary_df, by = "pinniped_id") %>%
-          left_join(tags_tojoin()$other_df, by = "Tag_ID") %>%
+          left_join(tags_tojoin()$other_df, by = "tag_id") %>%
           # collect() %>%
-          select(-season_open_date, season_close_date) %>%
           select(season_name, species, pinniped_id, cohort, pinniped_sex, primary_tag, primary_tag_info,
-                 Tag_ID, resight_tag, resight_tag_info, everything())
+                 tag_id, resight_tag, resight_tag_info, everything())
       })
 
 
