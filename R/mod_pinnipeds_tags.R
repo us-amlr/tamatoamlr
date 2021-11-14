@@ -7,32 +7,30 @@ mod_pinnipeds_tags_ui <- function(id) {
   tagList(
     fluidRow(
       box(
-        title = "Filters", status = "warning", solidHeader = FALSE, width = 5, collapsible = TRUE,
+        title = "Filters", status = "warning", solidHeader = FALSE, width = 8, collapsible = TRUE,
         fluidRow(
           column(4, checkboxGroupInput(ns("species"), label = tags$h5("Species"),
                                        choices = pinniped.sp.list,
-                                       selected = unname(unlist(pinniped.sp.list)))),
-          column(
-            width = 4,
-            radioButtons(ns("cohort"), tags$h5("Filter for:"),
-                         choices = list("All pinnipeds" = "all",
-                                        "Pinnipeds with cohorts" = "w_cohort",
-                                        "Pinnipeds without cohorts" = "wout_cohort"),
-                         selected = "all"),
-            conditionalPanel(
-              condition = "input.cohort == 'w_cohort'", ns = ns,
-              uiOutput(ns("cohort_vals_uiOut_selectize"))
-            )
-          )
+                                       selected = unname(unlist(pinniped.sp.list)),
+                                       width = "200px")),
+          column(8, radioButtons(ns("cohort"), tags$h5("Filter for:"),
+                                 choices = list("All pinnipeds" = "all",
+                                                "Pinnipeds with cohorts" = "w_cohort",
+                                                "Pinnipeds without cohorts" = "wout_cohort"),
+                                 selected = "all"))
+        ),
+        conditionalPanel(
+          condition = "input.cohort == 'w_cohort'", ns = ns,
+          uiOutput(ns("cohort_vals_uiOut_selectize"))
         )
       ),
       box(
-        title = "User selections", status = "warning", solidHeader = FALSE, width = 7, collapsible = TRUE,
+        title = "User selections", status = "warning", solidHeader = FALSE, width = 4, collapsible = TRUE,
         fluidRow(
-          column(4, radioButtons(ns("plot_type"), tags$h5("Plot type"),
-                                 choices = list("Number of tagged pinnipeds" = "pinnipeds",
-                                                "Number of tags deployed" = "tags"),
-                                 selected = "pinnipeds"))
+          column(12, radioButtons(ns("plot_type"), tags$h5("Plot type"),
+                                  choices = list("Number of tagged pinnipeds" = "pinnipeds",
+                                                 "Number of tags deployed" = "tags"),
+                                  selected = "pinnipeds"))
         )
       )
     ),
@@ -66,22 +64,12 @@ mod_pinnipeds_tags_server <- function(id, pool) {
       #########################################################################
       ### Generate base SQL query
       tags_pinnipeds_tbl <- reactive({
-        req(pool())
-        tbl.tags <- tbl(pool(), "vTags") %>%
-          select(pinniped_id, primary_tag, tag_id = ID,
-                 tag, tag_type, tag_species, color, tag_notes = notes, tag_sort)
-
-        tbl.pinnipeds <- tbl(pool(), "pinnipeds") %>%
-          select(pinniped_id = ID, species, sex, cohort, mothers_id, pinniped_notes = notes)
-
-        validate(
-          need(input$species, "Please select at least one species")
-        )
-
-        tbl.sql <- full_join(tbl.tags, tbl.pinnipeds, by = "pinniped_id") %>%  #TODO: use view
+        tbl(req(pool()), "vPinnipeds_All_Tags") %>%
           filter(tolower(species) %in% !!input$species) %>%
           select(pinniped_id, tag_id, species, sex, cohort,
-                 primary_tag, tag, tag_type, color, pinniped_notes, tag_notes, tag_sort)
+                 primary_tag, tag, tag_type, color, non_amlr_tag, tagging_date,
+                 pinniped_notes, tag_notes, tag_sort) %>%
+          arrange(species, tag_sort)
       })
 
 
@@ -120,8 +108,6 @@ mod_pinnipeds_tags_server <- function(id, pool) {
       #########################################################################
       ### Output plot
       plot_output <- reactive({
-
-
         if (input$plot_type == "pinnipeds") {
           df.summ <- tags_pinnipeds() %>%
             distinct(pinniped_id, .keep_all = TRUE) %>%
