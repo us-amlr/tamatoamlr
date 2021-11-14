@@ -24,7 +24,8 @@ db.server.local <- paste0(Sys.info()[["nodename"]], "\\SQLEXPRESS")
 db.name.prod <- "AMLR_PINNIPEDS"
 db.name.test <- "AMLR_PINNIPEDS_Test"
 
-pool.remote.prod <- amlr_dbPool(db.name.prod, db.driver, db.server.remote)
+# pool.remote.prod <- amlr_dbPool(db.name.prod, db.driver, db.server.remote)
+pool.remote.prod <- NULL
 pool.local.prod <- amlr_dbPool(db.name.prod, db.driver, db.server.local)
 
 # TODO: make these nicer i.e. via NULLS + validates
