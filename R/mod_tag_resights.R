@@ -13,7 +13,7 @@ mod_tag_resights_ui <- function(id) {
       box(
         title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         fluidRow(
-          mod_filter_season_ui(ns("filter_season"), col.width = 4),
+          column(8, mod_filter_season_ui(ns("filter_season"))),
           column(4, checkboxGroupInput(ns("species"), label = tags$h5("Species"),
                                        choices = pinniped.sp.list.tr,
                                        selected = "fur seal")),
@@ -25,7 +25,6 @@ mod_tag_resights_ui <- function(id) {
         fluidRow(
           column(4, radioButtons(ns("summary_level_1"), label = tags$h5("Summary level 1"),
                                  choices = list("Multiple seasons - total" = "fs_multiple_total",
-                                                # "Multiple seasons - weekly" = "fs_multiple_week",
                                                 "Single season" = "fs_single"),
                                  selected = "fs_multiple_total")),
           column(4, uiOutput(ns("type_uiOut_radio"))),
@@ -90,8 +89,7 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
       #########################################################################
       filter_season <- reactive({
         mod_filter_season_server(
-          "filter_season",  reactive(input$summary_level_1), season.df, season.id.list,
-          tbl.df = NULL #b/c we aren't doing any week number stuff
+          "filter_season",  reactive(input$summary_level_1), season.df, season.id.list
         )
       })
 
@@ -114,7 +112,7 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
         # Filter by season
         tr.sql <- if (input$summary_level_1 == "fs_multiple_total") {
           tr.sql.pre %>%
-            filter(between(season_info_id, !!req(z$season_min()), !!req(z$season_max())))
+            filter(season_info_id %in% !!req(z$season_select()))
 
         } else if (input$summary_level_1 == "fs_single") {
           tr.sql.pre %>%
@@ -162,19 +160,20 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
 
         season.info.tojoin <- season.df() %>%
           arrange(season_open_date) %>%
-          select(season_info_id = ID, season_name)
+          select(season_info_id = ID, season_name) %>%
+          filter(season_info_id %in% !!req(z$season_select()))
 
-        if (input$summary_level_1 == "fs_multiple_total") {
-          season.info.tojoin %>%
-            filter(between(season_info_id, !!req(z$season_min()), !!req(z$season_max())))
-
-        } else if (input$summary_level_1 == "fs_single") {
-          season.info.tojoin %>%
-            filter(season_info_id == !!req(z$season_select()))
-
-        } else {
-          validate("invalid input$summary_level_1")
-        }
+        # if (input$summary_level_1 == "fs_multiple_total") {
+        #   season.info.tojoin %>%
+        #     filter(season_info_id %in% !!req(z$season_select()))
+        #
+        # } else if (input$summary_level_1 == "fs_single") {
+        #   season.info.tojoin %>%
+        #     filter(season_info_id == !!req(z$season_select()))
+        #
+        # } else {
+        #   validate("invalid input$summary_level_1")
+        # }
       })
 
       ### Reactive with tags info to join to tag resights output
@@ -218,14 +217,14 @@ mod_tag_resights_server <- function(id, pool, season.df, season.id.list) {
         tr_sql() %>%
           collect() %>%
           left_join(tags_tojoin()$primary_df, by = "pinniped_id") %>%
-          group_by(species, pinniped_id, primary_tag, primary_tag_info, season_name) %>%
+          group_by(species, pinniped_id, primary_tag, primary_tag_info, sex, season_name) %>%
           summarise(count = n(), .groups = "drop") %>%
           # collect() %>%
           mutate(season_name = factor(season_name, levels = season_info_tojoin()$season_name),
                  species = str_to_sentence(species)) %>%
           complete(season_name, fill = list(count = 0)) %>%
           arrange_season(season.df(), .desc = FALSE) %>%
-          pivot_wider(id_cols = species:primary_tag_info, names_from = season_name,
+          pivot_wider(id_cols = species:sex, names_from = season_name,
                       values_from = count) %>%
           filter(!is.na(species)) %>%
           #^ to get rid of NA from complete()

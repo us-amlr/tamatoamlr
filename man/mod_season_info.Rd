@@ -20,13 +20,8 @@ mod_season_info_server(id, pool, si.name = "season_info")
 \item{si.name}{character; name of season information table. Default is 'season_info'}
 }
 \value{
-\code{mod_season_server} returns a list of two reactives:
-\enumerate{
-\item \code{season.df}, the season information data frame and
-\item \code{season.id.list}, a list of the ID values from the season information table,
-with the 'season_name' values as names.
-Intended for use in season selection dropdown widgets
-}
+\code{mod_season_server} returns a list with one component:
+a reactive of the season information data frame
 }
 \description{
 Shiny module for season information

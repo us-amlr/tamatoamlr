@@ -1,17 +1,17 @@
-#' Open amlrPinnipeds Shiny app
+#' Open Tamatoa, the amlrPinnipeds Shiny app
 #'
-#' Open the amlrPinnipeds R Shiny application
+#' Open Tamatoa, the amlrPinnipeds R Shiny application
 #'
 #' @param launch.browser Logical with default of \code{TRUE};
 #'   passed to \code{launch.browser} argument of \code{\link[shiny]{runApp}}
 #'
 #' @examples
-#' if (interactive()) amlr_pinnipeds_gui(launch.browser = TRUE)
+#' if (interactive()) tamatoa(launch.browser = TRUE)
 #'
 #' @seealso \url{https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center}
 #'
 #' @export
-amlr_pinnipeds_gui <- function(launch.browser = TRUE) {
+tamatoa <- function(launch.browser = TRUE) {
   appDir <- system.file("shiny", package = "amlrPinnipeds")
   if (appDir == "") {
     stop("There was an error opening the amlrPinnipeds Shiny app; try re-installing 'amlrPinnipeds'",

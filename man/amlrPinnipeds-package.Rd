@@ -9,10 +9,11 @@
 amlrPinnipeds: A package and Shiny app to analyze and visualize data from the AMLR_PINNIPEDS database
 }
 \details{
-This package contains a Shiny app that connects to the AMLR_PINNIPEDS database,
+This package contains \code{\link{tamatoa}},
+a Shiny app that connects to the AMLR_PINNIPEDS database,
 and allows users to analyze and visualize data from said database.
-This can be done manually in R,
-or using the built-in R Shiny app opened through \code{\link{amlr_pinnipeds_gui}}
+There are also several stand-alone functions,
+such as for calculating krill lengths from carapace measurements.
 }
 \author{
 Sam Woodman \email{sam.woodman@noaa.gov}

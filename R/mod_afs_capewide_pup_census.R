@@ -1,6 +1,6 @@
 #' @name shiny_modules
 #' @export
-mod_census_ui <- function(id) {
+mod_afs_census_ui <- function(id) {
   ns <- NS(id)
 
   pinniped.sp.list.phocid <- amlrPinnipeds::pinniped.sp.list[
@@ -13,16 +13,16 @@ mod_census_ui <- function(id) {
       box(
         title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         fluidRow(
-          mod_filter_season_ui(ns("filter_season"), col.width = 4),
-          column(
-            width = 3, offset = 1,
-            conditionalPanel(
-              condition = "input.type == 'phocid'", ns = ns,
-              checkboxGroupInput(ns("species"), label = tags$h5("Species"),
-                                 choices = pinniped.sp.list.phocid,
-                                 selected = unname(unlist(pinniped.sp.list.phocid)))
-            )
-          )
+          column(12, mod_filter_season_ui(ns("filter_season"))),
+          # column(
+          #   width = 3, offset = 1,
+          #   conditionalPanel(
+          #     condition = "input.type == 'phocid'", ns = ns,
+          #     checkboxGroupInput(ns("species"), label = tags$h5("Species"),
+          #                        choices = pinniped.sp.list.phocid,
+          #                        selected = unname(unlist(pinniped.sp.list.phocid)))
+          #   )
+          # )
         ),
         uiOutput(ns("age_sex_uiOut_selectize")),
         uiOutput(ns("beach_uiOut_selectize"))
@@ -36,8 +36,7 @@ mod_census_ui <- function(id) {
             width = 4,
             radioButtons(ns("type"), label = NULL, #tags$h5("Census type"),
                          choices = list("AFS pup census" = "afs_pup",
-                                        "AFS study beach census" = "afs_study_beach",
-                                        "Phocid census" = "phocid"),
+                                        "AFS study beach census" = "afs_study_beach"),
                          selected = "afs_pup")
           )
         ),
@@ -73,7 +72,7 @@ mod_census_ui <- function(id) {
         # tags$h5("Todo?: descriptive text about what the above choices 'mean' in terms of what is plotted"),
       )
     ),
-    mod_output_ui(ns("census_out"), tags$br(), uiOutput(ns("warning_na_records")))
+    mod_output_ui(ns("afs_census_out"), tags$br(), uiOutput(ns("warning_na_records")))
   )
 }
 
@@ -81,7 +80,7 @@ mod_census_ui <- function(id) {
 
 #' @name shiny_modules
 #' @export
-mod_census_server <- function(id, pool, season.df, season.id.list) {
+mod_afs_census_server <- function(id, pool, season.df, season.id.list) {
   stopifnot(
     is.reactive(pool),
     is.reactive(season.df),
@@ -106,27 +105,12 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
 
       ### Column names specific to each census type
-      census.cols.all <- list(
-        "ad_female_count", "ad_male_count", "ad_unk_count",
-        "adult_male_non_terr", "adult_male_terr", "adult_male_terr_noFem", "adult_male_terr_wFem", "adult_male_unk",
-        "juv_female_count", "juv_male_count", "juv_unk_count",
-        "pup_dead_count", "pup_live_count",
-        "unk_female_count", "unk_male_count", "unk_unk_count", "unknownMF_count"
-      )
-
-
       census.cols.afs.pup <- list("pup_live_count", "pup_dead_count")
       census.cols.afs.study.beach <- list(
         "ad_female_count", "ad_male_count", "ad_unk_count",
         "adult_male_non_terr", "adult_male_terr", "adult_male_terr_noFem", "adult_male_terr_wFem", "adult_male_unk",
         "juv_female_count", "juv_male_count", "juv_unk_count",
         "pup_dead_count", "pup_live_count"
-      )
-      census.cols.phocid <- list(
-        "ad_female_count", "ad_male_count", "ad_unk_count",
-        "juv_female_count", "juv_male_count", "juv_unk_count",
-        "pup_dead_count", "pup_live_count",
-        "unk_female_count", "unk_male_count", "unk_unk_count", "unknownMF_count"
       )
 
 
@@ -152,7 +136,6 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
           input$type,
           afs_pup = census.cols.afs.pup,
           afs_study_beach = census.cols.afs.study.beach,
-          phocid = census.cols.phocid
         )
       })
 
@@ -576,7 +559,7 @@ mod_census_server <- function(id, pool, season.df, season.id.list) {
 
 
       ### Send off
-      observe(mod_output_server("census_out", id, tbl_output, plot_output))
+      observe(mod_output_server("afs_census_out", id, tbl_output, plot_output))
     }
   )
 }
