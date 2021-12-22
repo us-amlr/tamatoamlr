@@ -1,6 +1,6 @@
-#' Modules for the different tabs of the amlrPinnipeds Shiny app
+#' Modules for the different tabs of Tamatoa, the amlrPinnipeds Shiny app
 #'
-#' Modules for the different tabs of the amlrPinnipeds Shiny app
+#' Modules for the different tabs of Tamatoa, the amlrPinnipeds Shiny app
 #'
 #' @name shiny_modules
 #'

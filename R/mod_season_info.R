@@ -28,11 +28,8 @@ mod_season_info_ui <- function(id, col.width = 7) {
 #' @param si.name character; name of season information table. Default is 'season_info'
 #'
 #' @returns
-#' \code{mod_season_server} returns a list of two reactives:
-#' 1) \code{season.df}, the season information data frame and
-#' 2) \code{season.id.list}, a list of the ID values from the season information table,
-#' with the 'season_name' values as names.
-#' Intended for use in season selection dropdown widgets
+#' \code{mod_season_server} returns a list with one component:
+#' a reactive of the season information data frame
 #'
 #' @export
 mod_season_info_server <- function(id, pool, si.name = "season_info") {
@@ -88,8 +85,8 @@ mod_season_info_server <- function(id, pool, si.name = "season_info") {
 
       ### Return values
       list(
-        season.df = season_info,
-        season.id.list = reactive(set_names(as.list(season_info()$ID), season_info()$season_name))
+        season.df = season_info
+        # season.list = reactive(as.list(season_info()$season_name))
       )
     }
   )

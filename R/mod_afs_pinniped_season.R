@@ -9,7 +9,7 @@ mod_afs_pinniped_season_ui <- function(id) {
       box(
         title = "Filters", status = "warning", solidHeader = FALSE, width = 5, collapsible = TRUE,
         fluidRow(
-          mod_filter_season_ui(ns("filter_season"), col.width = 6)
+          column(12, mod_filter_season_ui(ns("filter_season")))
         ),
         conditionalPanel(
           condition = "input.type == 'natality' && input.plot_x_axis == 'age'", ns = ns,
@@ -81,8 +81,7 @@ mod_afs_pinniped_season_server <- function(id, pool, season.df, season.id.list) 
       #########################################################################
       filter_season <- reactive({
         mod_filter_season_server(
-          "filter_season",  reactive("fs_multiple_total"), season.df, season.id.list,
-          NULL
+          "filter_season",  reactive("fs_multiple_total"), season.df, season.id.list
         )
       })
 

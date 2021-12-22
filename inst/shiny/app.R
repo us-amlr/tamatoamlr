@@ -110,20 +110,23 @@ jscode <- "shinyjs.closeWindow = function() { window.close(); }"
 
 # UI function
 ui <- dashboardPage(
-  dashboardHeader(title = "AMLR Pinnipeds Database Summaries", titleWidth = "400"),
+  title = "Tamatoa",
+  dashboardHeader(title = "Tamatoa: Summaries for the AMLR Pinniped Database", titleWidth = "520"),
 
   dashboardSidebar(
     sidebarMenu(
       id = "tabs",
-      menuItem("Database and season info", tabName = "tab_info", icon = icon("th", lib = "font-awesome")),
+      menuItem("Database and Season Info", tabName = "tab_info", icon = icon("th", lib = "font-awesome")),
       menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
-      menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
-      menuItem("Census", tabName = "tab_census", icon = icon("th", lib = "font-awesome")),
-      menuItem("Tag resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
+      # menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
+      # menuItem("AFS Capewide Pup Census", tabName = "tab_afs_capewide_pup_census", icon = icon("th", lib = "font-awesome")),
+      menuItem("AFS Study Beach Census", tabName = "tab_afs_study_beach_census", icon = icon("th", lib = "font-awesome")),
+      menuItem("Phocid Census", tabName = "tab_phocid_census", icon = icon("th", lib = "font-awesome")),
+      menuItem("Tag Resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
       menuItem("Pinnipeds + Tags", tabName = "tab_pt", icon = icon("th", lib = "font-awesome")),
       tags$br(), tags$br(),
       uiOutput("tabs_warning"),
-      actionButton("stop", "Close Shiny app")
+      actionButton("stop", "Close Tamatoa")
     ), width = "230"
   ),
 
@@ -150,8 +153,10 @@ ui <- dashboardPage(
       tabItem("tab_info", fluidRow(mod_database_ui("db", db.name.prod, db.name.test, remote.prod.valid),
                                    mod_season_info_ui("si"))),
       tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
-      tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
-      tabItem("tab_census", mod_census_ui("census")),
+      # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
+      # tabItem("tab_afs_capewide_pup_census", mod_afs_capewide_census_ui("afs_capewide_pup_census")),
+      tabItem("tab_afs_study_beach_census", mod_afs_study_beach_census_ui("afs_study_beach_census")),
+      tabItem("tab_phocid_census", mod_phocid_census_ui("phocid_census")),
       tabItem("tab_tr", mod_tag_resights_ui("tag_resights")),
       tabItem("tab_pt", mod_pinnipeds_tags_ui("pinnipeds_tags"))
     )
@@ -164,11 +169,11 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------------
   ### Quit GUI
   session$onSessionEnded(function() {
-    stopApp(returnValue = "amlrPinnipeds Shiny app was closed")
+    stopApp(returnValue = "Tamatoa was closed")
   })
 
   observeEvent(input$stop, {
-    stopApp(returnValue = "amlrPinnipeds Shiny app was closed")
+    stopApp(returnValue = "Tamatoa was closed")
     js$closeWindow()
   })
 
@@ -193,6 +198,22 @@ server <- function(input, output, session) {
   })
 
 
+
+  #------------------------------------------------------------------------------
+  ### Function to summarize census data- move to separate file if necess
+  # TODO: move to R/
+  # vcs_summ_func <- function(y, ..., beach.chr = FALSE) {
+  #   df.out <-  y %>%
+  #     group_by(...) %>%
+  #     summarise(across(where(is.numeric), ~if_else(all(is.na(.x)), NA_integer_, sum(.x, na.rm = TRUE))),
+  #               Beaches = paste(sort(unique(Beach)), collapse = ", "),
+  #               .groups = "drop") %>%
+  #     arrange_season(season.df(), species)
+  #
+  #   if (!beach.chr) select(df.out, -Beaches) else df.out
+  # }
+
+
   #----------------------------------------------------------------------------
   ### Modules
   pool <- mod_database_server(
@@ -206,11 +227,13 @@ server <- function(input, output, session) {
 
   si.list <- mod_season_info_server("si", pool)
 
-    mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
-    mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
-    mod_census_server("census", pool, si.list$season.df, si.list$season.id.list)
-    mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
-    mod_pinnipeds_tags_server("pinnipeds_tags", pool)
+  # mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
+  # mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
+  # mod_afs_capewide_pup_census_server("afs_capewide_pup_census", pool, si.list$season.df, si.list$season.id.list)
+  mod_afs_study_beach_census_server("afs_study_beach_census", pool, si.list$season.df)
+  mod_phocid_census_server("phocid_census", pool, si.list$season.df)
+  # mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
+  mod_pinnipeds_tags_server("pinnipeds_tags", pool)
 }
 
 shiny::shinyApp(ui = ui, server = server)
