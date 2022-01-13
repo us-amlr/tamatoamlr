@@ -4,7 +4,7 @@
 
 <!-- badges: end -->
 
-amlrPinnipeds and its accompanying Shiny app are for analyzing and visualizing data collected by the [AERD](https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center) [Pinniped Research Program](https://www.fisheries.noaa.gov/international/science-data/pinniped-research-antarctic).
+amlrPinnipeds and Tamatoa, its accompanying Shiny app, are for analyzing and visualizing data collected by the [AERD](https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center) [Pinniped Research Program](https://www.fisheries.noaa.gov/international/science-data/pinniped-research-antarctic).
 
 ## Installation
 
@@ -15,15 +15,17 @@ You can install the development version of amlrPinnipeds from [GitHub](https://g
 devtools::install_github("smwoodman/amlrPinnipeds")
 ```
 
-## Shiny app
+## Tamatoa: Shiny app
 
-To run the amlrPinnipeds Shiny app locally, you currently must have [RStudio](https://www.rstudio.com/products/rstudio/download/#download) installed. From within RStudio, install amlrPinnipeds as described above, and then run the following code in your RStudio console:
+To run Tamatoa, the amlrPinnipeds Shiny app, locally, you currently must have [RStudio](https://www.rstudio.com/products/rstudio/download/#download) installed. From within RStudio, install amlrPinnipeds as described above, and then run the following code in your RStudio console:
 
 ``` r
 amlrPinnipeds::amlr_pinnipeds_gui()
 ```
 
-Shiny app overview and guiding principles, for developers:
+By default, Tamatoa attempts to connect to the database on the SWFSC server. For it to connect, you must be logged into VPN on whatever computer you are using to run the app. You can also choose to connect to a local copy of the database, if appropriate.
+
+### Shiny app overview and guiding principles, for developers:
 
 * mod_database_server(), from [amlrDatabases](https://github.com/us-amlr/amlrDatabases), returns the connection to the user-specified database via a [pool](https://github.com/rstudio/pool) object that is used by the rest of the amlrPinnipeds Shiny App modules. Pool connections to the four possible databases (remote/local and AMLR_PINNIPEDS/AMLR_PINNIPEDS_Test) are generated at the top of the amlrPinnipeds app.R code, and then passed to mod_database_server. 
 
