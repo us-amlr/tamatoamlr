@@ -9,7 +9,7 @@ list.packages <- list(
 )
 
 if (!require(amlrPinnipeds))
-  stop("Error attaching amlrPinnipeds package - please reinstall amlrPinnipeds package")
+  stop("Error attaching amlrPinnipeds - please reinstall the amlrPinnipeds package")
 if (!all(sapply(list.packages, require, character.only = TRUE, warn.conflicts = FALSE)))
   stop("Error attaching packages - please reinstall amlrPinnipeds package")
 
@@ -24,8 +24,8 @@ db.server.local <- paste0(Sys.info()[["nodename"]], "\\SQLEXPRESS")
 db.name.prod <- "AMLR_PINNIPEDS"
 db.name.test <- "AMLR_PINNIPEDS_Test"
 
-# pool.remote.prod <- amlr_dbPool(db.name.prod, db.driver, db.server.remote)
-pool.remote.prod <- NULL
+pool.remote.prod <- amlr_dbPool(db.name.prod, db.driver, db.server.remote)
+# pool.remote.prod <- NULL
 pool.local.prod <- amlr_dbPool(db.name.prod, db.driver, db.server.local)
 
 # TODO: make these nicer i.e. via NULLS + validates
@@ -151,17 +151,18 @@ ui <- dashboardPage(
 
     tabItems(
       tabItem("tab_info", fluidRow(mod_database_ui("db", db.name.prod, db.name.test, remote.prod.valid),
-                                   mod_season_info_ui("si"))),
-      tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
-      # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
-      # tabItem("tab_afs_capewide_pup_census", mod_afs_capewide_census_ui("afs_capewide_pup_census")),
-      tabItem("tab_afs_study_beach_census", mod_afs_study_beach_census_ui("afs_study_beach_census")),
-      tabItem("tab_phocid_census", mod_phocid_census_ui("phocid_census")),
-      tabItem("tab_tr", mod_tag_resights_ui("tag_resights")),
-      tabItem("tab_pt", mod_pinnipeds_tags_ui("pinnipeds_tags"))
+                                   mod_season_info_ui("si")))
+      # tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
+      # # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
+      # # tabItem("tab_afs_capewide_pup_census", mod_afs_capewide_census_ui("afs_capewide_pup_census")),
+      # tabItem("tab_afs_study_beach_census", mod_afs_study_beach_census_ui("afs_study_beach_census")),
+      # tabItem("tab_phocid_census", mod_phocid_census_ui("phocid_census")),
+      # tabItem("tab_tr", mod_tag_resights_ui("tag_resights")),
+      # tabItem("tab_pt", mod_pinnipeds_tags_ui("pinnipeds_tags"))
     )
   )
 )
+
 
 ###############################################################################
 ##### server
@@ -177,13 +178,32 @@ server <- function(input, output, session) {
     js$closeWindow()
   })
 
+  #----------------------------------------------------------------------------
+  ### Modules
+  db_pool <- mod_database_server(
+    "db", db.name.prod, db.name.test,
+    pool.remote.prod, pool.remote.test, pool.local.prod, pool.local.test,
+    db.driver, db.server.remote, db.server.local
+  )
+
+  si.list <- mod_season_info_server("si", db_pool)
+
+  # mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
+  # mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
+  # mod_afs_capewide_pup_census_server("afs_capewide_pup_census", pool, si.list$season.df, si.list$season.id.list)
+  # mod_afs_study_beach_census_server("afs_study_beach_census", db_pool, si.list$season.df)
+  # mod_phocid_census_server("phocid_census", db_pool, si.list$season.df)
+  # # mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
+  # mod_pinnipeds_tags_server("pinnipeds_tags", db_pool)
+
+  #-----------------------------------------------------------------------------
   output$tabs_warning <- renderUI({
     validate(
-      need(inherits(pool(), "Pool"),
+      need(inherits(db_pool(), "Pool"),
            "The Shiny app is not connected to a database")
     )
 
-    df <- dbGetQuery(req(pool()), "SELECT DB_NAME() AS db_name")
+    df <- dbGetQuery(req(db_pool()), "SELECT DB_NAME() AS db_name")
     if (df$db_name == "AMLR_PINNIPEDS_Test") {
       tags$h5(
         tags$span(
@@ -196,44 +216,9 @@ server <- function(input, output, session) {
       NULL
     }
   })
-
-
-
-  #------------------------------------------------------------------------------
-  ### Function to summarize census data- move to separate file if necess
-  # TODO: move to R/
-  # vcs_summ_func <- function(y, ..., beach.chr = FALSE) {
-  #   df.out <-  y %>%
-  #     group_by(...) %>%
-  #     summarise(across(where(is.numeric), ~if_else(all(is.na(.x)), NA_integer_, sum(.x, na.rm = TRUE))),
-  #               Beaches = paste(sort(unique(Beach)), collapse = ", "),
-  #               .groups = "drop") %>%
-  #     arrange_season(season.df(), species)
-  #
-  #   if (!beach.chr) select(df.out, -Beaches) else df.out
-  # }
-
-
-  #----------------------------------------------------------------------------
-  ### Modules
-  pool <- mod_database_server(
-    "db", db.name.prod, db.name.test,
-    pool.remote.prod, pool.remote.test, pool.local.prod, pool.local.test,
-    db.driver, db.server.remote, db.server.local
-  )
-  # pool <- mod_database_server(
-  #   "db", db.name.prod, db.name.test, pool.remote.prod, pool.remote.test, db.driver, db.server
-  # )
-
-  si.list <- mod_season_info_server("si", pool)
-
-  # mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
-  # mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
-  # mod_afs_capewide_pup_census_server("afs_capewide_pup_census", pool, si.list$season.df, si.list$season.id.list)
-  mod_afs_study_beach_census_server("afs_study_beach_census", pool, si.list$season.df)
-  mod_phocid_census_server("phocid_census", pool, si.list$season.df)
-  # mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
-  mod_pinnipeds_tags_server("pinnipeds_tags", pool)
 }
 
+
+###############################################################################
+##### Start it up
 shiny::shinyApp(ui = ui, server = server)
