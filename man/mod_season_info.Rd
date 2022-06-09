@@ -15,9 +15,11 @@ mod_season_info_server(id, pool, si.name = "season_info")
 
 \item{col.width}{integer; column width of column of UI widgets}
 
-\item{pool}{reactive; a DBI database connection pool, intended to be the output of \code{\link{mod_database_server}}}
+\item{pool}{reactive; a DBI database connection pool,
+intended to be the output of \code{\link{mod_database_server}}}
 
-\item{si.name}{character; name of season information table. Default is 'season_info'}
+\item{si.name}{character; name of season information table.
+Default is 'season_info'}
 }
 \value{
 \code{mod_season_server} returns a list with one component:

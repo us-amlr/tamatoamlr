@@ -1,7 +1,7 @@
 # app.R for amlrPinnipeds
 
 ###############################################################################
-# Check for and attach packages
+##### Check for and attach packages
 list.packages <- list(
   "amlrDatabases", "DBI", "pool",
   "DT", "shiny", "shinybusy", "shinydashboard", "shinyjs",
@@ -16,86 +16,41 @@ if (!all(sapply(list.packages, require, character.only = TRUE, warn.conflicts = 
 
 
 ###############################################################################
-### Set up db connections, with error checking
-db.driver <- "SQL Server"
+##### Set connections to remote dbs
+db.driver <- "ODBC Driver 18 for SQL Server"
 db.server.remote <- "swc-estrella-s"
-db.server.local <- paste0(Sys.info()[["nodename"]], "\\SQLEXPRESS")
 
 db.name.prod <- "AMLR_PINNIPEDS"
 db.name.test <- "AMLR_PINNIPEDS_Test"
 
-pool.remote.prod <- amlr_dbPool(db.name.prod, db.driver, db.server.remote)
-# pool.remote.prod <- NULL
-pool.local.prod <- amlr_dbPool(db.name.prod, db.driver, db.server.local)
-
-# TODO: make these nicer i.e. via NULLS + validates
-#   Really, this should all happen in mod_database_server,
-#   with NULLs being returned if it can't connect.
-#   That way everything would be self-contained
-#   HOWEVER, this then violates the dbPool call being outside of the server function.?
-
+pool.remote.prod <- amlrDatabases::amlr_dbPool(db.name.prod, db.driver, db.server.remote)
 remote.prod.valid <- isTruthy(pool.remote.prod)
-local.prod.valid  <- isTruthy(pool.local.prod)
 
 if (remote.prod.valid) {
-  pool.remote.test <- amlr_dbPool(db.name.test, db.driver, db.server.remote)
+  pool.remote.test <- amlrDatabases::amlr_dbPool(db.name.test, db.driver, db.server.remote)
   remote.prod.valid <- DBI::dbIsValid(pool.remote.prod)
 } else {
   pool.remote.test <- NULL
 }
 
-if (local.prod.valid) {
-  pool.local.test <- amlr_dbPool(db.name.test, db.driver, db.server.local)
-  local.prod.valid <- DBI::dbIsValid(pool.local.prod)
-} else {
-  pool.local.test <- NULL
-}
-
-# db_stop_txt <- function(x, y) {
-#   paste0(
-#     "The Shiny app was unable to connect to the ", x, " database on the ",
-#     y, " server via a trusted connection - are you logged in to VPN? ",
-#     "Please close the app, log into VPN, and then open the app again"
-#   )
-# }
-
-# # Test connection to the production db
-# if (!(isTruthy(pool.remote.prod) | isTruthy(pool.local.prod))) {
-#   stop(db_stop_txt(db.name.prod, db.server.server))
-# } else if (!(DBI::dbIsValid(pool.remote.prod) | DBI::dbIsValid(pool.local.prod))) {
-#   stop(db_stop_txt(db.name.prod, db.server.server))
-#
-#
-# } else {
-#   # If there is a valid connection to the prod db, connect to the test db as well.
-#   pool.remote.test <- amlr_dbPool(db.name.test, db.driver, db.server.server)
-#
-#   # Check for connection to Test db
-#   if (!isTruthy(pool.remote.test)) {
-#     stop(db_stop_txt(db.name.test, db.server.server))
-#   } else if (!DBI::dbIsValid(pool.remote.test)) {
-#     stop(db_stop_txt(db.name.test, db.server.server))
-#   }
-# }
-
 
 onStop(function() {
-  if (isTruthy(pool.remote.prod)) poolClose(pool.remote.prod)
-  if (isTruthy(pool.remote.test)) poolClose(pool.remote.test)
-  if (isTruthy(pool.local.prod)) poolClose(pool.local.prod)
+  if (isTruthy(pool.remote.prod))
+    if (pool::dbIsValid(pool.remote.prod)) poolClose(pool.remote.prod)
+  if (isTruthy(pool.remote.test))
+    if (pool::dbIsValid(pool.remote.test)) poolClose(pool.remote.test)
 })
 
 
 
-
-# ###############################################################################
-# ##### Assorted other stuff...
+###############################################################################
+##### Assorted other stuff...
 
 # old <- options()
 # on.exit(options(old))
 #
 # options(shiny.maxRequestSize = 50 * 1024^2) # Max file size is 50MB
-# options("digits" = 5)   # for proper display of sighting and effort coordinates
+# options("digits" = 5)   # for proper display of decimals
 
 jscode <- "shinyjs.closeWindow = function() { window.close(); }"
 
@@ -111,7 +66,8 @@ jscode <- "shinyjs.closeWindow = function() { window.close(); }"
 # UI function
 ui <- dashboardPage(
   title = "Tamatoa",
-  dashboardHeader(title = "Tamatoa: Summaries for the AMLR Pinniped Database", titleWidth = "520"),
+  dashboardHeader(title = "Tamatoa: Summaries for the AMLR Pinniped Database",
+                  titleWidth = "520"),
 
   dashboardSidebar(
     sidebarMenu(
@@ -119,13 +75,13 @@ ui <- dashboardPage(
       menuItem("Database and Season Info", tabName = "tab_info", icon = icon("th", lib = "font-awesome")),
       menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
       # menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
-      # menuItem("AFS Capewide Pup Census", tabName = "tab_afs_capewide_pup_census", icon = icon("th", lib = "font-awesome")),
+      menuItem("AFS Capewide Pup Census", tabName = "tab_afs_capewide_pup_census", icon = icon("th", lib = "font-awesome")),
       menuItem("AFS Study Beach Census", tabName = "tab_afs_study_beach_census", icon = icon("th", lib = "font-awesome")),
       menuItem("Phocid Census", tabName = "tab_phocid_census", icon = icon("th", lib = "font-awesome")),
       menuItem("Tag Resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
       menuItem("Pinnipeds + Tags", tabName = "tab_pt", icon = icon("th", lib = "font-awesome")),
       tags$br(), tags$br(),
-      uiOutput("tabs_warning"),
+      column(12, uiOutput("tabs_warning")),
       actionButton("stop", "Close Tamatoa")
     ), width = "230"
   ),
@@ -150,13 +106,19 @@ ui <- dashboardPage(
     "))),
 
     tabItems(
-      tabItem("tab_info", fluidRow(mod_database_ui("db", db.name.prod, db.name.test, remote.prod.valid),
-                                   mod_season_info_ui("si")))
+      tabItem(
+        "tab_info",
+        fluidRow(
+          mod_database_ui("db", db.name.prod, db.name.test, remote.prod.valid,
+                          db.remote.default = "remote_test"),
+          mod_season_info_ui("si")
+        )
+      ),
       # tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
-      # # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
-      # # tabItem("tab_afs_capewide_pup_census", mod_afs_capewide_census_ui("afs_capewide_pup_census")),
+      # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
+      # tabItem("tab_afs_capewide_pup_census", mod_afs_capewide_census_ui("afs_capewide_pup_census")),
       # tabItem("tab_afs_study_beach_census", mod_afs_study_beach_census_ui("afs_study_beach_census")),
-      # tabItem("tab_phocid_census", mod_phocid_census_ui("phocid_census")),
+      tabItem("tab_phocid_census", mod_phocid_census_ui("phocid_census"))
       # tabItem("tab_tr", mod_tag_resights_ui("tag_resights")),
       # tabItem("tab_pt", mod_pinnipeds_tags_ui("pinnipeds_tags"))
     )
@@ -170,6 +132,14 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------------
   ### Quit GUI
   session$onSessionEnded(function() {
+    # Close current pool object. Needed here in case working off 'other' db
+    isolate({
+      if (inherits(db_pool(), "Pool")) {
+        if (pool::dbIsValid(db_pool())) {
+          pool::poolClose(db_pool())
+        }
+      }
+    })
     stopApp(returnValue = "Tamatoa was closed")
   })
 
@@ -181,9 +151,7 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------------
   ### Modules
   db_pool <- mod_database_server(
-    "db", db.name.prod, db.name.test,
-    pool.remote.prod, pool.remote.test, pool.local.prod, pool.local.test,
-    db.driver, db.server.remote, db.server.local
+    "db", pool.remote.prod, pool.remote.test, db.driver
   )
 
   si.list <- mod_season_info_server("si", db_pool)
@@ -192,7 +160,7 @@ server <- function(input, output, session) {
   # mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
   # mod_afs_capewide_pup_census_server("afs_capewide_pup_census", pool, si.list$season.df, si.list$season.id.list)
   # mod_afs_study_beach_census_server("afs_study_beach_census", db_pool, si.list$season.df)
-  # mod_phocid_census_server("phocid_census", db_pool, si.list$season.df)
+  mod_phocid_census_server("phocid_census", db_pool, si.list$season.df)
   # # mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
   # mod_pinnipeds_tags_server("pinnipeds_tags", db_pool)
 
