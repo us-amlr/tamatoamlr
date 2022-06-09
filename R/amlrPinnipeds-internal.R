@@ -21,10 +21,10 @@
 ### Returns the radioButton widget for selecting the timing summary level
 ### choices argument is the choices that should be included
 .summaryTimingUI <- function(
-  ns,
-  choices = c("fs_total", "fs_week", "fs_date_series", "fs_date_single",
-              "fs_single", "fs_raw"),
-  choices.selected = "fs_single")
+    ns,
+    choices = c("fs_total", "fs_week", "fs_date_series", "fs_date_single",
+                "fs_single", "fs_raw"),
+    choices.selected = "fs_single")
 {
   choices.args <- match.arg(choices, several.ok = TRUE)
 
@@ -54,9 +54,9 @@
 #-------------------------------------------------------------------------------
 ### Returns the radioButton widget for selecting the location summary level
 .summaryLocationUI <- function(
-  ns,
-  choices = c("by_capewide", "by_amlr", "by_beach"),
-  choices.selected = "by_capewide")
+    ns,
+    choices = c("by_capewide", "by_amlr", "by_beach"),
+    choices.selected = "by_capewide")
 {
   choices.args <- match.arg(choices, several.ok = TRUE)
 
@@ -74,8 +74,14 @@
   if (!(choices.selected %in% choices.list))
     stop("choices.selected must be one of the choices")
 
-  radioButtons(ns("summary_location"), label = tags$h5("Location"),
-               choices = choices.list, selected = choices.selected)
+  list(
+    radioButtons(ns("summary_location"), label = tags$h5("Location"),
+                 choices = choices.list, selected = choices.selected),
+    conditionalPanel(
+      condition = "input.summary_location == 'by_beach'", ns = ns,
+      checkboxInput(ns("location_aggregate"), "Group beaches", value = TRUE)
+    )
+  )
 }
 
 
@@ -84,9 +90,9 @@
 #-------------------------------------------------------------------------------
 ### Returns the radioButton widget for selecting the sp/age/sex summary level
 .summarySpAgeSexUI <- function(
-  ns,
-  choices = c("by_sp", "by_sp_age_sex"),
-  choices.selected = "by_sp")
+    ns,
+    choices = c("by_sp", "by_sp_age_sex"),
+    choices.selected = "by_sp")
 {
   choices.args <- match.arg(choices, several.ok = TRUE)
 
