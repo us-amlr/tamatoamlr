@@ -5,13 +5,13 @@
 \alias{pinniped.sp.colors}
 \title{Colors used in plots by pinniped species}
 \format{
-A (named) chracter vector
+A (named) character vector
 }
 \usage{
 pinniped.sp.colors
 }
 \description{
-The list contents are colors, specifically, \code{\link[scales]{hue_pal}()(5)},
-while the list names are the same as \code{\link{pinniped.sp.list}}
+The vector contents are colors, specifically, \code{\link[scales]{hue_pal}()(5)},
+while the vector names are the same as \code{\link{pinniped.sp}}
 }
 \keyword{datasets}

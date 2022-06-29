@@ -4,17 +4,31 @@
 \alias{tamatoa}
 \title{Open Tamatoa, the amlrPinnipeds Shiny app}
 \usage{
-tamatoa(launch.browser = TRUE)
+tamatoa(..., remote.prod = FALSE, remote.test = TRUE, local.prod = FALSE)
 }
 \arguments{
-\item{launch.browser}{Logical with default of \code{TRUE};
-passed to \code{launch.browser} argument of \code{\link[shiny]{runApp}}}
+\item{...}{passed to \code{\link[shiny]{shinyApp}}}
+
+\item{remote.prod}{logical; default is TRUE. Should tamatoa create an
+automatic connection to the ***REMOVED*** database on ***REMOVED***?}
+
+\item{remote.test}{logical; default is TRUE. Should tamatoa create an
+automatic connection to the ***REMOVED***_Test database on ***REMOVED***?}
+
+\item{local.prod}{logical; default is FALSE Should tamatoa create an
+automatic connection to the ***REMOVED*** database on
+the local SQL Express (see Details for more info)?}
 }
 \description{
-Open Tamatoa, the amlrPinnipeds R Shiny application
+Open Tamatoa, the amlrPinnipeds Shiny app
+}
+\details{
+If \code{local.prod} is TRUE, then Tamatoa will attemp to connect to the
+***REMOVED*** database on the following server:
+\code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]], "\\SQLEXPRESS")}
 }
 \examples{
-if (interactive()) tamatoa(launch.browser = TRUE)
+if (interactive()) tamatoa()
 
 }
 \seealso{

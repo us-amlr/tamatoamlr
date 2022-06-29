@@ -1,4 +1,4 @@
-#' amlrPinnipeds: A package and Shiny app to analyze and visualize data from the ***REMOVED*** database
+#' amlrPinnipeds: Analyze and Visualize US AMLR Pinniped Data
 #'
 #' This package contains \code{\link{tamatoa}},
 #' a Shiny app that connects to the ***REMOVED*** database,
@@ -9,7 +9,7 @@
 #' @name amlrPinnipeds-package
 #' @aliases amlrPinnipeds
 #' @docType package
-#' @title AMLR Pinniped Program data processing and analysis
+#' @title US AMLR Pinniped Program data processing and analysis
 #' @author Sam Woodman \email{sam.woodman@@noaa.gov}
 #'
 #' @import amlrDatabases
@@ -20,12 +20,16 @@
 #' @importFrom DT DTOutput renderDT
 #' @importFrom glue glue
 #' @importFrom lubridate days is.Date month week year ymd
+#' @importFrom pool dbIsValid dbGetQuery poolClose
 #' @importFrom purrr pmap_dbl pmap_lgl set_names
 #' @importFrom rlang .data enquo
 #' @importFrom scales hue_pal
-#' @importFrom shinydashboard box
+#' @importFrom shinybusy add_busy_spinner
+#' @importFrom shinydashboard box dashboardBody tabItems tabItem
+#'   dashboardHeader dashboardPage dashboardSidebar sidebarMenu menuItem
+#' @importFrom shinyjs useShinyjs extendShinyjs js
 #' @importFrom stringr str_to_sentence
-#' @importFrom tidyr nest pivot_longer pivot_wider unnest
+#' @importFrom tidyr complete nest unnest pivot_longer pivot_wider replace_na
 #' @importFrom utils write.csv
 #'
 #' @keywords package
