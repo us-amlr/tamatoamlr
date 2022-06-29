@@ -1,18 +1,17 @@
 Package: amlrPinnipeds
-Title: Analyze and visualize data from the AMLR_PINNIPEDS database
+Title: Analyze and Visualize US AMLR Pinniped Data
 Version: 0.2.0.9000
 Date: 2022-01-01
 Authors@R: 
         person("Sam", "Woodman", email = "sam.woodman@noaa.gov", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6071-8186"))
-Description: This package contains a Shiny app that connects to the AMLR_PINNIPEDS database, 
-    and allows users to analyze and visualize data from said database.
+Description: This package contains a Shiny app that connects to the 
+    US AMLR AMLR_PINNIPEDS database, 
+    and allows users to analyze and visualize data from this database.
     There are some exported functions that are helpful for processing certain AMLR Pinniped data,
     but the intent is for the Shiny app to provide the majority of the functionality for this package.
-Depends: R (>= 3.5.0)
+Depends: R (>= 4.0.0)
 Imports: 
-    amlrDatabases, 
-    DBI, 
-    dbplyr,
+    amlrDatabases (>= 0.4), 
     dplyr (>= 1.0),
     DT, 
     glue,

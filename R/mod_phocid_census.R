@@ -3,10 +3,6 @@
 mod_phocid_census_ui <- function(id) {
   ns <- NS(id)
 
-  pinniped.sp.list.phocid <- amlrPinnipeds::pinniped.sp.list[
-    c("Crabeater seal", "Elephant seal", "Leopard seal", "Weddell seal")
-  ]
-
   # assemble UI elements
   tagList(
     fluidRow(
@@ -47,7 +43,7 @@ mod_phocid_census_ui <- function(id) {
         # tags$h5("Todo?: descriptive text about what the above choices 'mean' in terms of what is plotted"),
       )
     ),
-    mod_output_ui(ns("phocid_census_out"), tags$br(), uiOutput(ns("warning_na_records")))
+    mod_output_ui(ns("out"), tags$br(), uiOutput(ns("warning_na_records")))
   )
 }
 
@@ -64,7 +60,16 @@ mod_phocid_census_server <- function(id, pool, season.df) {
   moduleServer(
     id,
     function(input, output, session) {
-      ###############################################################################
+      ##########################################################################
+      ### Get filter_season values
+      filter_season <- reactive({
+        mod_filter_season_server(
+          "filter_season",  reactive(input$summary_timing), season.df
+        )
+      })
+
+
+      ##########################################################################
       # Census-specific common values
 
       vals <- reactiveValues(
@@ -78,15 +83,15 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
 
       ### Column names specific to each census type
-      census.cols.phocid <- list(
-        "ad_female_count", "ad_male_count", "ad_unk_count",
-        "juv_female_count", "juv_male_count", "juv_unk_count",
-        "pup_live_count", "pup_dead_count",
-        "unk_female_count", "unk_male_count", "unk_unk_count", "unknownMF_count"
-      )
+      # census.cols.phocid <- list(
+      #   "ad_female_count", "ad_male_count", "ad_unk_count",
+      #   "juv_female_count", "juv_male_count", "juv_unk_count",
+      #   "pup_live_count", "pup_dead_count",
+      #   "unk_female_count", "unk_male_count", "unk_unk_count", "unknownMF_count"
+      # )
+      browser()
 
-
-      ###############################################################################
+      ##########################################################################
       # Observe events
 
       ### Store the selected beaches and column names
@@ -99,7 +104,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       })
 
 
-      ###############################################################################
+      ##########################################################################
       # RenderUIs
 
       ### Warning messages
@@ -110,7 +115,17 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ### Week number dropdown
       output$week_num_uiOut_select <- renderUI({
         req(input$summary_timing == "fs_week")
-        wk.list <- as.list(sort(unique(census_df_filter_season()$week_num)))
+
+        wk.list <- sort(unique(census_df_filter_season()$week_num))
+
+        # browser()
+        # census_df_filter_season() %>%
+        #   mutate(md = paste(stringr::str_pad(month(census_date), 2, side = "left", pad = "0"),
+        #                     stringr::str_pad(day(census_date), 2, side = "left", pad = "0"),
+        #                     sep = "-")) %>%
+        #   group_by(week_num) %>%
+        #   summarise(date_min = min(md),
+        #             date_max = max(md))
 
         selectInput(
           session$ns("week_num"), tags$h5("Week number"),
@@ -134,7 +149,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         }
 
         selectInput(
-          session$ns("location"), tags$h5("location(es)"),
+          session$ns("location"), tags$h5("Location(s)"),
           choices = beaches.list, selected = beaches.sel,
           multiple = TRUE, selectize = TRUE
         )
@@ -152,7 +167,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       })
 
 
-      ###############################################################################
+      ##########################################################################
       # Collect all phocid census data - one time run, then all data is collected
       census_df_collect <- reactive({
         vals$warning_na_records <- NULL
@@ -178,15 +193,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       })
 
 
-      ###############################################################################
-      ### Get filter_season values
-      filter_season <- reactive({
-        mod_filter_season_server(
-          "filter_season",  reactive(input$summary_timing), season.df
-        )
-      })
-
-
+      ##########################################################################
       ### Filter data by species, season/date, and remove NA values
       census_df_filter_season <- reactive({
         #----------------------------------------------
@@ -234,7 +241,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       })
 
 
-      ###############################################################################
+      ##########################################################################
       census_df_filter <- reactive({
         #----------------------------------------------
         # Filter by location
@@ -266,11 +273,11 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       })
 
 
-      ###############################################################################
+      ##########################################################################
       # Process collected census data
 
       ### Process collected census data, part 1 (summary level 2)
-      #------------------------------------------------------------------------------
+      #-------------------------------------------------------------------------
       census_df_summ <- reactive({
         vcs <- census_df_filter()
 
@@ -351,10 +358,10 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       })
 
 
-      ###############################################################################
+      ##########################################################################
       # Outputs
 
-      #------------------------------------------------------------------------------
+      #-------------------------------------------------------------------------
       ### Output table
       tbl_output <- reactive({
         df.out <- census_df() %>%
@@ -378,7 +385,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       })
 
 
-      #------------------------------------------------------------------------------
+      #-------------------------------------------------------------------------
       ### Output plot
       plot_output <- reactive({
         #--------------------------------------------------------
@@ -500,8 +507,9 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       })
 
 
+      #-------------------------------------------------------------------------
       ### Send off
-      observe(mod_output_server("phocid_census_out", id, tbl_output, plot_output))
+      observe(mod_output_server("out", session, tbl_output, plot_output))
     }
   )
 }

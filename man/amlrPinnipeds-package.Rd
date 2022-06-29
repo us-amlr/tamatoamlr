@@ -4,9 +4,9 @@
 \name{amlrPinnipeds-package}
 \alias{amlrPinnipeds-package}
 \alias{amlrPinnipeds}
-\title{AMLR Pinniped Program data processing and analysis}
+\title{US AMLR Pinniped Program data processing and analysis}
 \description{
-amlrPinnipeds: A package and Shiny app to analyze and visualize data from the AMLR_PINNIPEDS database
+amlrPinnipeds: Analyze and Visualize US AMLR Pinniped Data
 }
 \details{
 This package contains \code{\link{tamatoa}},
