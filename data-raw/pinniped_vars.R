@@ -12,7 +12,7 @@ usethis::use_data(pinniped.sp, overwrite = TRUE)
 
 ## code to prepare `pinniped.sp.colors` dataset goes here
 pinniped.sp.colors <- scales::hue_pal()(5)
-names(pinniped.sp.colors) <- stringr::str_to_sentence(pinniped.sp)
+names(pinniped.sp.colors) <- pinniped.sp
 
 usethis::use_data(pinniped.sp.colors, overwrite = TRUE)
 

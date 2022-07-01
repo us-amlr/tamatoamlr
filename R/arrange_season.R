@@ -4,10 +4,14 @@
 #'
 #' @param x data frame that at minimum contains a 'season_name' column
 #' @param season.info season.info data frame
-#' @param ... additional tidyselect arguments passed to arrange(), after desc(season_open_date)
-#' @param .desc logical; indicates if the data should be sorted by the descending season open date
+#' @param ... additional tidyselect arguments passed to arrange(),
+#'  after desc(season_open_date)
+#' @param .desc logical; indicates if the data should be sorted by
+#'   the descending season open date
 #'
-#' @details Sort x by corresponding season_open_date (descending), then other user-provided columns
+#' @details
+#' Sort x by corresponding season_open_date (descending),
+#' then other user-provided columns
 #'
 #' @return \code{x}, sorted by season open date and then \code{...}
 #'

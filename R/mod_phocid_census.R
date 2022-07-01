@@ -13,8 +13,8 @@ mod_phocid_census_ui <- function(id) {
           column(
             width = 3, offset = 1,
             checkboxGroupInput(ns("species"), label = tags$h5("Species"),
-                               choices = pinniped.sp.list.phocid,
-                               selected = unname(unlist(pinniped.sp.list.phocid)))
+                               choices = pinniped.phocid.sp,
+                               selected = pinniped.phocid.sp)
           )
         ),
         uiOutput(ns("week_num_uiOut_select")),
@@ -89,7 +89,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       #   "pup_live_count", "pup_dead_count",
       #   "unk_female_count", "unk_male_count", "unk_unk_count", "unknownMF_count"
       # )
-      browser()
+      # browser()
 
       ##########################################################################
       # Observe events
@@ -169,6 +169,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
       ##########################################################################
       # Collect all phocid census data - one time run, then all data is collected
+
       census_df_collect <- reactive({
         vals$warning_na_records <- NULL
 
@@ -177,17 +178,18 @@ mod_phocid_census_server <- function(id, pool, season.df) {
                "Unable to find vCensus_Phocid on specified database")
         )
 
-        tbl(req(pool()), "vCensus_Phocid") %>%
-          select(season_name, census_id, census_type, observer,
-                 census_date, time_start, time_end,
-                 location, location_group, beach_id, species,
-                 ad_female_count, ad_male_count, ad_unk_count, juv_female_count,
-                 juv_male_count, juv_unk_count, pup_live_count, pup_dead_count,
-                 unknownMF_count, unk_female_count, unk_male_count, unk_unk_count,
-                 census_notes, census_created_dt, census_wx_id) %>%
+        tbl_vCensus_Phocid(req(pool())) %>%
+          # tbl(req(pool()), "vCensus_Phocid") %>%
+          # select(season_name, census_id, census_type, observer,
+          #        census_date, time_start, time_end,
+          #        location, location_group, beach_id, species,
+          #        ad_female_count, ad_male_count, ad_unk_count, juv_female_count,
+          #        juv_male_count, juv_unk_count, pup_live_count, pup_dead_count,
+          #        unknownMF_count, unk_female_count, unk_male_count, unk_unk_count,
+          #        census_notes, census_created_dt, census_wx_id) %>%
           collect() %>%
-          mutate(species = str_to_sentence(species),
-                 week_num = lubridate::week(census_date))
+          mutate(week_num = lubridate::week(census_date))
+        # species = str_to_sentence(species),
         # census_date = factor(census_date),
         # species = factor(species, levels = sort(unique(species))))
       })
@@ -196,10 +198,11 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ##########################################################################
       ### Filter data by species, season/date, and remove NA values
       census_df_filter_season <- reactive({
+        # browser()
         #----------------------------------------------
         # Filter by species
         census.df <- census_df_collect() %>%
-          filter(tolower(species) %in% !!input$species)
+          filter(species %in% !!input$species)
 
         #----------------------------------------------
         # Filter by season/date/week num
@@ -219,14 +222,16 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         #----------------------------------------------
         # Filter records for non-NA values, verbosely as appropriate
         census.df.nona <- census.df %>%
-          filter(!is.na(season_name), !is.na(location), !is.na(census_date), !is.na(species))
+          filter(!is.na(season_name), !is.na(location),
+                 !is.na(census_date), !is.na(species))
 
         nrow.diff <- nrow(census.df) - nrow(census.df.nona)
         vals$warning_na_records <- if (nrow.diff != 0) {
           paste(
             "When processing census records,", nrow.diff,
             ifelse(nrow.diff == 1, "row was", "rows were"),
-            "removed because of a NULL season_name, species, location, and/or census_date value"
+            "removed because of a NULL season_name, species,",
+            "location, and/or census_date value"
           )
         } else {
           NULL
@@ -365,6 +370,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ### Output table
       tbl_output <- reactive({
         df.out <- census_df() %>%
+          mutate(species = str_to_sentence(species)) %>%
           nest(data = where(is.numeric)) %>%
           mutate(flag0 = pmap_lgl(list(data), function(i) all(i == 0))) %>%
           filter(!flag0) %>%

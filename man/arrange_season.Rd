@@ -11,9 +11,11 @@ arrange_season(x, season.info, ..., .desc = TRUE)
 
 \item{season.info}{season.info data frame}
 
-\item{...}{additional tidyselect arguments passed to arrange(), after desc(season_open_date)}
+\item{...}{additional tidyselect arguments passed to arrange(),
+after desc(season_open_date)}
 
-\item{.desc}{logical; indicates if the data should be sorted by the descending season open date}
+\item{.desc}{logical; indicates if the data should be sorted by
+the descending season open date}
 }
 \value{
 \code{x}, sorted by season open date and then \code{...}
@@ -22,5 +24,6 @@ arrange_season(x, season.info, ..., .desc = TRUE)
 Sort data frame by season, specifically by the season_open_date
 }
 \details{
-Sort x by corresponding season_open_date (descending), then other user-provided columns
+Sort x by corresponding season_open_date (descending),
+then other user-provided columns
 }
