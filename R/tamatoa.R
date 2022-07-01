@@ -84,7 +84,7 @@ tamatoa <- function(...,
   ui <- dashboardPage(
     title = "Tamatoa",
     dashboardHeader(title = "Tamatoa: Analyze and Visualize US AMLR Pinniped Data",
-                    titleWidth = "530"),
+                    titleWidth = "540"),
 
     dashboardSidebar(
       sidebarMenu(
@@ -180,7 +180,7 @@ tamatoa <- function(...,
     # mod_afs_capewide_pup_census_server("afs_capewide_pup_census", pool, si.list$season.df, si.list$season.id.list)
     # mod_afs_study_beach_census_server("afs_study_beach_census", db.pool, si.list$season.df)
     mod_phocid_census_server("phocid_census", db.pool, si.list$season.df)
-    # # mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
+    # mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
     # mod_pinnipeds_tags_server("pinnipeds_tags", db.pool)
 
     #----------------------------------------------------------------------------

@@ -12,7 +12,7 @@ You can install the development version of amlrPinnipeds from [GitHub](https://g
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("smwoodman/amlrPinnipeds")
+devtools::install_github("us-amlr/amlrPinnipeds")
 ```
 
 ## Tamatoa: Shiny app

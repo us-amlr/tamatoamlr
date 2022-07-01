@@ -4,18 +4,18 @@
 \alias{mutate_factor_species}
 \title{Convert species column to a factor}
 \usage{
-mutate_factor_species(x, levels = names(amlrPinnipeds::pinniped.sp.list))
+mutate_factor_species(x, levels = names(amlrPinnipeds::pinniped.sp))
 }
 \arguments{
 \item{x}{data frame that at minimum contains a 'species' column}
 
 \item{levels}{character; passed to 'levels' argument of \link[base]{factor}.
-Default is \code{names(\link{pinniped.sp.list})}}
+Default is \code{names(\link{pinniped.sp})}}
 }
 \value{
 \code{x}, with the column 'species' converted to a \link[base]{factor} that
-has levels: \code{\link[base]{names}(\link{pinniped.sp.list})}, i.e.
-\code{c("Fur seal", "Crabeater seal", "Elephant seal", "Leopard seal", "Weddell seal")}
+has levels: \code{\link[base]{names}(\link{pinniped.sp})}, i.e.
+\code{c("Fur seal", "Crabeater seal", etc.)}
 }
 \description{
 A 'wrapper' around mutate that converts the species column to a factor with the specified levels
