@@ -458,7 +458,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         # Generate initial plot pieces that depend on user selection
         if (input$summary_location == "by_beach") {
           ### Color-code lines and points by beach, require one species
-          ggplot.out <-  census.df %>%
+          ggplot.out <- census.df %>%
             mutate(species_lty = as.character(unique(species))) %>%
             ggplot(aes(x = !!x.val, y = count_value, linetype = species_lty)) +
             guides(
@@ -470,12 +470,12 @@ mod_phocid_census_server <- function(id, pool, season.df) {
             need("location" %in% names(census.df), "census plot: beach name error"),
             need(n_distinct(census.df$species) == 1, "census plot: beach-species error")
           )
-          if (input$summary_sas == "by_sp") {
-            ggplot.out <- ggplot.out +
+          ggplot.out <- if (input$summary_sas == "by_sp") {
+            ggplot.out +
               geom_point(aes(color = location)) +
               geom_line(aes(group = location, color = location))
           } else {
-            ggplot.out <- ggplot.out +
+            ggplot.out +
               geom_point(aes(shape = count_class, color = location)) +
               geom_line(aes(group = interaction(location, count_class), color = location)) +
               guides(shape = guide_legend(title = "Age+sex class"))
@@ -486,17 +486,19 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           ggplot.out <- ggplot(census.df, aes(x = !!x.val, y = count_value)) +
             guides(size = "none")
 
-          if (input$summary_sas == "by_sp") {
-            ggplot.out <- ggplot.out +
+          ggplot.out <- if (input$summary_sas == "by_sp") {
+            ggplot.out +
               geom_point(aes(color = species)) +
               geom_line(aes(group = species, color = species))
           } else {
-            ggplot.out <- ggplot.out +
+            ggplot.out +
               geom_point(aes(shape = count_class, color = species)) +
               geom_line(aes(group = interaction(species, count_class), color = species)) +
               guides(shape = guide_legend(title = "Sex+age class"))
           }
+          color.values <- pinniped.sp.colors[names(pinniped.sp.colors) %in% census.df$species]
           ggplot.out <- ggplot.out +
+            scale_color_manual(values = color.values)
             guides(color = guide_legend(title = "Species", order = 1))
         }
 
