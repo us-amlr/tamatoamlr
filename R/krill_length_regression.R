@@ -33,9 +33,11 @@ krill_length_regression <- function(x, col.length, col.width) {
   col_width <- enquo(col.width)
 
   x %>%
-    mutate(D = as.numeric(ifelse(!!col_length < 13, NA, -6.368 + 0.128*!!col_length + 0.387*!!col_width)),
-           sex = as.character(ifelse(D >= 0, "F", "M")),
-           krill_length = as.numeric(ifelse(sex == "F",
+    mutate(D = as.numeric(if_else(!!col_length < 13, NA_real_,
+                                  -6.368 + 0.128*!!col_length + 0.387*!!col_width)),
+           sex = as.character(if_else(.data$D >= 0, "F", "M")),
+           krill_length = as.numeric(if_else(.data$sex == "F",
                                             11.6 + 2.13 * !!col_length,
                                             0.62 + 3.13 * !!col_length)))
 }
+

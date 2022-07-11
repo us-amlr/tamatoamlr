@@ -13,8 +13,8 @@ mod_phocid_census_ui <- function(id) {
           column(
             width = 3, offset = 1,
             checkboxGroupInput(ns("species"), label = tags$h5("Species"),
-                               choices = pinniped.phocid.sp,
-                               selected = pinniped.phocid.sp)
+                               choices = amlrPinnipeds::pinniped.phocid.sp,
+                               selected = amlrPinnipeds::pinniped.phocid.sp)
           )
         ),
         uiOutput(ns("week_num_uiOut_select")),
@@ -263,7 +263,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         #----------------------------------------------
         # Filter by week num
         census.df.out <- if (input$summary_timing == "fs_week") {
-          census.df %>% filter(week_num == !!req(input$week_num))
+          census.df %>% filter(.data$week_num == !!req(input$week_num))
         } else {
           census.df
         }
@@ -371,11 +371,11 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       tbl_output <- reactive({
         df.out <- census_df() %>%
           mutate(species = str_to_sentence(species)) %>%
-          nest(data = where(is.numeric)) %>%
-          mutate(flag0 = pmap_lgl(list(data), function(i) all(i == 0))) %>%
-          filter(!flag0) %>%
-          unnest(cols = c(data)) %>%
-          select(-flag0) %>%
+          nest(data_lc = where(is.numeric)) %>%
+          mutate(flag0 = pmap_lgl(list(.data$data_lc), function(i) all(i == 0))) %>%
+          filter(!.data$flag0) %>%
+          unnest(cols = c(.data$data_lc)) %>%
+          select(-.data$flag0) %>%
           arrange(if("census_date" %in% names(.)) census_date else season_name,
                   species)
 
@@ -384,7 +384,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
             group_by(season_name) %>%
             summarise(n_census_date = n_distinct(census_date)) %>%
             right_join(df.out, by = "season_name") %>%
-            select(season_name, n_census_date, everything())
+            select(season_name, .data$n_census_date, everything())
         } else {
           df.out %>% select(season_name, census_date, everything())
         }
@@ -496,7 +496,8 @@ mod_phocid_census_server <- function(id, pool, season.df) {
               geom_line(aes(group = interaction(species, count_class), color = species)) +
               guides(shape = guide_legend(title = "Sex+age class"))
           }
-          color.values <- pinniped.sp.colors[names(pinniped.sp.colors) %in% census.df$species]
+          colors.all <- amlrPinnipeds::pinniped.sp.colors
+          color.values <- colors.all[names(colors.all) %in% census.df$species]
           ggplot.out <- ggplot.out +
             scale_color_manual(values = color.values)
             guides(color = guide_legend(title = "Species", order = 1))
