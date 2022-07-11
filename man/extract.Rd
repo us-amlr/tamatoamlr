@@ -8,7 +8,7 @@
 tbl_vCensus_Phocid(src)
 }
 \arguments{
-\item{src}{a data source; likely a \code{\link[pool-package]{pool}} object
+\item{src}{a data source; likely a \code{\link[pool]{pool}} object
 or some other connection to a database}
 }
 \description{
