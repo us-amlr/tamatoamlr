@@ -26,5 +26,5 @@ mutate_factor_species <- function(x, levels = names(amlrPinnipeds::pinniped.sp))
     inherits(levels, "character")
   )
 
-  x %>% mutate(species = factor(str_to_sentence(species), levels = levels))
+  x %>% mutate(species = factor(tolower(species), levels = levels))
 }

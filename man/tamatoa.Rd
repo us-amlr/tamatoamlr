@@ -23,7 +23,7 @@ the local SQL Express (see Details for more info)?}
 Open Tamatoa, the amlrPinnipeds Shiny app
 }
 \details{
-If \code{local.prod} is TRUE, then Tamatoa will attemp to connect to the
+If \code{local.prod} is TRUE, then Tamatoa will attempt to connect to the
 AMLR_PINNIPEDS database on the following server:
 \code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]], "\\SQLEXPRESS")}
 }

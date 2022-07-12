@@ -36,6 +36,7 @@ mod_filter_season_ui <- function(id) {
 #'
 #' @export
 mod_filter_season_server <- function(id, summ.level, season.df) {
+  #browser()
   stopifnot(
     is.reactive(summ.level),
     is.reactive(season.df)
@@ -44,6 +45,7 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
   moduleServer(
     id,
     function(input, output, session) {
+      #browser()
       #------------------------------------------------------------------------
       ### Generate season list to use in reactive
       season_list <- reactive({
