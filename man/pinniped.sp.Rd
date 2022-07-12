@@ -12,7 +12,7 @@ pinniped.sp
 }
 \description{
 The vector contents are lowercase, while the vector names are 'sentence'
-case (via \code{\link[stringr]{?str_to_sentence}}).
+case (via \code{\link[stringr]{str_to_sentence}}).
 The species included in this list are: Fur seal (Antarctic fur seal),
 Crabeater seal, Elephant seal (Southern elephant seal), Leopard seal, and Weddell seal
 }
