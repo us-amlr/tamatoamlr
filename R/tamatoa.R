@@ -24,7 +24,7 @@
 #'
 #' @export
 tamatoa <- function(...,
-                    remote.prod = FALSE, remote.test = TRUE,
+                    remote.prod = TRUE, remote.test = TRUE,
                     local.prod = FALSE) {
   ##############################################################################
   ##### Set connections to dbs, as specified by the user
