@@ -4,7 +4,7 @@
 #'
 #' @name extract
 #'
-#' @param src a data source; likely a \code{\link[pool-package]{pool}} object
+#' @param src a data source; likely a \code{\link[pool]{pool}} object
 #'   or some other connection to a database
 #'
 #' @details
@@ -21,12 +21,14 @@
 tbl_vCensus_Phocid <- function(src) {
   tbl(src, "vCensus_Phocid") %>%
     select(season_name, census_phocid_header_id, census_id,
-           census_type, observer, census_date_start, census_date_end,
+           census_type, observer,
+           census_date_start, census_date_end,
            census_date, time_start, time_end,
            location, location_group, beach_id, species,
-           ad_female_count, ad_male_count, ad_unk_count, juv_female_count,
-           juv_male_count, juv_unk_count, pup_live_count, pup_dead_count,
+           ad_female_count, ad_male_count, ad_unk_count,
+           juv_female_count, juv_male_count, juv_unk_count,
+           pup_live_count, pup_dead_count,
            unk_female_count, unk_male_count, unk_unk_count,
-           census_notes, census_created_dt, census_wx_id) %>%
-    mutate(species = tolower(species))
+           census_notes, census_created_dt) %>%
+    mutate(species = str_to_lower(species))
 }

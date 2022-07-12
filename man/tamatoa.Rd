@@ -4,7 +4,7 @@
 \alias{tamatoa}
 \title{Open Tamatoa, the amlrPinnipeds Shiny app}
 \usage{
-tamatoa(..., remote.prod = FALSE, remote.test = TRUE, local.prod = FALSE)
+tamatoa(..., remote.prod = TRUE, remote.test = TRUE, local.prod = FALSE)
 }
 \arguments{
 \item{...}{passed to \code{\link[shiny]{shinyApp}}}
