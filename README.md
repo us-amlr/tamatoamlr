@@ -4,7 +4,7 @@
 
 <!-- badges: end -->
 
-amlrPinnipeds and Tamatoa, its accompanying Shiny app, are for analyzing and visualizing data collected by the [AERD](https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center) [Pinniped Research Program](https://www.fisheries.noaa.gov/international/science-data/pinniped-research-antarctic). USA
+amlrPinnipeds and Tamatoa, its accompanying Shiny app, are for analyzing and visualizing data collected by the [AERD](https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center) [Pinniped Research Program](https://www.fisheries.noaa.gov/international/science-data/pinniped-research-antarctic).
 
 ## Installation
 
