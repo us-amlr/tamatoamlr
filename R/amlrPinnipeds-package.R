@@ -30,7 +30,7 @@
 #' @importFrom shinyjs useShinyjs extendShinyjs js
 #' @importFrom stringr str_to_sentence str_to_lower
 #' @importFrom tidyr complete nest unnest pivot_longer pivot_wider replace_na
-#' @importFrom utils write.csv
+#' @importFrom utils globalVariables write.csv
 #'
 #' @keywords package
 NULL

@@ -35,7 +35,8 @@ afs_diet_week <- function(x, col.diet.scat.date, col.collection.date) {
   # }
 
   x.out <- x %>%
-    mutate(diff_days = as.numeric(difftime(!!col.collection.date, !!col.diet.scat.date, units = "days")))
+    mutate(diff_days = as.numeric(difftime(!!col.collection.date, !!col.diet.scat.date,
+                                           units = "days")))
 
   if (any(x.out$diff_days < 0)) {
     stop("The col.collection.date date cannot come before the col.diet.scat.date date")
@@ -44,7 +45,7 @@ afs_diet_week <- function(x, col.diet.scat.date, col.collection.date) {
   }
 
   x.out %>%
-    mutate(week_num = floor(diff_days / 7) + 1,
-           week_start_date = ymd(!!col.diet.scat.date) + days((week_num - 1) * 7)) %>%
-    select(-diff_days)
+    mutate(week_num = floor(.data$diff_days / 7) + 1,
+           week_start_date = ymd(!!col.diet.scat.date) + days((.data$week_num - 1) * 7)) %>%
+    select(-.data$diff_days)
 }
