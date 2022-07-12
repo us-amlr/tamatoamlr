@@ -6,7 +6,8 @@
 .vcs_summ_func <- function(y, ..., season.df, beach.chr = FALSE) {
   df.out <-  y %>%
     group_by(...) %>%
-    summarise(across(where(is.numeric), ~if_else(all(is.na(.x)), NA_integer_, sum(.x, na.rm = TRUE))),
+    summarise(across(where(is.numeric), ~if_else(all(is.na(.x)), NA_integer_,
+                                                 sum(.x, na.rm = TRUE))),
               Beaches = paste(sort(unique(Beach)), collapse = ", "),
               .groups = "drop") %>%
     arrange_season(season.df, species)

@@ -13,13 +13,12 @@ mod_phocid_census_server(id, pool, season.df)
 \arguments{
 \item{id}{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
 
-\item{pool}{reactive; a DBI database connection pool. Intended to be the output of \code{\link{mod_database_server}}}
+\item{pool}{reactive; a DBI database connection pool.
+Intended to be the output of \code{\link{mod_database_server}}}
 
 \item{season.df}{reactive; the season info data frame.
-Intended to be the first element (\code{season.df}) of the (list) output of \code{\link{mod_filter_season_server}}}
-
-\item{season.id.list}{reactive; the (named)list of the season info ID values.
-Intended to be the second element (\code{season.id.list}) of the (list) output of \code{\link{mod_filter_season_server}}}
+Intended to be the first element (\code{season.df}) of
+the (list) output of \code{\link{mod_filter_season_server}}}
 }
 \description{
 Modules for the different tabs of Tamatoa, the amlrPinnipeds Shiny app
