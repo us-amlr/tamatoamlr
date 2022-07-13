@@ -17,15 +17,13 @@ captures_ui <- function(id) {
     box(title = "Summary Options", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
       fluidRow(
         column(5,radioButtons(ns("summary"), "Choose Summary Option", summary)),
-        # Figure out how too gray out the fur seal specific stuff unless only fur seals are selected.
         column(5,radioButtons(ns("morphometrics"), "Choose Morphometric Option", morphometrics, selected = "Number of Captures"))
         )
       ),
     box(title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         conditionalPanel(condition = "input.summary == 'Summary 2: Captures in one season'",
           mod_filter_season_ui(ns("season_filter")), ns = ns),
-        #column(3,checkboxGroupInput(ns("species_input"), "Select Species", choices = c(pinniped.sp, "All Species"), selected = "All Species"))
-        column(3, uiOutput(ns("species_list")))
+        column(5, uiOutput(ns("species_list")))
         ),
 
     box(title = "Graph", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
@@ -79,6 +77,7 @@ captures_server <- function(id, con) {
           rename(pinniped_id = ID)
         pinnipeds_simple <- pinnipeds %>%
           select(pinniped_id, species)
+        #pinnipeds_simple$species <- tolower(pinnipeds_simple$species)
         captures <- captures %>%
           left_join(pinnipeds_simple)
         captures
@@ -88,7 +87,8 @@ captures_server <- function(id, con) {
       DTsummary1 <- reactive({
         req()
         captures <- join_captures_pinnipeds()
-        if(!("All Species" %in% input$species_input)) {
+        if(input$morphometrics %in% c("Mass(kg)", "Number of Captures", "Capture to Release Times") &&
+           !("All Species" %in% input$species_input)) {
           captures <- captures %>%
             filter(species %in% input$species_input)
         }
@@ -97,18 +97,30 @@ captures_server <- function(id, con) {
             group_by(capture_season, species) %>%
             summarize(number_of_captures = n())
         }
-        else if(input$morphometrics == "Masses(kg)") {
+        if(input$morphometrics == "Masses(kg)") {
           captures_by_season <- captures %>%
             group_by(species) %>%
             summarize(Mass = mass_total_kg)
         }
-        else if(input$morphometrics == "Capture to Release Times") {
+        if(input$morphometrics == "Capture to Release Times") {
           captures_by_season <- captures %>%
             group_by(species) %>%
-            summarize(capt_to_release = release_time-capture_time)
+            summarize(capt_to_release = as.numeric(difftime(hms::as_hms(release_time), hms::as_hms(capture_time), units = "mins")))
         }
-        else {
-          captures_by_season = captures
+        if(input$morphometrics == "Capture to Reunion Times (Fur Seals only)") {
+          captures_by_season <- captures %>%
+            filter(species == "Fur seal") %>%
+            mutate(capt_to_reunion = as.numeric(difftime(hms::as_hms(release_time), hms::as_hms(capture_time), units = "mins")))
+        }
+        if(input$morphometrics == "Times on Gas (Fur Seals only)") {
+          captures_by_season <- captures %>%
+            filter(species == "Fur seal") %>%
+            mutate(gas_time = as.numeric(difftime(hms::as_hms(gas_off), hms::as_hms(gas_on), units = "mins")))
+        }
+        if(input$morphometrics == "Recovery in Box Times (Fur Seals only)") {
+          captures_by_season <- captures %>%
+            filter(species == "Fur seal") %>%
+            mutate(box_time = as.numeric(difftime(hms::as_hms(release_time), hms::as_hms(in_box), units = "mins")))
         }
         return(captures_by_season)
       })
@@ -117,7 +129,9 @@ captures_server <- function(id, con) {
       DTsummary2 <- reactive({
         req(season_filter)
         captures <- join_captures_pinnipeds()
-        if(!("All Species" %in% input$species_input)) {
+        if(input$morphometrics %in% c("Mass(kg)", "Number of Captures", "Capture to Release Times") &&
+           !("All Species" %in% input$species_input)) {
+          message("all species check worked")
           captures <- captures %>%
             filter(species %in% input$species_input)
         }
@@ -138,6 +152,21 @@ captures_server <- function(id, con) {
           one_season <- one_season %>%
             group_by(species) %>%
             summarize(capt_to_release = release_time-capture_time)
+        }
+        if(input$morphometrics == "Capture to Reunion Times (Fur Seals only)") {
+          one_season <- one_season %>%
+            filter(species == "Fur seal") %>%
+            mutate(capt_to_reunion = as.numeric(difftime(hms::as_hms(release_time), hms::as_hms(capture_time), units = "mins")))
+        }
+        if(input$morphometrics == "Times on Gas (Fur Seals only)") {
+          one_season <- one_season %>%
+            filter(species == "Fur seal") %>%
+            mutate(gas_time = as.numeric(difftime(hms::as_hms(gas_off), hms::as_hms(gas_on), units = "mins")))
+        }
+        if(input$morphometrics == "Recovery in Box Times (Fur Seals only)") {
+          one_season <- one_season %>%
+            filter(species == "Fur seal") %>%
+            mutate(box_time = as.numeric(difftime(hms::as_hms(release_time), hms::as_hms(in_box), units = "mins")))
         }
         return(one_season)
       })
@@ -162,12 +191,16 @@ captures_server <- function(id, con) {
         return(captures)
       })
 
+      species_check_boxes <- reactive(
+        checkboxGroupInput(session$ns("species_input"), "Select Species", choices = c("All Species", names(pinniped.sp)), selected = "All Species")
+      )
+
       output$species_list <- renderUI({
         #browser()
-        req(input$summary, input$morphometrics)
+        req(input$morphometrics)
         if (input$morphometrics == "Masses(kg)" || input$morphometrics == "Capture to Release Times" ||
             input$morphometrics == "Number of Captures") {
-          checkboxGroupInput(session$ns("species_input"), "Select Species", choices = c(pinniped.sp, "All Species"), selected = "All Species")
+          species_check_boxes()
         }
         else {
           textOutput(session$ns("fur_seals_only"))
@@ -212,17 +245,38 @@ captures_server <- function(id, con) {
                    geom_point(position = "identity", stat = "identity") +
                    geom_line(position = "identity", stat = "identity") +
                    theme(axis.text.x = element_text(angle = 90))) +
-                   scale_color_manual(values = pinniped.sp.colors)
+                   scale_color_manual(values = .colorsPresent(table_for_plot)) +
+                   labs(x = ifelse(input$summary == "Summary 1: Captures in all seasons", "Season", "Date"), y = "Number of Captures")
         }
         if(input$morphometrics == "Masses(kg)") {
           return(ggplot(table_for_plot, aes(x = Mass, fill = species, group = species)) +
                    geom_histogram() +
-                   scale_fill_manual(values = pinniped.sp.colors))
+                   scale_fill_manual(values = .colorsPresent(table_for_plot)) +
+                   xlab("Mass(kg)"))
         }
         if(input$morphometrics == "Capture to Release Times") {
           return(ggplot(table_for_plot, aes(x = capt_to_release, fill = species, group = species)) +
                    geom_histogram() +
-                   scale_fill_manual(values = pinniped.sp.colors))
+                   scale_fill_manual(values = .colorsPresent(table_for_plot)) +
+                   xlab("Capture to Release Time (minutes)"))
+        }
+        if(input$morphometrics == "Capture to Reunion Times (Fur Seals only)") {
+          return(ggplot(table_for_plot, aes(x = capt_to_reunion, fill = species, group = species)) +
+                   geom_histogram() +
+                   scale_fill_manual(values = .colorsPresent(table_for_plot)) +
+                   xlab("Capture to Reunion Time (minutes)"))
+        }
+        if(input$morphometrics == "Times on Gas (Fur Seals only)") {
+          return(ggplot(table_for_plot, aes(x = gas_time, fill = species, group = species)) +
+                   geom_histogram() +
+                   scale_fill_manual(values = .colorsPresent(table_for_plot)) +
+                   xlab("Time on Gas"))
+        }
+        if(input$morphometrics == "Recovery in Box Times (Fur Seals only)") {
+          return(ggplot(table_for_plot, aes(x = box_time, fill = species, group = species)) +
+                   geom_histogram() +
+                   scale_fill_manual(values = .colorsPresent(table_for_plot)) +
+                   xlab("Time Recovering in Box (minutes)"))
         }
       })
 
