@@ -1,6 +1,6 @@
 
 
-summary <- c("Summary 1: Captures in all seasons", "Summary 2: Captures in one season", "Summary 3: Captures by Individual", "raw data")
+summary <- c("Summary 1: Captures in all seasons", "Summary 2: Captures in one season", "Summary 3: Captures in some seasons", "Summary 4: Captures by Individual", "raw data")
 data_type <- c("Masses(kg)","Body Conditions (Mass/Length)", "Capture to Release Times", "Times on Gas (Fur Seals only)",
                    "Capture to Reunion Times (Fur Seals only)", "Recovery in Box Times (Fur Seals only)", "Number of Captures")
 
@@ -17,8 +17,9 @@ captures_ui <- function(id) {
     box(title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         #Use or statements, javascript is not amenable to in.
         conditionalPanel(condition = "input.summary == 'Summary 2: Captures in one season' |
+                                                        input.summary == 'Summary 3: Captures in some seasons' |
                                                         input.summary == 'raw data' |
-                                                        input.summary == 'Summary 3: Captures by Individual'",
+                                                        input.summary == 'Summary 4: Captures by Individual'",
                          mod_filter_season_ui(ns("season_filter")), ns = ns),
         conditionalPanel(condition = "input.data_type == 'Masses(kg)' |
                                                                input.data_type == 'Body Conditions (Mass/Length)' |
@@ -31,6 +32,11 @@ captures_ui <- function(id) {
                            input.data_type == 'Capture to Release Times' |
                            input.data_type == 'Number of Captures')",
                          textOutput(ns("fur_seals_only")),
+                         ns = ns),
+        conditionalPanel(condition = "(input.summary == 'Summary 1: Captures in all seasons' |
+                            input.summary == 'Summary 3: Captures in some seasons') &
+                            input.data_type != 'Number of Captures'",
+                         checkboxInput(ns("faceting"), "Facet By Season"),
                          ns = ns)
         #column(5, uiOutput(ns("species_list")))
     ),
@@ -81,7 +87,11 @@ captures_server <- function(id, con) {
 
       #Uses mod_filter_season to implement the season and date filters
       summ_level <- reactive(
-        "fs_multiple_total"
+        if(input$summary != "Summary 2: Captures in one season"){
+          "fs_multiple_total"
+        } else {
+          "fs_single"
+        }
       )
       season_filter = reactive(mod_filter_season_server("season_filter", summ_level , season_info))
 
@@ -146,18 +156,17 @@ captures_server <- function(id, con) {
         return(captures_by_season)
       })
 
-      #reactive for creating summary 2 table
+      # Creates the table used for Summary option 2
       DTsummary2 <- reactive({
         req(season_filter()$season_select(), season_filter()$date_range())
-        #browser()
         captures <- captures()
         if(input$data_type %in% c("Mass(kg)", "Number of Captures", "Capture to Release Times")) {
           captures <- captures %>%
             filter(species %in% input$species_input)
         }
-        browser()
+        #browser()
         one_season <- captures %>%
-          filter(season_name %in% season_filter()$season_select()) %>%
+          filter(season_name == season_filter()$season_select()) %>%
           filter(capture_date > season_filter()$date_range()[[1]] & capture_date < season_filter()$date_range()[[2]])
         if(input$data_type == "Number of Captures") {
           one_season <- one_season %>%
@@ -197,8 +206,61 @@ captures_server <- function(id, con) {
         return(one_season)
       })
 
+
+      #reactive for creating summary 3 table
       DTsummary3 <- reactive({
+        req(season_filter()$season_select())
+        #browser()
         captures <- captures()
+        if(input$data_type %in% c("Mass(kg)", "Number of Captures", "Capture to Release Times")) {
+          captures <- captures %>%
+            filter(species %in% input$species_input)
+        }
+        #browser()
+        some_seasons <- captures %>%
+          filter(season_name %in% season_filter()$season_select())
+        if(input$data_type == "Number of Captures") {
+          some_seasons <- some_seasons %>%
+            group_by(season_name, species) %>%
+            summarize(number_of_captures = n())
+        }
+        if(input$data_type == "Masses(kg)") {
+          some_seasons <- some_seasons %>%
+            group_by(species) %>%
+            mutate(Mass = mass_total_kg - tare_kg)
+        }
+        if(input$data_type == "Capture to Release Times") {
+          some_seasons <- some_seasons %>%
+            group_by(species) %>%
+            mutate(capt_to_release = as.numeric(difftime(hms::as_hms(release_time), hms::as_hms(capture_time), units = "mins")))
+        }
+        if(input$data_type == "Body Conditions (Mass/Length)") {
+          some_seasons <- some_seasons %>%
+            group_by(species) %>%
+            mutate(body_condition = (mass_total_kg - tare_kg)/std_length_cm)
+        }
+        if(input$data_type == "Capture to Reunion Times (Fur Seals only)") {
+          some_seasons <- some_seasons %>%
+            filter(species == "Fur seal") %>%
+            mutate(capt_to_reunion = as.numeric(difftime(hms::as_hms(reunion_time), hms::as_hms(capture_time), units = "mins")))
+        }
+        if(input$data_type == "Times on Gas (Fur Seals only)") {
+          some_seasons <- some_seasons %>%
+            filter(species == "Fur seal") %>%
+            mutate(gas_time = as.numeric(difftime(hms::as_hms(gas_off), hms::as_hms(gas_on), units = "mins")))
+        }
+        if(input$data_type == "Recovery in Box Times (Fur Seals only)") {
+          some_seasons <- some_seasons %>%
+            filter(species == "Fur seal") %>%
+            mutate(box_time = as.numeric(difftime(hms::as_hms(release_time), hms::as_hms(in_box), units = "mins")))
+        }
+        return(some_seasons)
+      })
+
+      DTsummary4 <- reactive({
+        captures <- captures() %>%
+          filter(species %in% input$species_input) %>%
+          filter(season_name %in% season_filter()$season_select())
         captures <- captures %>%
           group_by(pinniped_id, season_name) %>%
           summarize(number_of_captures = n())
@@ -208,16 +270,6 @@ captures_server <- function(id, con) {
       #creates raw data table
       DTrawdata <- reactive({
         req()
-        # pinnipeds <- pinnipeds() %>%
-        #   rename(pinniped_id = ID)
-        # pinnipeds_simple <- pinnipeds %>%
-        #   select(pinniped_id, species, sex)
-        # tags_simple <- tags() %>%
-        #   filter(primary_tag == "TRUE") %>%
-        #   select(tag, tag_type, pinniped_id, tagging_date)
-        # captures <- captures() %>%
-        #   left_join(pinnipeds_simple) %>%
-        #   left_join(tags_simple)
         captures <- captures()
         if(input$data_type %in% c("Masses(kg)", "Body Conditions (Mass/Length)", "Number of Captures", "Capture to Release Times")) {
           captures <- captures %>%
@@ -226,10 +278,10 @@ captures_server <- function(id, con) {
           captures <- captures %>%
             filter(species == "Fur seal")
         }
-        if(input$summary == 'Summary 2: Captures in one season' || input$summary == 'raw data'){
+        if(input$summary == "Summary 3: Captures in some seasons" || input$summary == "Summary 2: Captures in one season" || input$summary == 'raw data'){
           captures <- captures %>%
-            filter(season_name %in% season_filter()$season_select(),
-                   capture_date > season_filter()$date_range()[[1]] & capture_date < season_filter()$date_range()[[2]])
+            filter(season_name %in% season_filter()$season_select())
+                   #capture_date > season_filter()$date_range()[[1]] & capture_date < season_filter()$date_range()[[2]])
         }
         return(captures)
       })
@@ -240,22 +292,26 @@ captures_server <- function(id, con) {
 
       #DT tables above render with the appropriate data
       summary_table_reactive <- reactive({
-        if(input$summary == "Summary 3: Captures by Individual") {
-          browser()
-          return(DTsummary3() %>%
+        if(input$summary == "Summary 4: Captures by Individual") {
+          pinnipeds <- pinnipeds() %>%
+                   rename(pinniped_id = ID)
+          return(DTsummary4() %>%
                    pivot_wider(names_from = season_name, values_from = number_of_captures) %>%
-                   left_join(pinnipeds()) %>%
+                   left_join(pinnipeds) %>%
                    left_join(
                      select(filter(
                        tags(), primary_tag == "TRUE"),
-                       tag_type, pinniped_id, tagging_date)
-                   )
+                       tag, tag_type, pinniped_id, tagging_date)
+                   ) %>%
+                   select(pinniped_id, species, tag, tag_type, rev(season_info()$season_name), sex, cohort)
           )
         }else if(input$data_type == "Number of Captures") {
           if(input$summary == "Summary 1: Captures in all seasons") {
             return(DTsummary1())
           } else if(input$summary == "Summary 2: Captures in one season") {
             return(DTsummary2())
+          } else if(input$summary == "Summary 3: Captures in some seasons") {
+            return(DTsummary3())
           } else {
             return(DTrawdata())
           }
@@ -277,79 +333,74 @@ captures_server <- function(id, con) {
         } else if(input$summary == "Summary 2: Captures in one season") {
           table_for_plot <- DTsummary2()
           x_var <- table_for_plot$capture_date
-        } else if(input$summary == "Summary 3: Captures by Individual") {
+        } else if(input$summary == "Summary 3: Captures in some seasons") {
+          table_for_plot <- DTsummary3()
+          x_var <- table_for_plot$season_name
+        } else if(input$summary == "Summary 4: Captures by Individual") {
           #browser()
-          return(ggplot(DTsummary3(), aes(x = number_of_captures)) +
+          return(ggplot(DTsummary4(), aes(x = number_of_captures)) +
                           geom_histogram() +
                           xlab("Number of Captures by Individual"))
         } else {
           validate(need(input$summary != "raw data", "no plot for raw data"))
         }
         if(input$data_type == "Number of Captures") {
-          return(ggplot(table_for_plot, aes(x = x_var, y = number_of_captures, color = species, group = species)) +
+          plot <- ggplot(table_for_plot, aes(x = x_var, y = number_of_captures, color = species, group = species)) +
                    geom_point(position = "identity", stat = "identity") +
                    geom_line(position = "identity", stat = "identity") +
                    theme(axis.text.x = element_text(angle = 90)) +
                    scale_color_manual(values = .colorsPresent(table_for_plot)) +
-                   labs(x = ifelse(input$summary == "Summary 1: Captures in all seasons", "Season", "Date"), y = "Number of Captures"))
+                   labs(x = ifelse(input$summary == "Summary 1: Captures in all seasons", "Season", "Date"), y = "Number of Captures")
         }
         if(input$data_type == "Masses(kg)") {
-          return(ggplot(table_for_plot, aes(x = Mass, fill = species, group = species)) +
+          plot <- ggplot(table_for_plot, aes(x = Mass, fill = species, group = species)) +
                    geom_histogram() +
                    scale_fill_manual(values = .colorsPresent(table_for_plot)) +
-                   xlab("Mass(kg)"))
+                   xlab("Mass(kg)")
         }
         if(input$data_type == "Body Conditions (Mass/Length)") {
-          return(ggplot(table_for_plot, aes(x = body_condition, fill = species, group = species)) +
+          plot <- ggplot(table_for_plot, aes(x = body_condition, fill = species, group = species)) +
                    geom_histogram() +
                    scale_fill_manual(values = .colorsPresent(table_for_plot)) +
-                   xlab("Body Condition(Mass/length)"))
+                   xlab("Body Condition(Mass/length)")
         }
         if(input$data_type == "Capture to Release Times") {
-          return(ggplot(table_for_plot, aes(x = capt_to_release, fill = species, group = species)) +
+          plot <- ggplot(table_for_plot, aes(x = capt_to_release, fill = species, group = species)) +
                    geom_histogram() +
                    scale_fill_manual(values = .colorsPresent(table_for_plot)) +
-                   xlab("Capture to Release Time (minutes)"))
+                   xlab("Capture to Release Time (minutes)")
         }
         if(input$data_type == "Capture to Reunion Times (Fur Seals only)") {
-          return(ggplot(table_for_plot, aes(x = capt_to_reunion, fill = species, group = species)) +
+          plot <- ggplot(table_for_plot, aes(x = capt_to_reunion, fill = species, group = species)) +
                    geom_histogram() +
                    scale_fill_manual(values = .colorsPresent(table_for_plot)) +
-                   xlab("Capture to Reunion Time (minutes)"))
+                   xlab("Capture to Reunion Time (minutes)")
         }
         if(input$data_type == "Times on Gas (Fur Seals only)") {
-          return(ggplot(table_for_plot, aes(x = gas_time, fill = species, group = species)) +
+          plot <- ggplot(table_for_plot, aes(x = gas_time, fill = species, group = species)) +
                    geom_histogram() +
                    scale_fill_manual(values = .colorsPresent(table_for_plot)) +
-                   xlab("Time on Gas"))
+                   xlab("Time on Gas")
         }
         if(input$data_type == "Recovery in Box Times (Fur Seals only)") {
-          return(ggplot(table_for_plot, aes(x = box_time, fill = species, group = species)) +
+          plot <- ggplot(table_for_plot, aes(x = box_time, fill = species, group = species)) +
                    geom_histogram() +
                    scale_fill_manual(values = .colorsPresent(table_for_plot)) +
-                   xlab("Time Recovering in Box (minutes)"))
+                   xlab("Time Recovering in Box (minutes)")
         }
+        # Implements the faceting option
+        if((input$summary == "Summary 1: Captures in all seasons" ||
+            input$summary == "Summary 3: Captures in some seasons") &&
+            input$data_type != "Number of Captures" && input$faceting == TRUE) {
+          plot <- plot + facet_wrap(~season_name, ncol = 4)
+        }
+        return(plot)
       })
 
-      # output$plot <- renderPlot({
-      #   validate(need(input$summary != "raw data", "no plot for raw data"))
-      #   summary_plot_reactive()
-      # }, res = 96)
-
-      #controls widget to download the tables
-      # output$downloadData <- downloadHandler(
-      #   filename = function() {
-      #     paste(input$summarydatatbl, ".csv", sep = "")
-      #   },
-      #   content = function(file) {
-      #     write.csv(summary_table_reactive(), file, row.names = FALSE)
-      #   }
-      # )
-
+      #Uses mod_output to implement the graph and table produced above
       observe({
-        # if (!inherits(summary_table_reactive(), "data.frame"))
         mod_output_server("table_and_plot", session, summary_table_reactive, summary_plot_reactive)
-        })
+      })
     }
   )
 }
