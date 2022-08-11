@@ -1,3 +1,8 @@
+# amlrPinnipeds 0.3.0.9000
+
+* Added Captures tab and associated functionality
+
+
 # amlrPinnipeds 0.2.0.9000
 
 * Update database connection management to keep up with amlrDatabases v0.4.0
