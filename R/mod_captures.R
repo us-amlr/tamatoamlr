@@ -16,10 +16,10 @@ captures_ui <- function(id) {
   tagList(
     box(title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         #Use or statements, javascript is not amenable to in.
-        conditionalPanel(condition = "input.summary == 'Summary 1: Captures in one season' |
-                                                        input.summary == 'Summary 2: Captures in multiple seasons' |
-                                                        input.summary == 'raw data'",
-                         mod_filter_season_ui(ns("season_filter")), ns = ns),
+        # conditionalPanel(condition = "input.summary == 'Summary 1: Captures in one season' |
+        #                                                 input.summary == 'Summary 2: Captures in multiple seasons' |
+        #                                                 input.summary == 'raw data'",
+                         mod_filter_season_ui(ns("season_filter")),# ns = ns),
         conditionalPanel(condition = "input.data_type == 'Masses(kg)' |
                                                                input.data_type == 'Body Conditions (Mass/Length)' |
                                                                input.data_type == 'Capture to Release Times' |
@@ -106,7 +106,7 @@ captures_server <- function(id, con) {
           captures <- captures %>%
             filter(species == "Fur seal")
         }
-        if(input$summary == "Summary 2: Captures in multiple seasons") {
+        if(input$summary == "Summary 2: Captures in multiple seasons" || input$summary == "Summary 3: Captures by Individual") {
           captures <- captures %>%
             filter(season_name %in% season_filter()$season_select())
         }
@@ -197,16 +197,18 @@ captures_server <- function(id, con) {
         if(input$summary == "Summary 3: Captures by Individual") {
           pinnipeds <- pinnipeds() %>%
             rename(pinniped_id = ID)
-          return(DTsummary3() %>%
+          summary3_table <- DTsummary3() %>%
                    pivot_wider(names_from = season_name, values_from = number_of_captures) %>%
                    left_join(pinnipeds) %>%
                    left_join(
                      select(filter(
                        tags(), primary_tag == "TRUE"),
                        tag, tag_type, pinniped_id, tagging_date)
-                   ) %>%
-                   select(pinniped_id, species, tag, tag_type, rev(season_info()$season_name), sex, cohort)
-          )
+                   )
+          season_list <- intersect(rev(season_info()$season_name), colnames(summary3_table))
+          summary3_table <- summary3_table %>%
+            select(pinniped_id, species, tag, tag_type, season_list, sex, cohort)
+          return(summary3_table)
         } else if(input$data_type == "Number of Captures") {
           if(input$summary == "Summary 1: Captures in one season" || input$summary == "Summary 2: Captures in multiple seasons") {
             return(DTsummary1_and_2())
