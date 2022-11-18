@@ -201,6 +201,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         # browser()
         #----------------------------------------------
         # Filter by species
+        print(input$species)
         census.df <- census_df_collect() %>%
           filter(species %in% !!input$species)
 

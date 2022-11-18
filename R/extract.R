@@ -30,5 +30,5 @@ tbl_vCensus_Phocid <- function(src) {
            pup_live_count, pup_dead_count,
            unk_female_count, unk_male_count, unk_unk_count,
            census_notes, census_created_dt) %>%
-    mutate(species = str_to_lower(species))
+    mutate(species = str_to_sentence(species))
 }
