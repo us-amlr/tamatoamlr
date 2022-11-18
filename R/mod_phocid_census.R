@@ -485,7 +485,8 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         } else {
           ### Color-code lines and points by species
           ggplot.out <- ggplot(census.df, aes(x = !!x.val, y = count_value)) +
-            guides(size = "none")
+            guides(size = "none") +
+            scale_color_manual(values = pinniped.sp.colors)
 
           ggplot.out <- if (input$summary_sas == "by_sp") {
             ggplot.out +
@@ -511,6 +512,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           ylab(y.lab) +
           ggtitle(gg.title) +
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
 
         # Output
         ggplot.out
