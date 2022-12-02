@@ -59,10 +59,10 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
 
         ### Keep this list up to date with choices arg of .summaryTimingUI
         summ.levels.vals <- c(
-          "fs_total", "fs_week", "fs_date_series", "fs_date_single",
-          "fs_single", "fs_raw",
+          "fs_total", "fs_date_series", "fs_date_single", #"fs_week",
+          "fs_single", "fs_raw"
 
-          "fs_multiple_total", "fs_multiple_date", "fs_multiple_week", "raw"
+          # "fs_multiple_total", "fs_multiple_date", "fs_multiple_week", "raw"
         )
 
         validate(

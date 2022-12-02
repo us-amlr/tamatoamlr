@@ -23,7 +23,7 @@
 ### choices argument is the choices that should be included
 .summaryTimingUI <- function(
     ns,
-    choices = c("fs_total", "fs_week", "fs_date_series", "fs_date_single",
+    choices = c("fs_total", "fs_date_series", "fs_date_single", #"fs_week",
                 "fs_single", "fs_raw"),
     choices.selected = "fs_single")
 {
@@ -31,9 +31,9 @@
 
   choices.list.all <- list(
     "Multiple seasons - total" = "fs_total",
-    "Multiple seasons - by week" = "fs_week",
+    # "Multiple seasons - by week" = "fs_week",
     "Multiple seasons - date series" = "fs_date_series",
-    "Multiple seasons - on date" = "fs_date_single",
+    "Multiple seasons - by date" = "fs_date_single",
     "Single season" = "fs_single",
     "Raw data" = "fs_raw"
   )
