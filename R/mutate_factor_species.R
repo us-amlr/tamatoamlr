@@ -6,7 +6,8 @@
 #' @param levels character; passed to 'levels' argument of \link[base]{factor}.
 #'   Default is \code{names(\link{pinniped.sp})}
 #'
-#' @details A wrapper around \code{\link[dplyr]{mutate}} that converts the species column to a factor with the specified levels.
+#' @details A wrapper around \code{\link[dplyr]{mutate}} that converts
+#'   the species column to a factor with the specified levels.
 #'   This allows this function to be used directly in dplyr pipelines.
 #'
 #' @return \code{x}, with the column 'species' converted to a \link[base]{factor} that
@@ -26,5 +27,5 @@ mutate_factor_species <- function(x, levels = names(amlrPinnipeds::pinniped.sp))
     inherits(levels, "character")
   )
 
-  x %>% mutate(species = factor(tolower(species), levels = levels))
+  x %>% mutate(species = factor(str_to_sentence(species), levels = levels))
 }

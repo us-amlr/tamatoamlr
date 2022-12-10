@@ -4,7 +4,7 @@ utils::globalVariables(c(
 
   # Commonly used variables
   "observer", "location", "location_group", "beach_id", "species",
-  "Beach", "Beaches", "loc_lower",
+  "Beach", "Beaches", "loc_lower", "week_num",
 
   # Plotting
   "count_class", "count_value", "species_lty",

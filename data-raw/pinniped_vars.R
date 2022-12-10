@@ -1,10 +1,12 @@
-pinniped.afs <- "fur seal"
-pinniped.phocid <- c("crabeater seal", "elephant seal", "leopard seal", "weddell seal")
+pinniped.afs <- stringr::str_to_sentence("fur seal")
+pinniped.phocid <- stringr::str_to_sentence(
+  c("crabeater seal", "elephant seal", "leopard seal", "weddell seal")
+)
 
 ## code to prepare `pinniped.sp` dataset goes here
 pinniped.sp <- c(pinniped.afs, pinniped.phocid)
 # pinniped.sp.list <- as.list(pinniped.sp)
-names(pinniped.sp) <- stringr::str_to_sentence(pinniped.sp)
+names(pinniped.sp) <- pinniped.sp
 
 usethis::use_data(pinniped.sp, overwrite = TRUE)
 

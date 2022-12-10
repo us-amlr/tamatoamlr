@@ -19,24 +19,37 @@
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
+
+.summaryTimingChoicesList <- list(
+  "Multiple seasons - total" = "fs_total",
+  "Multiple seasons - by week" = "fs_week",
+  "Multiple seasons - date series" = "fs_date_series",
+  # "Multiple seasons - by date" = "fs_date_single",
+  "Single season" = "fs_single",
+  "Raw data" = "fs_raw"
+)
+.summaryTimingChoices <- unlist(unname(.summaryTimingChoicesList))
+
+.summaryTimingMultiple <- c("fs_total", "fs_week", "fs_date_series")
+.summaryTimingSingle <- c("fs_single")
+
+
 ### Returns the radioButton widget for selecting the timing summary level
 ### choices argument is the choices that should be included
 .summaryTimingUI <- function(
-    ns,
-    choices = c("fs_total", "fs_date_series", "fs_date_single", #"fs_week",
-                "fs_single", "fs_raw"),
-    choices.selected = "fs_single")
-{
+    ns, choices = .summaryTimingChoices, choices.selected = "fs_single"
+) {
   choices.args <- match.arg(choices, several.ok = TRUE)
 
-  choices.list.all <- list(
-    "Multiple seasons - total" = "fs_total",
-    # "Multiple seasons - by week" = "fs_week",
-    "Multiple seasons - date series" = "fs_date_series",
-    "Multiple seasons - by date" = "fs_date_single",
-    "Single season" = "fs_single",
-    "Raw data" = "fs_raw"
-  )
+  choices.list.all <- .summaryTimingChoicesList
+  #   list(
+  #   "Multiple seasons - total" = "fs_total",
+  #   "Multiple seasons - by week" = "fs_week",
+  #   "Multiple seasons - date series" = "fs_date_series",
+  #   # "Multiple seasons - by date" = "fs_date_single",
+  #   "Single season" = "fs_single",
+  #   "Raw data" = "fs_raw"
+  # )
 
   if (!all(choices.args %in% choices.list.all))
     stop("Need to update internal function - please contact the database manager")

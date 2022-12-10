@@ -13,8 +13,11 @@ mod_filter_season_ui <- function(id) {
   # assemble UI elements
   tagList(
     fluidRow(
-      uiOutput(ns("season_select_uiOut_select")),
+      uiOutput(ns("season_uiOut_select")),
       uiOutput(ns("date_range_uiOut_dateRange"))
+    ),
+    fluidRow(
+      column(6, uiOutput(ns("week_uiOut_select")))
     )
   )
 }
@@ -23,15 +26,16 @@ mod_filter_season_ui <- function(id) {
 #' @name mod_filter_season
 #'
 #' @param summ.level a reactive of the 'summary level one' selection. Value must
-#'   be one of: "fs_multiple_total", "fs_multiple_week", "fs_single", or "raw"
+#'   be one of: TODO
 #' @param season.df reactive; the season info data frame. Intended to be the
 #'   first element (\code{season.df}) of the (list) output of
 #'   \code{\link{mod_season_info_server}}
 #'
 #' @return A list with following components:
 #' \itemize{
-#'   \item{season_select: reactive character, the name(s) of the selected season(s)}
+#'   \item{season: reactive character, the name(s) of the selected season(s)}
 #'   \item{date_range: reactive Date vector of length 2; the date range for a single season}
+#'   \item{week: reactive character; the week to select for, across multiple seasons}
 #' }
 #'
 #' @export
@@ -45,7 +49,6 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
   moduleServer(
     id,
     function(input, output, session) {
-      #browser()
       #------------------------------------------------------------------------
       ### Generate season list to use in reactive
       season_list <- reactive({
@@ -54,12 +57,12 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
 
       #------------------------------------------------------------------------
       # Select season dropdown - could combine with min season, but left separate for now
-      output$season_select_uiOut_select <- renderUI({
+      output$season_uiOut_select <- renderUI({
         req(season.df())
 
         ### Keep this list up to date with choices arg of .summaryTimingUI
         summ.levels.vals <- c(
-          "fs_total", "fs_date_series", "fs_date_single", #"fs_week",
+          "fs_total", "fs_week", "fs_date_series", #"fs_date_single",
           "fs_single", "fs_raw"
 
           # "fs_multiple_total", "fs_multiple_date", "fs_multiple_week", "raw"
@@ -87,7 +90,7 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
         column(
           width = column.width,
           selectInput(
-            session$ns("season_select"), tags$h5("Select season"),
+            session$ns("season"), tags$h5("Select season"),
             choices = season_list(), selected = choices.sel,
             multiple = multi, selectize = TRUE
           )
@@ -97,9 +100,9 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
 
       # Date range - for single season only
       output$date_range_uiOut_dateRange <- renderUI({
-        req(summ.level() == "fs_single", season.df(), input$season_select)
+        req(summ.level() == "fs_single", season.df(), input$season)
         season.curr <- season.df() %>%
-          filter(season_name == input$season_select)
+          filter(season_name == input$season)
 
         validate(
           need(nrow(season.curr) == 1,
@@ -123,11 +126,23 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
       })
 
 
+      # Week dropdown - for multiple season by week only
+      output$week_uiOut_select <- renderUI({
+        req(summ.level() == "fs_week", input$season)
+
+        selectInput(
+          session$ns("week"), tags$h5("Select week (calendar year)"),
+          choices = 1:53, selected = 1, multiple = FALSE,
+        )
+      })
+
+
       #------------------------------------------------------------------------
       ### Return values
       list(
-        season_select = reactive(input$season_select),
-        date_range = reactive(input$date_range)
+        season = reactive(input$season),
+        date_range = reactive(input$date_range),
+        week = reactive(input$week)
       )
     }
   )

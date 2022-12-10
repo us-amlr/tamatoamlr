@@ -1,5 +1,5 @@
 # This script creates internal data used by Tamatoa and amlrPinnipeds functions
-#   These include,
+#   These include:
 
 #-------------------------------------------------------------------------------
 census.cols.phocid <- c(
