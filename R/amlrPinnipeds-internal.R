@@ -112,8 +112,7 @@
 
   choices.list.all <- list(
     "By species" = "by_sp",
-    # "By species and age class" = "by_sp_age",
-    "By species, sex, and age class" = "by_sp_age_sex"
+    "By species, and sex + age class" = "by_sp_age_sex"
   )
 
   if (!all(choices.args %in% choices.list.all))

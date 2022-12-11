@@ -24,9 +24,9 @@ mod_phocid_census_ui <- function(id) {
       ),
       box(
         title = "Summary options", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
-        tags$h5("This tab allows you to summarize and visualize phocid census data. ",
-                "Select how you wish to summarize this data, ",
-                "and then specify any filters you would like to apply"),
+        helpText("This tab allows you to summarize and visualize phocid census data. ",
+                 "Select how you wish to summarize this data, ",
+                 "and then specify any filters you would like to apply"),
         fluidRow(
           column(
             width = 4,
@@ -38,6 +38,12 @@ mod_phocid_census_ui <- function(id) {
           ),
           column(4, .summaryLocationUI(ns, c("by_capewide", "by_beach"), "by_capewide")),
           column(4, .summarySpAgeSexUI(ns, c("by_sp", "by_sp_age_sex"), "by_sp"))
+        ),
+        conditionalPanel(
+          condition = "input.summary_timing == 'fs_single'", ns = ns,
+          helpText("Note that the output will have 'census_date_start',",
+                   "the date of the start of the census,",
+                   "rather than 'census_date'")
         )
       )
     ),
@@ -59,6 +65,8 @@ mod_phocid_census_server <- function(id, pool, season.df) {
     id,
     function(input, output, session) {
       ##########################################################################
+      # General
+
       ### Get filter_season values
       filter_season <- reactive({
         mod_filter_season_server(
@@ -66,10 +74,17 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         )
       })
 
+      ### Get location column
+      loc_column <- reactive({
+        if_else(input$location_aggregate, "location_group", "location")
+      })
+
+      ### Date column
+      census.date <- "census_date_start"
+
 
       ##########################################################################
       # Census-specific common values
-
       vals <- reactiveValues(
         beaches_selected = NULL,
         census_tbl_columns_selected = NULL,
@@ -101,11 +116,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ### locations dropdown
       output$location_uiOut_selectize <- renderUI({
         req(input$summary_location == "by_beach")
-        beaches.list <- if (input$location_aggregate) {
-          as.list(sort(unique(census_df_filter_season()$location_group)))
-        } else {
-          as.list(sort(unique(census_df_filter_season()$location)))
-        }
+        beaches.list <-  as.list(sort(unique(census_df_filter_season()[[loc_column()]])))
 
         beaches.sel <- if (is.null(vals$beaches_selected)) {
           beaches.list[[1]]
@@ -144,7 +155,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
                "Unable to find vCensus_Phocid on specified database")
         )
 
-        census.df.collect <- tbl_vCensus_Phocid(req(pool())) %>%
+        census.df.collect <- tbl_vCensus_Phocid(pool()) %>%
           mutate(week_num = lubridate::week(census_date))
         # census_date = factor(census_date),
         # species = factor(species, levels = sort(unique(species)))),
@@ -170,6 +181,11 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         }
 
         validate(
+          need(census.date %in% names(census.df.nona),
+               "Error with census date column")
+        )
+
+        validate(
           need(nrow(census.df.nona) > 0,
                "No data to process after removing rows with NA values")
         )
@@ -180,24 +196,25 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
 
       ##########################################################################
+      # Filter data
+
+      #-------------------------------------------------------------------------
       ### Filter data by species, season/date, and remove NA values
       census_df_filter_season <- reactive({
-        #----------------------------------------------
-        # Filter by species
-        census.df <- census_df_collect() %>%
-          filter(species %in% !!input$species)
+        census.df.orig <- census_df_collect()
 
         #----------------------------------------------
         # Filter by season/date/week num
         fs <- filter_season()
 
         census.df <- if (input$summary_timing %in% .summaryTimingMultiple) {
-          census.df %>%
+          census.df.orig %>%
             filter(season_name %in% !!req(fs$season()))
         } else if (input$summary_timing %in% .summaryTimingSingle) {
-          census.df %>%
+          census.df.orig %>%
             filter(season_name == !!req(fs$season()),
-                   between(census_date, !!req(fs$date_range())[1], !!req(fs$date_range())[2]))
+                   between(!!sym(census.date),
+                           !!req(fs$date_range())[1], !!req(fs$date_range())[2]))
         } else {
           validate("invalid input$summary_timing value")
         }
@@ -216,21 +233,31 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       })
 
 
-      ##########################################################################
+      #-------------------------------------------------------------------------
+      ### Filter data by species
+      census_df_filter_species <- reactive({
+        census.df <- census_df_filter_season() %>%
+          filter(species %in% !!input$species)
+
+        validate(
+          need(nrow(census.df) > 0,
+               "There are no data for the given species filter")
+        )
+
+        census.df
+      })
+
+
+      #-------------------------------------------------------------------------
+      ### Filter data by location
       census_df_filter_location <- reactive({
-        #----------------------------------------------
-        # Filter by location
-        census.df <- if (input$summary_location == "by_beach") {
+        census.df <- census_df_filter_species()
+
+        if (input$summary_location == "by_beach") {
           validate(need(input$location, "Please select at least one beach name"))
-          census_df_filter_season() %>% filter(location %in% input$location)
-        } else {
-          census_df_filter_season()
+          census.df <- census.df %>% filter(!!sym(loc_column()) %in% input$location)
         }
 
-        if (input$location_aggregate)
-          census.df <- census.df %>% mutate(location = location_group)
-
-        #----------------------------------------------
         validate(
           need(nrow(census.df) > 0,
                "There are no data for the given location filter")
@@ -260,14 +287,14 @@ mod_phocid_census_server <- function(id, pool, season.df) {
             arrange_season(season.df(), species)
         }
 
-        if (input$summary_location == "by_capewide" && input$summary_timing == "fs_single") {
-          vcs_summ_func(vcs, season_name, census_date, species)
+        if (input$summary_location == "by_capewide" && input$summary_timing %in% .summaryTimingSingle) {
+          vcs_summ_func(vcs, season_name, !!sym(census.date), species)
         } else if (input$summary_location == "by_capewide" && input$summary_timing %in% .summaryTimingMultiple) {
           vcs_summ_func(vcs, season_name, species)
-        } else if (input$summary_location == "by_beach" && input$summary_timing == "fs_single") {
-          vcs_summ_func(vcs, season_name, census_date, species, location)
+        } else if (input$summary_location == "by_beach" && input$summary_timing %in% .summaryTimingSingle) {
+          vcs_summ_func(vcs, season_name, !!sym(census.date), species, !!sym(loc_column()))
         } else if (input$summary_location == "by_beach" && input$summary_timing %in% .summaryTimingMultiple) {
-          vcs_summ_func(vcs, season_name, species, location)
+          vcs_summ_func(vcs, season_name, species, !!sym(loc_column()))
         } else {
           validate("invalid input$summary_timing + input$summary_location combo")
         }
@@ -278,7 +305,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ### Process collected census data, part 2 (summary level 3)
       census_df <- reactive({
         # Get the names of the applicable census columns, and then summarize
-        grp.names.all <- c("season_name", "census_date", "species", "location")
+        grp.names.all <- c("season_name", census.date, "species", loc_column())
 
         if (input$summary_sas == "by_sp") {
           # Summarize by species only
@@ -312,7 +339,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         # If necessary, calculate cumsums of census columns
         if (input$summary_timing == "fs_single" && input$plot_cumsum) {
-          grp.names.all <- c("season_name", "species", "location")
+          grp.names.all <- c("season_name", "species", loc_column())
           grp.syms <- syms(dplyr::intersect(grp.names.all, names(vcs.summ)))
 
           vcs.summ <- vcs.summ %>%
@@ -344,11 +371,11 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         if (input$summary_timing %in% .summaryTimingMultiple) {
           census_df_filter_location() %>%
             group_by(season_name) %>%
-            summarise(n_census_date = n_distinct(census_date)) %>%
+            summarise(n_census_header = n_distinct(census_phocid_header_id)) %>%
             right_join(df.out, by = "season_name") %>%
-            select(season_name, .data$n_census_date, everything())
+            select(season_name, .data$n_census_header, everything())
         } else {
-          df.out %>% select(season_name, census_date, everything())
+          df.out %>% select(season_name, !!sym(census.date), everything())
         }
       })
 
@@ -358,9 +385,9 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       plot_output <- reactive({
         #--------------------------------------------------------
         # 'Get' upstream validate() messages before any req() calls are hit
-        census_df()
+        census.df.orig <- census_df()
 
-        # TODO: fix
+        # TODO: fix?
         if (input$summary_sas == "by_sp_age_sex") {
           validate(
             need(between(length(input$age_sex), 1, 6),
@@ -368,15 +395,10 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           )
         }
 
-        # validate(
-        #   need(input$summary_location != "by_beach" || length(input$species) == 1,
-        #        "When plotting phocid census data by beach, please select exactly one species")
-        # )
-
         #--------------------------------------------------------
         # Set plot variable depending on user selections
         if (input$summary_timing %in% .summaryTimingSingle) {
-          x.val <- as.name("census_date")
+          x.val <- as.name(census.date)
           x.lab <- "Date"
         } else if (input$summary_timing %in% .summaryTimingMultiple) {
           x.val <- as.name("season_name")
@@ -396,19 +418,20 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         #--------------------------------------------------------
         # This processing is done here so that output$tbl is wide
-        grp.names.all <- c("species", "location", "census_date")
-        grp.syms <- syms(dplyr::intersect(grp.names.all, names(census_df())))
+        grp.names.all <- c("species", loc_column(), census.date)
+        grp.syms <- syms(dplyr::intersect(grp.names.all, names(census.df.orig)))
 
 
         census.df <- if (input$summary_location == "by_beach") {
-          census_df() %>% mutate(location_lty = factor(location))
+          census.df.orig %>% mutate(location_lty = factor(!!sym(loc_column())))
         } else {
-          census_df() %>% mutate(location_lty = "1")
+          census.df.orig %>% mutate(location_lty = "1")
         }
 
         census.df <- if (input$summary_sas == "by_sp") {
           census.df %>%
             mutate_factor_species() %>%
+            mutate(count_class = "1") %>%
             arrange_season(season.df(), !!!grp.syms)
         } else {
           census.df %>%
@@ -423,7 +446,8 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         # Plotting
         # Always: Species is color, shape is age/sex class, linetype is beach
 
-        ggplot.out <- ggplot(census.df, aes(x = !!x.val, y = count_value))
+        colors.all <- amlrPinnipeds::pinniped.sp.colors
+        color.values <- colors.all[names(colors.all) %in% census.df$species]
 
         lty_guide_legend <- if (input$summary_location == "by_beach") {
           guide_legend(title = "Location")
@@ -431,27 +455,20 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           "none"
         }
 
-        ggplot.out <- if (input$summary_sas == "by_sp") {
-          ggplot.out +
-            geom_point(aes(color = species)) +
-            geom_line(aes(group = interaction(species, location_lty),
-                          color = species, linetype = location_lty))
+        shape_guide_legend <- if (input$summary_sas == "by_sp") {
+          "none"
         } else {
-          ggplot.out +
-            geom_point(aes(shape = count_class, color = species)) +
-            geom_line(aes(group = interaction(species, count_class, location_lty),
-                          color = species, linetype = location_lty)) +
-            guides(shape = guide_legend(title = "Sex + Age class"))
+          guide_legend(title = "Sex + Age Class")
         }
 
-
-        colors.all <- amlrPinnipeds::pinniped.sp.colors
-        color.values <- colors.all[names(colors.all) %in% census.df$species]
-
-        ggplot.out <- ggplot.out +
+        ggplot.out <- ggplot(census.df, aes(x = !!x.val, y = count_value)) +
+          geom_point(aes(shape = count_class, color = species)) +
+          geom_line(aes(group = interaction(species, count_class, location_lty),
+                        color = species, linetype = location_lty)) +
           scale_color_manual(values = color.values) +
           guides(color = guide_legend(title = "Species", order = 1),
                  linetype = lty_guide_legend,
+                 shape = shape_guide_legend,
                  size = "none")+
           expand_limits(y = 0) +
           xlab(x.lab) +
@@ -462,7 +479,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         if (input$summary_timing %in% .summaryTimingSingle) {
           ggplot.out <- ggplot.out +
-            scale_x_date(breaks = sort(unique(census.df$census_date)),
+            scale_x_date(breaks = sort(unique(census.df[[census.date]])),
                          date_labels = "%d %b %Y")
         }
 
