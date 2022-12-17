@@ -310,14 +310,15 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           vcs.summ <- census_df_summ() %>%
             select(where(is.character), where(is.Date), !!!census.cols.phocid)
 
-          grp.syms <- syms(dplyr::intersect(grp.names.all, names(vcs.summ)))
+          grp.syms <- syms(intersect(grp.names.all, names(vcs.summ)))
 
           vcs.summ <- vcs.summ %>%
-            pivot_longer(cols = where(is.numeric), names_to = "count_class", values_to = "count_value") %>%
+            pivot_longer(cols = where(is.numeric), names_to = "count_class",
+                         values_to = "count_value") %>%
             group_by(!!!grp.syms) %>%
             summarise(count_value = sum(count_value),
                       .groups = "drop") %>%
-            arrange_season(season.df(), !!!syms(dplyr::intersect(grp.names.all[-1], names(vcs.summ))))
+            arrange_season(season.df(), !!!syms(intersect(grp.names.all[-1], names(vcs.summ))))
 
           # } else if (input$summary_sas == "by_sp_age") {
           #   validate("Cannot summarize by species+age (yet?)")
@@ -382,19 +383,18 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ### Output plot
       plot_output <- reactive({
         #--------------------------------------------------------
-        # 'Get' upstream validate() messages before any req() calls are hit
-        census.df.orig <- census_df()
+        census.df.orig <- census_df() %>%
+          mutate_factor_species(levels = pinniped.phocid.sp)
 
-        # TODO: fix?
         if (input$summary_sas == "by_sp_age_sex") {
           validate(
             need(between(length(input$age_sex), 1, 6),
-                 "Please select between one and six 'columns to plot' to display a graph")
+                 "Please select between one and six 'columns to plot'")
           )
         }
 
         #--------------------------------------------------------
-        # Set plot variable depending on user selections
+        # Set some plot variable depending on user selections
         if (input$summary_timing %in% .summaryTimingSingle) {
           x.val <- as.name(census.date)
           x.lab <- "Date"
@@ -407,11 +407,26 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         y.lab <- if (input$plot_cumsum) "Count (cumulative sum)" else "Count"
         gg.title <- case_when(
-          input$summary_timing == "fs_total" ~ "Phocid Census - Totals by Season",
+          input$summary_timing == "fs_total" ~
+            "Phocid Census - Totals by Season",
           # input$summary_timing == "fs_date_single" ~ "Phocid Census - Closest to Date",
-          input$summary_timing == "fs_week" ~ paste("Phocid Census - Week", filter_season()$week(), "by Season"),
-          input$summary_timing == "fs_single" ~ paste("Phocid Census -", filter_season()$season())
+          input$summary_timing == "fs_week" ~
+            paste("Phocid Census - Week", filter_season()$week(), "by Season"),
+          input$summary_timing == "fs_single" ~
+            paste("Phocid Census -", filter_season()$season())
         )
+
+        lty_guide_legend <- if (input$summary_location == "by_beach") {
+          guide_legend(title = "Location")
+        } else {
+          "none"
+        }
+
+        shape_guide_legend <- if (input$summary_sas == "by_sp") {
+          "none"
+        } else {
+          guide_legend(title = "Sex + Age Class")
+        }
 
 
         #--------------------------------------------------------
@@ -428,13 +443,12 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         census.df <- if (input$summary_sas == "by_sp") {
           census.df %>%
-            mutate_factor_species() %>%
             mutate(count_class = "1") %>%
             arrange_season(season.df(), !!!grp.syms)
         } else {
           census.df %>%
-            pivot_longer(cols = where(is.numeric), names_to = "count_class", values_to = "count_value") %>%
-            mutate_factor_species() %>%
+            pivot_longer(cols = where(is.numeric), names_to = "count_class",
+                         values_to = "count_value") %>%
             arrange_season(season.df(), !!!grp.syms, count_class)
         }
 
@@ -444,26 +458,12 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         # Plotting
         # Always: Species is color, shape is age/sex class, linetype is beach
 
-        colors.all <- amlrPinnipeds::pinniped.sp.colors
-        color.values <- colors.all[names(colors.all) %in% census.df$species]
-
-        lty_guide_legend <- if (input$summary_location == "by_beach") {
-          guide_legend(title = "Location")
-        } else {
-          "none"
-        }
-
-        shape_guide_legend <- if (input$summary_sas == "by_sp") {
-          "none"
-        } else {
-          guide_legend(title = "Sex + Age Class")
-        }
-
         ggplot.out <- ggplot(census.df, aes(x = !!x.val, y = count_value)) +
           geom_point(aes(shape = count_class, color = species)) +
           geom_line(aes(group = interaction(species, count_class, location_lty),
                         color = species, linetype = location_lty)) +
-          scale_color_manual(values = color.values) +
+          scale_color_manual(values = pinniped.sp.colors[input$species],
+                             drop = FALSE) +
           guides(color = guide_legend(title = "Species", order = 1),
                  linetype = lty_guide_legend,
                  shape = shape_guide_legend,
