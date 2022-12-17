@@ -33,3 +33,34 @@ tbl_vCensus_Phocid <- function(src) {
     collect() %>%
     mutate(species = str_to_sentence(species))
 }
+
+#' @name extract
+#' @export
+tbl_beaches <- function(src) {
+  tbl(src, "beaches") %>%
+    select(beach_id = ID, everything()) %>%
+    collect()
+}
+
+#' @name extract
+#' @export
+tbl_location_name_general <- function(src) {
+  tbl_beaches(src) %>%
+    filter(general) %>%
+    select(name) %>%
+    unname() %>%
+    unlist() %>%
+    as.list()
+}
+
+#' @name extract
+#' @export
+tbl_location_name_group <- function(src) {
+  tbl(src, "beach_groups") %>%
+    filter(beach_group_level == 1) %>%
+    select(beach_group_name) %>%
+    collect() %>%
+    unname() %>%
+    unlist() %>%
+    as.list()
+}

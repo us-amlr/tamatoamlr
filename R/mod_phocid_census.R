@@ -41,8 +41,8 @@ mod_phocid_census_ui <- function(id) {
         ),
         conditionalPanel(
           condition = "input.summary_timing == 'fs_single'", ns = ns,
-          helpText("Note that the output will have 'census_date_start',",
-                   "the date of the start of the census,",
+          helpText("Note that the output plot and table will have",
+                   "'census_date_start', the date of the start of the census,",
                    "rather than 'census_date'")
         )
       )
@@ -86,7 +86,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Census-specific common values
       vals <- reactiveValues(
-        beaches_selected = NULL,
+        # beaches_selected = NULL,
         census_tbl_columns_selected = NULL,
         warning_na_records = NULL
       )
@@ -96,11 +96,11 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       # Observe events
 
       ### Store the selected beaches and column names
-      observe(vals$beaches_selected <- input$location)
+      # observe(vals$beaches_selected <- input$location)
       observe(vals$census_tbl_columns_selected <- input$age_sex)
 
       observeEvent(input$tabs, {
-        vals$beaches_selected  <- NULL
+        # vals$beaches_selected  <- NULL
         vals$census_tbl_columns_selected <- NULL
       })
 
@@ -116,18 +116,16 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ### locations dropdown
       output$location_uiOut_selectize <- renderUI({
         req(input$summary_location == "by_beach")
-        beaches.list <-  as.list(sort(unique(census_df_filter_season()[[loc_column()]])))
 
-        beaches.sel <- if (is.null(vals$beaches_selected)) {
-          beaches.list[[1]]
+        beaches.list <- if (input$location_aggregate){
+          sort(unique(census_df_collect()$location_group))
         } else {
-          vals$beaches_selected
+          sort(unique(census_df_collect()$location))
         }
 
         selectInput(
           session$ns("location"), tags$h5("Location(s)"),
-          choices = beaches.list, selected = beaches.sel,
-          multiple = TRUE, selectize = TRUE
+          choices = beaches.list, multiple = TRUE
         )
       })
 
