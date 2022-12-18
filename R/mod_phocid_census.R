@@ -30,7 +30,9 @@ mod_phocid_census_ui <- function(id) {
         fluidRow(
           column(
             width = 4,
-            .summaryTimingUI(ns, c("fs_total", "fs_week", "fs_single")),
+            .summaryTimingUI(ns, c("fs_total", "fs_single")), #, "fs_week"
+            # week currently doesn't have any guarantees that you'll only get one phocid census.
+            # Idea: Do a distinct()
             conditionalPanel(
               condition = "input.summary_timing == 'fs_single'", ns = ns,
               checkboxInput(ns("plot_cumsum"), "Plot cumulative sum", value = FALSE)
@@ -135,7 +137,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         selectInput(
           session$ns("age_sex"), tags$h5("Columns to plot"),
-          choices = census.cols.phocid, selected = census.cols.phocid[[1]],
+          choices = .census.cols.phocid, selected = .census.cols.phocid[[1]],
           multiple = TRUE, selectize = TRUE
         )
       })
@@ -189,12 +191,11 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         )
 
         census.df.nona
-
       })
 
 
       ##########################################################################
-      # Filter data
+      # Filter collected data
 
       #-------------------------------------------------------------------------
       ### Filter data by species, season/date, and remove NA values
@@ -205,10 +206,10 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         # Filter by season/date/week num
         fs <- filter_season()
 
-        census.df <- if (input$summary_timing %in% .summaryTimingMultiple) {
+        census.df <- if (input$summary_timing %in% .summary.timing.multiple) {
           census.df.orig %>%
             filter(season_name %in% !!req(fs$season()))
-        } else if (input$summary_timing %in% .summaryTimingSingle) {
+        } else if (input$summary_timing %in% .summary.timing.single) {
           census.df.orig %>%
             filter(season_name == !!req(fs$season()),
                    between(!!sym(census.date),
@@ -266,7 +267,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
 
       ##########################################################################
-      # Process collected census data
+      # Process collected and filtered census data
 
       ### Process collected census data, part 1 (summary level 2)
       #-------------------------------------------------------------------------
@@ -285,13 +286,13 @@ mod_phocid_census_server <- function(id, pool, season.df) {
             arrange_season(season.df(), species)
         }
 
-        if (input$summary_location == "by_capewide" && input$summary_timing %in% .summaryTimingSingle) {
+        if (input$summary_location == "by_capewide" && input$summary_timing %in% .summary.timing.single) {
           vcs_summ_func(vcs, season_name, !!sym(census.date), species)
-        } else if (input$summary_location == "by_capewide" && input$summary_timing %in% .summaryTimingMultiple) {
+        } else if (input$summary_location == "by_capewide" && input$summary_timing %in% .summary.timing.multiple) {
           vcs_summ_func(vcs, season_name, species)
-        } else if (input$summary_location == "by_beach" && input$summary_timing %in% .summaryTimingSingle) {
+        } else if (input$summary_location == "by_beach" && input$summary_timing %in% .summary.timing.single) {
           vcs_summ_func(vcs, season_name, !!sym(census.date), species, !!sym(loc_column()))
-        } else if (input$summary_location == "by_beach" && input$summary_timing %in% .summaryTimingMultiple) {
+        } else if (input$summary_location == "by_beach" && input$summary_timing %in% .summary.timing.multiple) {
           vcs_summ_func(vcs, season_name, species, !!sym(loc_column()))
         } else {
           validate("invalid input$summary_timing + input$summary_location combo")
@@ -308,7 +309,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         if (input$summary_sas == "by_sp") {
           # Summarize by species only
           vcs.summ <- census_df_summ() %>%
-            select(where(is.character), where(is.Date), !!!census.cols.phocid)
+            select(where(is.character), where(is.Date), !!!.census.cols.phocid)
 
           grp.syms <- syms(intersect(grp.names.all, names(vcs.summ)))
 
@@ -325,7 +326,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         } else if (input$summary_sas == "by_sp_age_sex") {
           # Summarize by species, sex, and age class
-          req(all(input$age_sex %in% unlist(census.cols.phocid)))
+          req(all(input$age_sex %in% unlist(.census.cols.phocid)))
 
           vcs.summ <- census_df_summ() %>%
             select(where(is.character), where(is.Date), !!!as.list(input$age_sex)) %>%
@@ -367,7 +368,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           arrange(if("census_date" %in% names(.)) census_date else season_name,
                   species)
 
-        if (input$summary_timing %in% .summaryTimingMultiple) {
+        if (input$summary_timing %in% .summary.timing.multiple) {
           census_df_filter_location() %>%
             group_by(season_name) %>%
             summarise(n_census_header = n_distinct(census_phocid_header_id)) %>%
@@ -395,10 +396,10 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         #--------------------------------------------------------
         # Set some plot variable depending on user selections
-        if (input$summary_timing %in% .summaryTimingSingle) {
+        if (input$summary_timing %in% .summary.timing.single) {
           x.val <- as.name(census.date)
           x.lab <- "Date"
-        } else if (input$summary_timing %in% .summaryTimingMultiple) {
+        } else if (input$summary_timing %in% .summary.timing.multiple) {
           x.val <- as.name("season_name")
           x.lab <- "Season"
         } else {
@@ -475,7 +476,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 
-        if (input$summary_timing %in% .summaryTimingSingle) {
+        if (input$summary_timing %in% .summary.timing.single) {
           ggplot.out <- ggplot.out +
             scale_x_date(breaks = sort(unique(census.df[[census.date]])),
                          date_labels = "%d %b %Y")

@@ -14,7 +14,7 @@ mod_filter_season_server(id, summ.level, season.df)
 \item{id}{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
 
 \item{summ.level}{a reactive of the 'summary level one' selection. Value must
-be one of: "fs_multiple_total", "fs_multiple_week", "fs_single", or "raw"}
+be one of: TODO}
 
 \item{season.df}{reactive; the season info data frame. Intended to be the
 first element (\code{season.df}) of the (list) output of
@@ -23,8 +23,9 @@ first element (\code{season.df}) of the (list) output of
 \value{
 A list with following components:
 \itemize{
-\item{season_select: reactive character, the name(s) of the selected season(s)}
+\item{season: reactive character, the name(s) of the selected season(s)}
 \item{date_range: reactive Date vector of length 2; the date range for a single season}
+\item{week: reactive character; the week to select for, across multiple seasons}
 }
 }
 \description{

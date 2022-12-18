@@ -4,7 +4,13 @@
 \alias{tamatoa}
 \title{Open Tamatoa, the amlrPinnipeds Shiny app}
 \usage{
-tamatoa(..., remote.prod = TRUE, remote.test = TRUE, local.prod = FALSE)
+tamatoa(
+  ...,
+  remote.prod = TRUE,
+  remote.test = TRUE,
+  local.prod = FALSE,
+  server.sql = "\\\\SQLEXPRESS"
+)
 }
 \arguments{
 \item{...}{passed to \code{\link[shiny]{shinyApp}}}
@@ -18,6 +24,8 @@ automatic connection to the ***REMOVED***_Test database on ***REMOVED***?}
 \item{local.prod}{logical; default is FALSE Should tamatoa create an
 automatic connection to the ***REMOVED*** database on
 the local SQL Express (see Details for more info)?}
+
+\item{server.sql}{character; SQL server suffix. Default is '\\SQLEXPRESS'}
 }
 \description{
 Open Tamatoa, the amlrPinnipeds Shiny app
@@ -25,7 +33,7 @@ Open Tamatoa, the amlrPinnipeds Shiny app
 \details{
 If \code{local.prod} is TRUE, then Tamatoa will attempt to connect to the
 ***REMOVED*** database on the following server:
-\code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]], "\\SQLEXPRESS")}
+\code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]], server.sql)}
 }
 \examples{
 if (interactive()) tamatoa()

@@ -17,5 +17,7 @@ such as for calculating krill lengths from carapace measurements.
 }
 \author{
 Sam Woodman \email{sam.woodman@noaa.gov}
+
+Karen Snyder \email{ksnyder@g.hmc.edu}
 }
 \keyword{package}

@@ -1,5 +1,7 @@
 # amlrPinnipeds internal functions
 
+# Internal data are created in data-raw/internal.R
+
 
 #-------------------------------------------------------------------------------
 ### Summary function used by census tabs
@@ -19,42 +21,17 @@
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-
-.summaryTimingChoicesList <- list(
-  "Multiple seasons - total" = "fs_total",
-  "Multiple seasons - by week" = "fs_week",
-  "Multiple seasons - date series" = "fs_date_series",
-  # "Multiple seasons - by date" = "fs_date_single",
-  "Single season" = "fs_single",
-  "Raw data" = "fs_raw"
-)
-.summaryTimingChoices <- unlist(unname(.summaryTimingChoicesList))
-
-.summaryTimingMultiple <- c("fs_total", "fs_week", "fs_date_series")
-.summaryTimingSingle <- c("fs_single")
-
-
 ### Returns the radioButton widget for selecting the timing summary level
 ### choices argument is the choices that should be included
 .summaryTimingUI <- function(
-    ns, choices = .summaryTimingChoices, choices.selected = "fs_single"
+    ns, choices = .summary.timing.choices, choices.selected = "fs_single"
 ) {
   choices.args <- match.arg(choices, several.ok = TRUE)
 
-  choices.list.all <- .summaryTimingChoicesList
-  #   list(
-  #   "Multiple seasons - total" = "fs_total",
-  #   "Multiple seasons - by week" = "fs_week",
-  #   "Multiple seasons - date series" = "fs_date_series",
-  #   # "Multiple seasons - by date" = "fs_date_single",
-  #   "Single season" = "fs_single",
-  #   "Raw data" = "fs_raw"
-  # )
-
-  if (!all(choices.args %in% choices.list.all))
+  if (!all(choices.args %in% .summary.timing.choices.list))
     stop("Need to update internal function - please contact the database manager")
 
-  choices.list <- choices.list.all[choices.list.all %in% choices.args]
+  choices.list <- intersect(.summary.timing.choices.list, choices.args)
 
   if (!(choices.selected %in% choices.list))
     stop("choices.selected must be one of the choices")
@@ -128,11 +105,9 @@
 }
 
 #-------------------------------------------------------------------------------
-###Returns a list of all the species/color pairs present in a table
+### Returns a list of all the species/color pairs present in a table
 .colorsPresent <- function(table) {
   colors.all <- amlrPinnipeds::pinniped.sp.colors
   color.values <- colors.all[names(colors.all) %in% table$species]
   return(color.values)
 }
-
-

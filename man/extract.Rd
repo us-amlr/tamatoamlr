@@ -3,9 +3,21 @@
 \name{extract}
 \alias{extract}
 \alias{tbl_vCensus_Phocid}
+\alias{tbl_vCensus_AFS_Study_Beach}
+\alias{tbl_beaches}
+\alias{tbl_location_name_general}
+\alias{tbl_location_name_group}
 \title{Extract data from database}
 \usage{
 tbl_vCensus_Phocid(src)
+
+tbl_vCensus_AFS_Study_Beach(src)
+
+tbl_beaches(src)
+
+tbl_location_name_general(src)
+
+tbl_location_name_group(src)
 }
 \arguments{
 \item{src}{a data source; likely a \code{\link[pool]{pool}} object

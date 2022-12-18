@@ -21,7 +21,8 @@ has levels: \code{\link[base]{names}(\link{pinniped.sp})}, i.e.
 A 'wrapper' around mutate that converts the species column to a factor with the specified levels
 }
 \details{
-A wrapper around \code{\link[dplyr]{mutate}} that converts the species column to a factor with the specified levels.
+A wrapper around \code{\link[dplyr]{mutate}} that converts
+the species column to a factor with the specified levels.
 This allows this function to be used directly in dplyr pipelines.
 }
 \examples{
