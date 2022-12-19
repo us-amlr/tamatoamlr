@@ -118,11 +118,12 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ### locations dropdown
       output$location_uiOut_selectize <- renderUI({
         req(input$summary_location == "by_beach")
+        census.df <- census_df_filter_season()
 
         beaches.list <- if (input$location_aggregate){
-          sort(unique(census_df_collect()$location_group))
+          sort(unique(census.df$location_group))
         } else {
-          sort(unique(census_df_collect()$location))
+          sort(unique(census.df$location))
         }
 
         selectInput(

@@ -20,7 +20,7 @@
 )
 .summary.timing.choices <- unlist(unname(.summary.timing.choices.list))
 
-.summary.timing.multiple <- c("fs_total", "fs_week", "fs_date_series")
+.summary.timing.multiple <- c("fs_total", "fs_week", "fs_date_series", "fs_date_single")
 .summary.timing.single <- c("fs_single")
 
 

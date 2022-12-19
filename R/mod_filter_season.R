@@ -52,25 +52,16 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
       #------------------------------------------------------------------------
       ### Generate season list to use in reactive
       season_list <- reactive({
-        as.list(season.df()$season_name)
+        as.list(req(season.df())$season_name)
       })
 
       #------------------------------------------------------------------------
       # Select season dropdown - could combine with min season, but left separate for now
       output$season_uiOut_select <- renderUI({
-        req(season.df())
-
-        ### Keep this list up to date with choices arg of .summaryTimingUI
-        summ.levels.vals <- c(
-          "fs_total", "fs_week", "fs_date_series", #"fs_date_single",
-          "fs_single", "fs_raw"
-
-          # "fs_multiple_total", "fs_multiple_date", "fs_multiple_week", "raw"
-        )
-
         validate(
-          need(summ.level() %in% summ.levels.vals,
-               "Invalid summ.level value - please contact Sam")
+          need(summ.level() %in% .summary.timing.choices,
+               paste("Invalid summ.level value in mod_filter_season_server -",
+                     "please contact thedatabase manager"))
         )
 
         if (summ.level() == "fs_single") {

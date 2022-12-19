@@ -37,7 +37,7 @@ mod_afs_study_beach_census_ui <- function(id) {
             #   checkboxInput(ns("plot_cumsum"), "Plot cumulative sum", value = FALSE)
             # )
           ),
-          column(4, .summaryLocationUI(ns, c("by_amlr", "by_beach"), "by_amlr")),
+          column(4, .summaryLocationUI(ns, c("by_amlr", "by_capewide", "by_beach"), "by_amlr")),
           column(4, .summarySpAgeSexUI(ns, c("by_sp_age_sex"), "by_sp_age_sex"))
         ),
         helpText("helptext todo")
@@ -89,6 +89,23 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       ### Warning messages
       output$warning_na_records <- renderUI({
         span(req(vals$warning_na_records), style = "color:red;")
+      })
+
+      ### Locations dropdown
+      output$location_uiOut_selectize <- renderUI({
+        req(input$summary_location == "by_beach")
+        census.df <- census_df_filter_season()
+
+        beaches.list <- if (input$location_aggregate){
+          sort(unique(census.df$location_group))
+        } else {
+          sort(unique(census.df$location))
+        }
+
+        selectInput(
+          session$ns("location"), tags$h5("Location(s)"),
+          choices = beaches.list, multiple = TRUE
+        )
       })
 
       ### Columns dropdown
@@ -152,7 +169,68 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Filter collected data
 
-      # TODO
+      #-------------------------------------------------------------------------
+      ### Filter data by species, season/date, and remove NA values
+      census_df_filter_season <- reactive({
+        census.df.orig <- census_df_collect()
+        #----------------------------------------------
+        # Filter by season/date/week num
+        fs <- filter_season()
+
+        census.df <- if (input$summary_timing %in% .summary.timing.multiple) {
+          census.df.orig %>%
+            filter(season_name %in% !!req(fs$season()))
+        } else if (input$summary_timing %in% .summary.timing.single) {
+          census.df.orig %>%
+            filter(season_name == !!req(fs$season()),
+                   between(census_date,
+                           !!req(fs$date_range())[1], !!req(fs$date_range())[2]))
+        } else {
+          validate("invalid input$summary_timing value")
+        }
+
+        # if (input$summary_timing == "fs_week") {
+        #   census.df <- census.df %>%
+        #     filter(week_num == as.numeric(!!req(fs$week())))
+        # }
+
+        validate(
+          need(nrow(census.df) > 0,
+               "There are no data for the given season filter(s)")
+        )
+
+        census.df
+      })
+
+
+      #-------------------------------------------------------------------------
+      ### Filter data by location
+      census_df_filter_location <- reactive({
+        census.df <- census_df_filter_season()
+        browser()
+
+        if (input$summary_location == "by_beach") {
+          validate(need(input$location, "Please select at least one beach name"))
+          census.df <- census.df %>% filter(!!sym(loc_column()) %in% input$location)
+        } else if (input$summary_location == "by_amlr") {
+          amlr.beaches <- c("Chungungo", "Cachorros", "Maderas", "Copi", "Hue",
+                            "Copihue", "Daniel", "Marko")
+          # tbl(pool(), "beaches") %>%
+          #   collect() %>%
+          #   filter(!is.na(study_beach_season_start_id)) %>%
+          #   select(name) %>%
+          #   arrange(name) %>%
+          #   unlist() %>% unname()
+          census.df <- census.df %>% filter(!!sym(loc_column()) %in% amlr.beaches)
+        }
+
+        validate(
+          need(nrow(census.df) > 0,
+               "There are no data for the given location filter")
+        )
+
+        census.df
+      })
 
 
       ##########################################################################
@@ -185,9 +263,9 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
         #     right_join(df.out, by = "season_name") %>%
         #     select(season_name, .data$n_census_header, everything())
         # } else {
-        #   df.out %>% select(season_name, !!sym(census.date), everything())
+        #   df.out %>% select(season_name, census_date, everything())
         # }
-        census_df_collect()
+        census_df_filter_location()
       })
 
 
