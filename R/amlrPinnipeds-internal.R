@@ -47,7 +47,8 @@
 .summaryLocationUI <- function(
     ns,
     choices = c("by_capewide", "by_amlr", "by_beach"),
-    choices.selected = "by_capewide")
+    choices.selected = "by_capewide",
+    group.option = TRUE)
 {
   choices.args <- match.arg(choices, several.ok = TRUE)
 
@@ -65,14 +66,20 @@
   if (!(choices.selected %in% choices.list))
     stop("choices.selected must be one of the choices")
 
-  list(
-    radioButtons(ns("summary_location"), label = tags$h5("Location"),
-                 choices = choices.list, selected = choices.selected),
-    conditionalPanel(
-      condition = "input.summary_location == 'by_beach'", ns = ns,
-      checkboxInput(ns("location_aggregate"), "Group beaches", value = TRUE)
+  rb.out <- radioButtons(ns("summary_location"), label = tags$h5("Location"),
+                         choices = choices.list, selected = choices.selected)
+
+  if (group.option) {
+    list(
+      rb.out,
+      conditionalPanel(
+        condition = "input.summary_location == 'by_beach'", ns = ns,
+        checkboxInput(ns("location_aggregate"), "Group beaches", value = TRUE)
+      )
     )
-  )
+  } else {
+    rb.out
+  }
 }
 
 

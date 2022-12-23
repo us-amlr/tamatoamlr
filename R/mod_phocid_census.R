@@ -270,7 +270,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Process collected and filtered census data
 
-      ### Process collected census data, part 1 (summary level 2)
+      ### Process data, part 1: group by/summarise/complete as desired
       #-------------------------------------------------------------------------
       census_df_summ <- reactive({
         vcs <- census_df_filter_location()
@@ -301,8 +301,8 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       })
 
 
-      #------------------------------------------------------------------------------
-      ### Process collected census data, part 2 (summary level 3)
+      #------------------------------------------------------------------------
+      ### Process data, part 2: make data long / calculate other values if necessary
       census_df <- reactive({
         # Get the names of the applicable census columns, and then summarize
         grp.names.all <- c("season_name", census.date, "species", loc_column())

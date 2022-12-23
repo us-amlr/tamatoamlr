@@ -37,10 +37,12 @@ mod_afs_study_beach_census_ui <- function(id) {
             #   checkboxInput(ns("plot_cumsum"), "Plot cumulative sum", value = FALSE)
             # )
           ),
-          column(4, .summaryLocationUI(ns, c("by_amlr", "by_capewide", "by_beach"), "by_amlr")),
+          column(4, .summaryLocationUI(ns, c("by_amlr", "by_capewide", "by_beach"), "by_amlr", FALSE)),
           column(4, .summarySpAgeSexUI(ns, c("by_sp_age_sex"), "by_sp_age_sex"))
         ),
-        helpText("helptext todo")
+        helpText("Note that locations (i.e., the 'location' column in the",
+                 "table output) are always grouped", tags$br(),
+                 "helptext todo")
       )
     ),
     mod_output_ui(ns("out"), tags$br(), uiOutput(ns("warning_na_records")))
@@ -70,10 +72,11 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
         )
       })
 
-      ### Get location column
-      loc_column <- reactive({
-        if_else(input$location_aggregate, "location_group", "location")
-      })
+      # AFS Study Beach Census data is always filtered by location_group
+      # ### Get location column
+      # loc_column <- reactive({
+      #   if_else(input$location_aggregate, "location_group", "location")
+      # })
 
 
       ##########################################################################
@@ -207,21 +210,21 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       ### Filter data by location
       census_df_filter_location <- reactive({
         census.df <- census_df_filter_season()
-        browser()
 
         if (input$summary_location == "by_beach") {
           validate(need(input$location, "Please select at least one beach name"))
-          census.df <- census.df %>% filter(!!sym(loc_column()) %in% input$location)
+          census.df <- census.df %>% filter(location_group %in% input$location)
         } else if (input$summary_location == "by_amlr") {
+          # TODO: AMLR study beach start dates, etc
           amlr.beaches <- c("Chungungo", "Cachorros", "Maderas", "Copi", "Hue",
-                            "Copihue", "Daniel", "Marko")
+                            "Copihue", "Modulo",  "Daniel", "Marko")
           # tbl(pool(), "beaches") %>%
           #   collect() %>%
           #   filter(!is.na(study_beach_season_start_id)) %>%
           #   select(name) %>%
           #   arrange(name) %>%
           #   unlist() %>% unname()
-          census.df <- census.df %>% filter(!!sym(loc_column()) %in% amlr.beaches)
+          census.df <- census.df %>% filter(location_group %in% amlr.beaches)
         }
 
         validate(
@@ -236,7 +239,24 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Process collected and filtered census data
 
-      # TODO
+      ### Process collected census data, part 1
+      #-------------------------------------------------------------------------
+      census_df <- reactive({
+        grp.chr <- if (req(input$summary_location) == "by_beach") {
+          c("season_name", "census_date", "species", "location")
+        } else {
+          c("season_name", "census_date", "species")
+        }
+
+        census_df_filter_location() %>%
+          mutate(location = location_group) %>%
+          select(!!grp.chr, !!!as.list(input$age_sex)) %>%
+          group_by(!!!syms(grp.chr)) %>%
+          summarise(across(where(is.numeric), sum, na.rm = TRUE),
+                    .groups = "drop") %>%
+          # complete(census_date) %>%
+          arrange_season(season.df(), desc(census_date))
+      })
 
 
 
@@ -265,7 +285,7 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
         # } else {
         #   df.out %>% select(season_name, census_date, everything())
         # }
-        census_df_filter_location()
+        census_df()
       })
 
 
