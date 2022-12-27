@@ -9,16 +9,9 @@ mod_afs_study_beach_census_ui <- function(id) {
       box(
         title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         fluidRow(
-          column(12, mod_filter_season_ui(ns("filter_season"))),
-          # column(
-          #   width = 3, offset = 1,
-          #   checkboxGroupInput(ns("species"), label = tags$h5("Species"),
-          #                      choices = amlrPinnipeds::pinniped.phocid.sp,
-          #                      selected = amlrPinnipeds::pinniped.phocid.sp)
-          # )
+          column(12, mod_filter_season_ui(ns("filter_season")))
         ),
 
-        # uiOutput(ns("week_num_uiOut_select")),
         uiOutput(ns("age_sex_uiOut_selectize")),
         uiOutput(ns("location_uiOut_selectize"))
       ),
@@ -30,8 +23,8 @@ mod_afs_study_beach_census_ui <- function(id) {
         fluidRow(
           column(
             width = 4,
-            .summaryTimingUI(ns, c("fs_total", "fs_date_single", "fs_single")),
-            helpText("Cumulative sum for dead pups? In some years")
+            .summaryTimingUI(ns, c("fs_single")),
+            # TODO: .summaryTimingUI(ns, c("fs_total", "fs_date_single", "fs_single")),
             # conditionalPanel(
             #   condition = "input.summary_timing == 'fs_single'", ns = ns,
             #   checkboxInput(ns("plot_cumsum"), "Plot cumulative sum", value = FALSE)
@@ -42,6 +35,7 @@ mod_afs_study_beach_census_ui <- function(id) {
         ),
         helpText("Note that locations (i.e., the 'location' column in the",
                  "table output) are always grouped", tags$br(),
+                 "Cumulative sum for dead pups? In some years?", tags$br(),
                  "helptext todo")
       )
     ),
@@ -98,12 +92,7 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       output$location_uiOut_selectize <- renderUI({
         req(input$summary_location == "by_beach")
         census.df <- census_df_filter_season()
-
-        beaches.list <- if (input$location_aggregate){
-          sort(unique(census.df$location_group))
-        } else {
-          sort(unique(census.df$location))
-        }
+        beaches.list <- sort(unique(census.df$location_group))
 
         selectInput(
           session$ns("location"), tags$h5("Location(s)"),
@@ -117,10 +106,10 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
 
         selectInput(
           session$ns("age_sex"), tags$h5("Columns to plot"),
-          choices = c("pup_live_count", "pup_dead_count",
+          choices = c("pup_total_count", "pup_live_count", "pup_dead_count",
                       "ad_female_count", "ad_male_count_sum",
                       "juv_female_count", "juv_male_count", "juv_unk_count"),
-          selected = c("pup_live_count", "pup_dead_count"),
+          selected = c("pup_total_count"),
           multiple = TRUE, selectize = TRUE
         )
       })
@@ -239,22 +228,22 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Process collected and filtered census data
 
-      ### Process collected census data, part 1
-      #-------------------------------------------------------------------------
-      census_df <- reactive({
-        grp.chr <- if (req(input$summary_location) == "by_beach") {
+      grp_names_chr <- reactive({
+        if (req(input$summary_location) == "by_beach") {
           c("season_name", "census_date", "species", "location")
         } else {
           c("season_name", "census_date", "species")
         }
-
+      })
+      census_df <- reactive({
         census_df_filter_location() %>%
-          mutate(location = location_group) %>%
-          select(!!grp.chr, !!!as.list(input$age_sex)) %>%
-          group_by(!!!syms(grp.chr)) %>%
-          summarise(across(where(is.numeric), sum, na.rm = TRUE),
+          mutate(location = location_group,
+                 pup_total_count = pup_live_count + pup_dead_count) %>%
+          select(!!grp_names_chr(), !!!as.list(input$age_sex)) %>%
+          group_by(!!!syms(grp_names_chr())) %>%
+          summarise(n_census_records = n(),
+                    across(where(is.numeric), sum), #na.rm = TRUE
                     .groups = "drop") %>%
-          # complete(census_date) %>%
           arrange_season(season.df(), desc(census_date))
       })
 
@@ -266,25 +255,6 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       #-------------------------------------------------------------------------
       ### Output table
       tbl_output <- reactive({
-        # df.out <- census_df() %>%
-        #   mutate(species = str_to_sentence(species)) %>%
-        #   nest(data_lc = where(is.numeric)) %>%
-        #   mutate(flag0 = pmap_lgl(list(.data$data_lc), function(i) all(i == 0))) %>%
-        #   filter(!.data$flag0) %>%
-        #   unnest(cols = c(.data$data_lc)) %>%
-        #   select(-.data$flag0) %>%
-        #   arrange(if("census_date" %in% names(.)) census_date else season_name,
-        #           species)
-        #
-        # if (input$summary_timing %in% .summary.timing.multiple) {
-        #   census_df_filter_location() %>%
-        #     group_by(season_name) %>%
-        #     summarise(n_census_header = n_distinct(census_phocid_header_id)) %>%
-        #     right_join(df.out, by = "season_name") %>%
-        #     select(season_name, .data$n_census_header, everything())
-        # } else {
-        #   df.out %>% select(season_name, census_date, everything())
-        # }
         census_df()
       })
 
@@ -292,8 +262,87 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       #-------------------------------------------------------------------------
       ### Output plot
       plot_output <- reactive({
-        ggplot(data.frame(x = 1:10, y = 10:19), aes(x, y)) +
-          geom_point()
+        census.df.orig <- census_df()
+
+        #--------------------------------------------------------
+        # Set some plot variable depending on user selections
+        if (input$summary_timing %in% .summary.timing.single) {
+          x.val <- as.name("census_date")
+          x.lab <- "Date"
+        } else if (input$summary_timing %in% .summary.timing.multiple) {
+          x.val <- as.name("season_name")
+          x.lab <- "Season"
+        } else {
+          validate("census plot - invalid input$summary_timing value")
+        }
+
+        y.lab <- "Count"
+
+        gg.title <- case_when(
+          input$summary_timing == "fs_total" ~
+            "AFS Study Beach Census - Totals by Season",
+          # input$summary_timing == "fs_date_single" ~ "Phocid Census - Closest to Date",
+          input$summary_timing == "fs_single" ~
+            paste("AFS Study Beach Census -", filter_season()$season()),
+          TRUE ~ "Title todo"
+        )
+
+        if (input$summary_location == "by_beach") {
+          guide_legend_color <- guide_legend(title = "Location")
+          guide_legend_shape <- guide_legend(title = "Sex / Age Class", order = 1)
+          color.val <- as.name("location_fctr")
+          shape.val <- as.name("count_class")
+        } else {
+          guide_legend_color <- guide_legend(title = "Sex / Age Class")
+          guide_legend_shape <- "none"
+          color.val <- as.name("count_class")
+          shape.val <- as.name("location_fctr")
+        }
+
+
+        #--------------------------------------------------------
+        # This processing is done here so that output$tbl is wide
+        census.df <- if (input$summary_location == "by_beach") {
+          census.df.orig %>% mutate(location_fctr = factor(location))
+        } else {
+          census.df.orig %>% mutate(location_fctr = "1")
+        }
+
+        census.df <- census.df %>%
+          select(-n_census_records) %>%
+          pivot_longer(cols = where(is.numeric), names_to = "count_class",
+                       values_to = "count_value") %>%
+          arrange_season(season.df(), !!!syms(grp_names_chr()), count_class)
+
+        validate(need(nrow(census.df) > 0, "No data to plot"))
+
+
+        #--------------------------------------------------------
+        # Plotting
+        # Always: color is sex/age class, shape is beach
+        ggplot.out <- ggplot(census.df, aes(x = !!x.val, y = count_value)) +
+          geom_point(aes(color = !!color.val, shape = !!shape.val)) +
+          geom_line(aes(group = interaction(count_class, location_fctr),
+                        color = !!color.val)) +
+          # scale_color_manual(values = amlrPinnipeds::pinniped.sp.colors[input$species],
+          #                    drop = FALSE) +
+          guides(color = guide_legend_color, linetype = "none",
+                 shape = guide_legend_shape, size = "none")+
+          expand_limits(y = 0) +
+          xlab(x.lab) +
+          ylab(y.lab) +
+          ggtitle(gg.title) +
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+        if (input$summary_timing %in% .summary.timing.single) {
+          ggplot.out <- ggplot.out +
+            scale_x_date(breaks = sort(unique(census.df[["census_date"]])),
+                         date_labels = "%d %b %Y")
+        }
+
+        # Output
+        ggplot.out
       })
 
       #-------------------------------------------------------------------------

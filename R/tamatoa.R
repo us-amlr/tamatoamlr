@@ -91,6 +91,7 @@ tamatoa <- function(...,
       sidebarMenu(
         id = "tabs",
         menuItem("Database and Season Info", tabName = "tab_info", icon = icon("th")),
+        menuItem("AFS Raw DCC", tabName = "tab_dcc_raw", icon = icon("th")),
         # menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
         # menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
         # menuItem("AFS Capewide Pup Census", tabName = "tab_afs_capewide_pup_census", icon = icon("th", lib = "font-awesome")),
@@ -127,10 +128,8 @@ tamatoa <- function(...,
       "))),
 
       tabItems(
-        tabItem(
-          "tab_info",
-          fluidRow(mod_database_ui("db"), mod_season_info_ui("si"))
-        ),
+        tabItem("tab_info", fluidRow(mod_database_ui("db"), mod_season_info_ui("si"))),
+        tabItem("tab_dcc_raw", mod_dcc_raw_ui("dcc_raw")),
         # tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
         # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
         # tabItem("tab_afs_capewide_pup_census", mod_afs_capewide_census_ui("afs_capewide_pup_census")),
