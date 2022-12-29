@@ -94,7 +94,7 @@ tamatoa <- function(...,
         menuItem("AFS Raw DCC", tabName = "tab_dcc_raw", icon = icon("th")),
         # menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
         # menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
-        # menuItem("AFS Capewide Pup Census", tabName = "tab_afs_capewide_pup_census", icon = icon("th", lib = "font-awesome")),
+        menuItem("AFS Cape-wide Pup Census", tabName = "tab_afs_capewide_pup_census", icon = icon("th", lib = "font-awesome")),
         menuItem("AFS Study Beach Census", tabName = "tab_afs_study_beach_census", icon = icon("th", lib = "font-awesome")),
         menuItem("Phocid Census", tabName = "tab_phocid_census", icon = icon("th")),
         # menuItem("Tag Resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
@@ -132,7 +132,7 @@ tamatoa <- function(...,
         tabItem("tab_dcc_raw", mod_dcc_raw_ui("dcc_raw")),
         # tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
         # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
-        # tabItem("tab_afs_capewide_pup_census", mod_afs_capewide_census_ui("afs_capewide_pup_census")),
+        tabItem("tab_afs_capewide_pup_census", mod_afs_capewide_pup_census_ui("afs_capewide_pup_census")),
         tabItem("tab_afs_study_beach_census", mod_afs_study_beach_census_ui("afs_study_beach_census")),
         tabItem("tab_phocid_census", mod_phocid_census_ui("phocid_census")),
         # tabItem("tab_tr", mod_tag_resights_ui("tag_resights")),
@@ -179,7 +179,7 @@ tamatoa <- function(...,
 
     # mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
     # mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
-    # mod_afs_capewide_pup_census_server("afs_capewide_pup_census", pool, si.list$season.df, si.list$season.id.list)
+    mod_afs_capewide_pup_census_server("afs_capewide_pup_census", db.pool, si.list$season.df)
     mod_afs_study_beach_census_server("afs_study_beach_census", db.pool, si.list$season.df)
     mod_phocid_census_server("phocid_census", db.pool, si.list$season.df)
     # mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)

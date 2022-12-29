@@ -372,9 +372,9 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         if (input$summary_timing %in% .summary.timing.multiple) {
           census_df_filter_location() %>%
             group_by(season_name) %>%
-            summarise(n_census_header = n_distinct(census_phocid_header_id)) %>%
+            summarise(n_header_records = n_distinct(census_phocid_header_id)) %>%
             right_join(df.out, by = "season_name") %>%
-            select(season_name, .data$n_census_header, everything())
+            select(season_name, .data$n_header_records, everything())
         } else {
           df.out %>% select(season_name, !!sym(census.date), everything())
         }

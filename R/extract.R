@@ -38,9 +38,8 @@ tbl_vCensus_Phocid <- function(src) {
 #' @export
 tbl_vCensus_AFS_Study_Beach <- function(src) {
   tbl(src, "vCensus_AFS_Study_Beach") %>%
-    select(season_name, census_id,
-           census_type, observer,
-           census_date, time_start, time_end,
+    select(season_name, census_id, census_type,
+           observer, census_date, time_start, time_end,
            location, location_group, beach_id, species,
            ad_female_count, pup_live_count, pup_dead_count,
            ad_male_count_sum,
@@ -55,31 +54,23 @@ tbl_vCensus_AFS_Study_Beach <- function(src) {
 
 #' @name extract
 #' @export
-tbl_beaches <- function(src) {
-  tbl(src, "beaches") %>%
-    select(beach_id = ID, everything()) %>%
-    collect()
-}
-
-#' @name extract
-#' @export
-tbl_location_name_general <- function(src) {
-  tbl_beaches(src) %>%
-    filter(general) %>%
-    select(name) %>%
-    unname() %>%
-    unlist() %>%
-    as.list()
-}
-
-#' @name extract
-#' @export
-tbl_location_name_group <- function(src) {
-  tbl(src, "beach_groups") %>%
-    filter(beach_group_level == 1) %>%
-    select(beach_group_name) %>%
+tbl_vCensus_AFS_Capewide_Pup <- function(src) {
+  tbl(src, "vCensus_AFS_Capewide_Pup") %>%
+    select(season_name, census_id, census_type,
+           observer, census_date, time_start, time_end,
+           location, location_group, beach_id, species,
+           pup_live_count, pup_dead_count, exclude_count,
+           census_notes, census_created_dt) %>%
     collect() %>%
-    unname() %>%
-    unlist() %>%
-    as.list()
+    mutate(species = str_to_sentence(species))
+}
+
+#' @name extract
+#' @export
+tbl_beaches_capewide <- function(src) {
+  tbl(src, "vBeaches") %>%
+    filter(!is.na(census_afs_capewide_pup_sort)) %>%
+    arrange(census_afs_capewide_pup_sort) %>%
+    select(beach_id, location = name, census_afs_capewide_pup_sort) %>%
+    collect()
 }

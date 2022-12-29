@@ -241,7 +241,7 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
                  pup_total_count = pup_live_count + pup_dead_count) %>%
           select(!!grp_names_chr(), !!!as.list(input$age_sex)) %>%
           group_by(!!!syms(grp_names_chr())) %>%
-          summarise(n_census_records = n(),
+          summarise(n_records = n(),
                     across(where(is.numeric), sum), #na.rm = TRUE
                     .groups = "drop") %>%
           arrange_season(season.df(), desc(census_date))
@@ -309,7 +309,7 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
         }
 
         census.df <- census.df %>%
-          select(-n_census_records) %>%
+          select(-n_records) %>%
           pivot_longer(cols = where(is.numeric), names_to = "count_class",
                        values_to = "count_value") %>%
           arrange_season(season.df(), !!!syms(grp_names_chr()), count_class)
