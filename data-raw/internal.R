@@ -23,10 +23,16 @@
 .summary.timing.multiple <- c("fs_total", "fs_week", "fs_date_series", "fs_date_single")
 .summary.timing.single <- c("fs_single")
 
+.tamatoa.csv.accept <- c(
+  "text/csv",
+  "text/comma-separated-values,text/plain",
+  ".csv"
+)
+
 
 #-------------------------------------------------------------------------------
 usethis::use_data(
   .census.cols.phocid, .summary.timing.choices.list, .summary.timing.choices,
-  .summary.timing.multiple, .summary.timing.single,
+  .summary.timing.multiple, .summary.timing.single, .tamatoa.csv.accept,
   internal = TRUE, overwrite = TRUE
 )

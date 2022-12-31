@@ -84,12 +84,10 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ### Date column
       census.date <- "census_date_start"
 
-
-      ##########################################################################
-      # Census-specific common values
+      ### Census-specific common values
       vals <- reactiveValues(
         # beaches_selected = NULL,
-        census_tbl_columns_selected = NULL,
+        # census_tbl_columns_selected = NULL,
         warning_na_records = NULL
       )
 
@@ -97,14 +95,14 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Observe events
 
-      ### Store the selected beaches and column names
-      # observe(vals$beaches_selected <- input$location)
-      observe(vals$census_tbl_columns_selected <- input$age_sex)
-
-      observeEvent(input$tabs, {
-        # vals$beaches_selected  <- NULL
-        vals$census_tbl_columns_selected <- NULL
-      })
+      # ### Store the selected beaches and column names
+      # # observe(vals$beaches_selected <- input$location)
+      # observe(vals$census_tbl_columns_selected <- input$age_sex)
+      #
+      # observeEvent(input$tabs, {
+      #   # vals$beaches_selected  <- NULL
+      #   vals$census_tbl_columns_selected <- NULL
+      # })
 
 
       ##########################################################################

@@ -91,15 +91,15 @@ tamatoa <- function(...,
       sidebarMenu(
         id = "tabs",
         menuItem("Database and Season Info", tabName = "tab_info", icon = icon("th")),
-        menuItem("AFS Raw DCC", tabName = "tab_dcc_raw", icon = icon("th")),
         # menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
         # menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
+        menuItem("AFS DCC", tabName = "tab_dcc_raw", icon = icon("th")),
         menuItem("AFS Cape-wide Pup Census", tabName = "tab_afs_capewide_pup_census", icon = icon("th", lib = "font-awesome")),
         menuItem("AFS Study Beach Census", tabName = "tab_afs_study_beach_census", icon = icon("th", lib = "font-awesome")),
-        menuItem("Phocid Census", tabName = "tab_phocid_census", icon = icon("th")),
         # menuItem("Tag Resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
         # menuItem("Pinnipeds + Tags", tabName = "tab_pt", icon = icon("th", lib = "font-awesome")),
         menuItem("Captures Data", tabName = "tab_captures_summaries", icon = icon("th")),
+        menuItem("Phocid Census", tabName = "tab_phocid_census", icon = icon("th")),
         tags$br(), tags$br(),
         column(12, uiOutput("tabs_warning")),
         actionButton("stop", "Close")
@@ -179,6 +179,7 @@ tamatoa <- function(...,
 
     # mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
     # mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
+    mod_dcc_raw_server("dcc_raw", db.pool, si.list$season.df)
     mod_afs_capewide_pup_census_server("afs_capewide_pup_census", db.pool, si.list$season.df)
     mod_afs_study_beach_census_server("afs_study_beach_census", db.pool, si.list$season.df)
     mod_phocid_census_server("phocid_census", db.pool, si.list$season.df)

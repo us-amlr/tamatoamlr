@@ -19,7 +19,7 @@ mod_afs_capewide_pup_census_ui <- function(id) {
                  "Select how you wish to summarize this data, ",
                  "and then specify any filters you would like to apply"),
         fluidRow(
-          column(4, .summaryTimingUI(ns, c("fs_single"))),
+          column(4, .summaryTimingUI(ns, c("fs_single", "fs_total"))),
           column(4, .summaryLocationUI(ns, c("by_capewide", "by_beach"), "by_capewide", FALSE))
         ),
         conditionalPanel(
@@ -189,7 +189,7 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
                       counts_dead = paste(paste(observer, pup_live_count, sep = ": "),
                                           collapse = "; "),
                       .groups = "drop") %>%
-            left_join(tbl_beaches_capewide(pool()), by = "location") %>%
+            left_join(tbl_beaches_capewide(req(pool())), by = "location") %>%
             arrange(census_afs_capewide_pup_sort) %>%
             select(-c(census_afs_capewide_pup_sort, notes_tmp, beach_id))
 
@@ -214,13 +214,26 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
       #-------------------------------------------------------------------------
       ### Output plot
       plot_output <- reactive({
-        validate("No plot for single season AFS Cape-wide Pup Census data")
+        # census_df()
+        # print("plot1")
+        # print(input$summary_timing)
+        # if (input$summary_timing == "fs_single") {
+        #   validate("No plot for single season AFS Cape-wide Pup Census data")
+        # }
+        # # validate(
+        # #   need(input$summary_timing != "fs_single",
+        # #        "No plot for single season AFS Cape-wide Pup Census data")
+        # # )
+        # print("plot2")
+
+        ggplot(data.frame(x = 1:2, y = 1:2), aes(x, y)) +
+          geom_point() +
+          ggtitle("Ignore this plot")
       })
 
       #-------------------------------------------------------------------------
       ### Send off
       observe(mod_output_server("out", session, tbl_output, plot_output))
-
     }
   )
 }
