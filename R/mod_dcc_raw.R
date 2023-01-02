@@ -88,6 +88,12 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
         warning_na_records = NULL
       )
 
+      ### Warning messages
+      output$warning_na_records <- renderUI({
+        span(req(vals$warning_na_records), style = "color:red;")
+      })
+
+      ### TODO
       mutate_tag_freq_code <- function(x) {
         x %>% mutate(tag_freq_code = paste(tag, freq, code, sep = " | "))
       }

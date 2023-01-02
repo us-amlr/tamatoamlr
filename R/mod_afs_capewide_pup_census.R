@@ -31,10 +31,7 @@ mod_afs_capewide_pup_census_ui <- function(id) {
         helpText("helptext todo")
       )
     ),
-    mod_output_ui(
-      ns("out"),
-      tags$br(), uiOutput(ns("warning_na_records")),
-      tags$br(), uiOutput(ns("mean_count_uiOut_text")))
+    mod_output_ui(ns("out"), tags$br(), uiOutput(ns("warning_na_records")))
   )
 }
 
@@ -213,7 +210,7 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Process data
       census_df_fs_single <- reactive({
-        census_df_filter_location() %>%
+        census.df.out <- census_df_filter_location() %>%
           mutate(pup_total_count = pup_live_count + pup_dead_count) %>%
           group_by(census_date, location) %>%
           summarise(n_records = n(),
@@ -236,6 +233,14 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
           left_join(tbl_beaches_capewide(req(pool())), by = "location") %>%
           arrange(census_afs_capewide_pup_sort) %>%
           select(-c(census_afs_capewide_pup_sort, notes_tmp, beach_id))
+
+        bind_rows(
+          data.frame(location = "Capewide",
+                     count_mean = sum(census.df.out$count_mean),
+                     count_live_mean = sum(census.df.out$count_live_mean),
+                     count_dead_mean = sum(census.df.out$count_dead_mean)),
+          census.df.out
+        )
       })
 
 
@@ -253,13 +258,13 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Outputs
 
-      output$mean_count_uiOut_text <- renderUI({
-        census.df.summ <- census_df_fs_single()
-        paste(
-          "Total mean count:", round(sum(census.df.summ$count_mean), 0),
-          paste0("(", round(sum(census.df.summ$count_live_mean), 0), " live)")
-        )
-      })
+      # output$mean_count_uiOut_text <- renderUI({
+      #   census.df.summ <- census_df_fs_single()
+      #   paste(
+      #     "Total mean count:", round(sum(census.df.summ$count_mean), 0),
+      #     paste0("(", round(sum(census.df.summ$count_live_mean), 0), " live)")
+      #   )
+      # })
 
       #-------------------------------------------------------------------------
       ### Output table
