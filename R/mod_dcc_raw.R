@@ -12,9 +12,7 @@ mod_dcc_raw_ui <- function(id) {
           column(
             width = 6,
             fileInput(ns("tx_key"), tags$h5("Load female-transmitter key"),
-                      accept = .tamatoa.csv.accept),
-            dateRangeInput(ns("dcc_date_range"), tags$h5("Date range"),
-                           start = "2022-11-28")
+                      accept = .tamatoa.csv.accept)
           ),
           column(
             width = 6,
@@ -26,23 +24,45 @@ mod_dcc_raw_ui <- function(id) {
         )
       ),
       box(
-        title = "Summary options", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
+        title = "Summary and Filter Options", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         fluidRow(
           column(
             width = 6,
-            selectInput(ns("summary_type"), tags$h5("Summary type"),
-                        choices = c("Trips" = "trips",
-                                    "Pings, by individual" = "pings"),
-                        selected = "trips"),
-            uiOutput(ns("individual_tag_tx_uiOut_select"))
+            radioButtons(ns("summary_type"), tags$h5("Summary type"),
+                         choices = c("Trips" = "trips",
+                                     "Trip lengths" = "trip_lengths",
+                                     "Pings, by individual" = "pings"),
+                         selected = "trips"),
+            column(
+              width = 12,
+              conditionalPanel(
+                condition = "input.summary_type == 'trips'", ns = ns,
+                tags$br(),
+                checkboxInput(ns("trips_completed"), "Show only maximum completed trips")
+              ),
+              conditionalPanel(
+                condition = "input.summary_type == 'trip_lengths'", ns = ns,
+                tags$br(),
+                radioButtons(ns("trip_lengths_summary_type"), tags$h5("Trip length summary type"),
+                             choices = c("For each seal, average across trips" = "by_pinniped",
+                                         "For each trip number, average across seals" = "by_trip",
+                                         "Average across all seals and trips" = "all"),
+                             selected = "by_pinniped"),
+                numericInput(ns("trip_num_max"), tags$h5("Maximum trip number to include"),
+                             value = 6, min = 1, step = 1)
+              )
+            )
           ),
           column(
             width = 6,
+            dateRangeInput(ns("dcc_date_range"), tags$h5("Date range"),
+                           start = "2022-11-28"),
             numericInput(ns("trip_hours"), tags$h5("Trip time gap (hours)"),
-                         value = 8),
-            checkboxInput(ns("include_resights"), "Include resights as tx pings - TODO")
+                         value = 24, min = 1, step = 1),
+            checkboxInput(ns("include_resights"), "Include resights as tx pings")
           )
-        )
+        ),
+        uiOutput(ns("tag_freq_code_uiOut_select"))
       ),
       mod_output_ui(ns("out"), tags$br(), uiOutput(ns("warning_na_records")))
     )
@@ -68,18 +88,35 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
         warning_na_records = NULL
       )
 
-      output$individual_tag_tx_uiOut_select <- renderUI({
-        req(input$summary_type == 'pings')
+      mutate_tag_freq_code <- function(x) {
+        x %>% mutate(tag_freq_code = paste(tag, freq, code, sep = " | "))
+      }
 
-        choices.list <- dcc_df_join() %>%
-          mutate(tag_device = paste(tag, device_num, sep = " | ")) %>%
-          distinct(tag_device) %>%
-          arrange(tag_device) %>%
+      output$tag_freq_code_uiOut_select <- renderUI({
+        x <- dcc_df_join() %>%
+          mutate_tag_freq_code()
+
+        choices.attendance <- x %>%
+          filter(attendance_study) %>%
+          arrange(tag_freq_code) %>%
           unlist() %>% unname()
 
-        selectInput(session$ns("individual_tag_tx"),
-                    tags$h5("Select individual 'tag | tx'"),
-                    choices = choices.list)
+        choices.list <- x %>%
+          distinct(tag_freq_code) %>%
+          arrange(tag_freq_code) %>%
+          unlist() %>% unname()
+
+        multiple <- input$summary_type != "pings"
+        selected <- if (multiple) choices.attendance else NULL
+        select.name <- if_else(
+          multiple,
+          "Select at least one 'tag | frequency | code'",
+          "Select one 'tag | frequency | code'",
+        )
+
+        selectInput(session$ns("tag_freq_code"), tags$h5(select.name),
+                    choices = choices.list, selected = selected,
+                    multiple = multiple)
       })
 
 
@@ -89,7 +126,7 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
       ### Female-transmitter key
       tx_key_df <- reactive({
         tx.key <- read.csv(req(input$tx_key$datapath))
-        tx.key.columns <- c("location", "tag", "pinniped_id")
+        tx.key.columns <- c("location", "tag", "pinniped_id", "attendance_study")
 
         validate(
           need(all(tx.key.columns %in% names(tx.key)),
@@ -152,18 +189,20 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
           arrange(freq, code, datetime)
       })
 
-      ### Join DCC data with with tx key
+      ### Join DCC data with with tx key, after filtering for user-provided date range
       dcc_df_join <- reactive({
         dcc_raw_df() %>%
-          inner_join(tx_key_df(), by = c("freq", "code"))
+          filter(between(as.Date(datetime),
+                         input$dcc_date_range[1], input$dcc_date_range[2])) %>%
+          inner_join(tx_key_df(), by = c("freq", "code")) %>%
+          filter(datetime > capture_datetime)
       })
 
-      ### Filter DCC data based on capture and provided dates, and calculate trips
-      dcc_df <- reactive({
-        dcc <- dcc_df_join() %>%
-          filter(datetime > capture_datetime,
-                 between(as.Date(datetime),
-                         input$dcc_date_range[1], input$dcc_date_range[2]))
+      ### Add resight data to dcc data, if specified
+      dcc_resight_df <- reactive({
+        dcc <- dcc_df_join()
+        # filter(between(as.Date(datetime),
+        #         input$dcc_date_range[1], input$dcc_date_range[2]))
 
         if (input$include_resights) {
           tr.key.join <- tbl(pool(), "vTag_Resights") %>%
@@ -202,15 +241,35 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
           dcc <- bind_rows(dcc, tr.ping.resights)
         }
 
-        dcc %>%
+        dcc
+      })
+
+
+      ### Calculate trips
+      dcc_calc_trips_df <- reactive({
+        dcc_resight_df() %>%
           arrange(freq, code, datetime) %>%
           arrange(tag, datetime) %>%
           group_by(freq, code) %>%
           mutate(datetime_prev = lag(datetime),
                  time_diff_hr = round(as.numeric(
                    difftime(datetime, datetime_prev, units = "hours")), 2),
-                 trip_num = c(NA, cumsum(head(lead(time_diff_hr), -1) > input$trip_hours))) %>%
+                 trip_num_completed = c(NA, cumsum(head(lead(time_diff_hr), -1) > input$trip_hours))) %>%
           ungroup()
+      })
+
+
+      ### Filter for selected tag/tx
+      dcc_df <- reactive({
+        validate(
+          need(input$tag_freq_code,
+               "Please select a 'tag | freq | code'")
+        )
+
+        dcc_calc_trips_df() %>%
+          mutate_tag_freq_code() %>%
+          filter(tag_freq_code %in% input$tag_freq_code) %>%
+          select(-tag_freq_code)
       })
 
 
@@ -218,34 +277,88 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
       ##########################################################################
       # Outputs
 
+      #-------------------------------------------------------------------------
+      #-------------------------------------------------------------------------
       ### Customized output for trips
-      dcc_df_trip <- reactive({
-        dcc_df() %>%
+      dcc_df_trips <- reactive({
+        dcc.trips.out <- dcc_df() %>%
           filter(time_diff_hr > input$trip_hours) %>%
-          select(tag, freq, code, trip_num, trip_length_hr = time_diff_hr,
+          select(tag, freq, code,
+                 trip_num = trip_num_completed, trip_length_hr = time_diff_hr,
                  departure_dt = datetime_prev, arrival_dt = datetime,
                  capture_location = location)
+
+        validate(
+          need(nrow(dcc.trips.out) > 0,
+               "There are no trips for the selected filters")
+        )
+
+        dcc.trips.out
+      })
+
+      ### Number of completed trips for seals
+      dcc_df_trips_completed <- reactive({
+        dcc_df_trips() %>%
+          group_by(freq, code) %>%
+          filter(trip_num == max(trip_num)) %>%
+          ungroup() %>%
+          select(tag, freq, code, trip_num_completed_max = trip_num,
+                 capture_location)
+      })
+
+      ### Mean trip lengths
+      dcc_df_trip_lengths <- reactive({
+        dcc.trips <- dcc_df_trips() %>%
+          filter(trip_num <= input$trip_num_max)
+
+        summarise_trip_lengths <- function(.data, ...) {
+          .data %>%
+            group_by(...) %>%
+            summarise(n_trips = n(),
+                      # {{n_records_name}} := n(),
+                      trip_length_hr_mean = round(mean(trip_length_hr), 2),
+                      trip_length_day_mean = round(trip_length_hr_mean/24, 2),
+                      .groups = "drop")
+        }
+
+        if (input$trip_lengths_summary_type == "by_pinniped") {
+          dcc.trips %>% summarise_trip_lengths(tag, freq, code)
+        } else if (input$trip_lengths_summary_type == "by_trip") {
+          dcc.trips %>% summarise_trip_lengths(trip_num)
+        } else if (input$trip_lengths_summary_type == "all") {
+          dcc.trips %>% summarise_trip_lengths()
+        } else {
+          .validate_else("trip_lengths_summary_type")
+        }
       })
 
       ### Customized output for pings
       dcc_df_pings <- reactive({
-        tag.tx.split <- strsplit(req(input$individual_tag_tx), " | ")[[1]]
+        dcc <- dcc_df()
+        req(n_distinct(paste(dcc$tag, dcc$code)) == 1)
 
-        dcc_df() %>%
-          filter(tag == tag.tx.split[1],
-                 device_num == tag.tx.split[3]) %>%
+        pings.out <- dcc_df() %>%
           mutate(date = as.Date(datetime),
                  time = format(datetime, "%H:%M:%S")) %>%
           select(-datetime_prev) %>%
-          select(tag, freq, code, sig, station,
-                 datetime, date, time, time_diff_hr, trip_num, everything())
+          select(tag, freq, code, sig, station, datetime, date, time,
+                 time_diff_hr, trip_num_completed, everything())
+
+        validate(
+          need(nrow(pings.out) > 0,
+               "There are no pings for the selected individual")
+        )
+
+        pings.out
       })
 
       #-------------------------------------------------------------------------
       ### Output table
       tbl_output <- reactive({
         if (input$summary_type == "trips") {
-          dcc_df_trip()
+          if (input$trips_completed) dcc_df_trips_completed() else dcc_df_trips()
+        } else if (input$summary_type == "trip_lengths") {
+          dcc_df_trip_lengths()
         } else if (input$summary_type == "pings") {
           dcc_df_pings()
         } else {
@@ -255,24 +368,129 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
 
 
       #-------------------------------------------------------------------------
+      #-------------------------------------------------------------------------
+      # Plot outputs
+
+      ### Plot for trips summary type
+      dcc_plot_trips <- reactive({
+        dcc.trip.max <- max(dcc_df_trips()$trip_num)
+        dcc.triplen.max <- max(dcc_df_trips()$trip_length_hr)
+
+        # Make plot depending on trips_completed checkbox
+        if (input$trips_completed) {
+          dcc_df_trips_completed() %>%
+            mutate_tag_freq_code() %>%
+            ggplot(aes(tag_freq_code, trip_num_completed_max)) +
+            geom_col() +
+            scale_y_continuous(breaks = seq(0, dcc.trip.max, by = 1),
+                               minor_breaks = NULL) +
+            theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1)) +
+            ggtitle(paste("Number of completed trips:",
+                          paste(format(input$dcc_date_range, "%d %b %Y"),
+                                collapse = " to "))) +
+            xlab("Tag | Frequency | Code") +
+            ylab(NULL)
+
+
+        } else {
+          ggplot(dcc_df_trips(), aes(trip_num, trip_length_hr)) +
+            geom_point(aes(color = tag), size = 3) +
+            geom_line(aes(group = tag, color = tag)) +
+            guides(color = guide_legend(title = "Tag")) +
+            scale_x_continuous(breaks = seq_len(dcc.trip.max),
+                               minor_breaks = NULL) +
+            scale_y_continuous(breaks = seq(0, dcc.triplen.max, by = 20),
+                               minor_breaks = seq(0, dcc.triplen.max, by = 10)) +
+            expand_limits(y = 0) +
+            ggtitle(paste("AFS female trips:",
+                          paste(format(input$dcc_date_range, "%d %b %Y"),
+                                collapse = " to "))) +
+            xlab("Trip number") +
+            ylab("Trip length (hours)")
+        }
+      })
+
+
+      ### Plot for trip length summary type
+      dcc_plot_trip_lengths <- reactive({
+        # Helper plot function
+        dcc_trip_length_plot <- function(df, x, y, fill, xlab) {
+          ggplot.out <-  df %>%
+            ggplot(aes({{x}}, {{y}}, fill = {{fill}})) +
+            geom_col() +
+            scale_y_continuous(breaks = seq(0,  max(df$trip_length_hr_mean),
+                                            by = 20),
+                               minor_breaks = NULL) +
+            ggtitle(paste("Average trip length through up to",
+                          input$trip_num_max, "trips:",
+                          paste(format(input$dcc_date_range, "%d %b %Y"),
+                                collapse = " to "))) +
+            xlab(xlab) +
+            ylab("Trip length (hours)")
+
+          if (xlab == "Tag | Frequency | Code") {
+            ggplot.out +
+              theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1))
+          } else {
+            ggplot.out
+          }
+        }
+
+        # Make plot depending on trip_lengths_summary_type
+        if (input$trip_lengths_summary_type == "by_pinniped") {
+          dcc_trip_length_plot(
+            dcc_df_trip_lengths() %>% mutate_tag_freq_code(),
+            tag_freq_code, trip_length_hr_mean, n_trips,
+            "Tag | Frequency | Code"
+          )
+        } else if (input$trip_lengths_summary_type == "by_trip") {
+          dcc_trip_length_plot(
+            dcc_df_trip_lengths(), trip_num, trip_length_hr_mean, n_trips,
+            "Trip number"
+          )
+        } else if (input$trip_lengths_summary_type == "all") {
+          validate("No plot for all trips trip length summary")
+        } else {
+          .validate_else("trip_lengths_summary_type")
+        }
+      })
+
+
+      ### Plot for pings summary type
+      dcc_plot_pings <- reactive({
+        dcc_df_pings() %>%
+          filter(time_diff_hr < input$trip_hours) %>%
+          ggplot(aes(datetime)) +
+          geom_point(aes(y = time_diff_hr, size = sig)) +
+          geom_line(aes(y = time_diff_hr)) +
+          guides(color = "none",
+                 size = guide_legend(title = "Signal")) +
+          scale_x_datetime(date_breaks = "1 day", date_minor_breaks = "6 hours",
+                           date_labels = "%d %b %Y") +
+          theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1)) +
+          ggtitle(paste0(dcc_df_pings()$tag[1],
+                         ": time gap and signal strength")) +
+          xlab("Datetime") +
+          ylab("Time gap (hours)")
+      })
+
+
+      #-------------------------------------------------------------------------
       ### Output plot
       plot_output <- reactive({
-        # census_df()
-        # print("plot1")
-        # print(input$summary_timing)
-        # if (input$summary_timing == "fs_single") {
-        #   validate("No plot for single season AFS Cape-wide Pup Census data")
-        # }
-        # # validate(
-        # #   need(input$summary_timing != "fs_single",
-        # #        "No plot for single season AFS Cape-wide Pup Census data")
-        # # )
-        # print("plot2")
+        if (input$summary_type == "trips") {
+          dcc_plot_trips()
+        } else if (input$summary_type == "trip_lengths") {
+          dcc_plot_trip_lengths()
+        } else if (input$summary_type == "pings") {
+          dcc_plot_pings()
+        } else {
+          validate("invalid summary_type - please contact the database manager")
+        }
+      })
 
-        ggplot(data.frame(x = 1:2, y = 1:2), aes(x, y)) +
-          geom_point() +
-          ggtitle("Ignore this plot - DCC")
-      })#-------------------------------------------------------------------------
+
+      #-------------------------------------------------------------------------
       ### Send off
       observe(mod_output_server("out", session, tbl_output, plot_output))
     }

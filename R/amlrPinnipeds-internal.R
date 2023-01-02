@@ -118,3 +118,13 @@
   color.values <- colors.all[names(colors.all) %in% table$species]
   return(color.values)
 }
+
+
+#-------------------------------------------------------------------------------
+### Generic validate message used in else blocks in Tamatoa
+.validate_else <- function(widget.name) {
+  validate(
+    paste0("Invalid input$", widget.name, " value - ",
+           "please contact the database manager")
+  )
+}
