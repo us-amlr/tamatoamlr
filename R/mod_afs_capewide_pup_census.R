@@ -24,13 +24,17 @@ mod_afs_capewide_pup_census_ui <- function(id) {
         ),
         conditionalPanel(
           condition = "input.summary_timing == 'fs_single'", ns = ns,
+          checkboxInput(ns("exclude_count"), "Remove data with 'exclude_count' flag", value = TRUE),
           helpText("For the AFS Cape-wide Pup Census, the 'Single Season' ",
                    "view is for checking data for count consistency")
         ),
         helpText("helptext todo")
       )
     ),
-    mod_output_ui(ns("out"), tags$br(), uiOutput(ns("warning_na_records")))
+    mod_output_ui(
+      ns("out"),
+      tags$br(), uiOutput(ns("warning_na_records")),
+      tags$br(), uiOutput(ns("mean_count_uiOut_text")))
   )
 }
 
@@ -61,6 +65,11 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
       vals <- reactiveValues(
         warning_na_records = NULL
       )
+
+      ### Warning messages
+      output$warning_na_records <- renderUI({
+        span(req(vals$warning_na_records), style = "color:red;")
+      })
 
       ### Locations dropdown
       output$location_uiOut_selectize <- renderUI({
@@ -149,9 +158,43 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
 
 
       #-------------------------------------------------------------------------
+      ### Filter data that has been specified to be excluded
+      census_df_filter_exclude <- reactive({
+        census.df <- census_df_filter_season()
+
+        if (input$exclude_count) {
+          census.df.orig <- census.df
+          census.df <- census.df.orig %>%
+            filter(!exclude_count)
+
+          nrow.diff <- nrow(census.df.orig) - nrow(census.df)
+          vals$warning_na_records <- if (nrow.diff != 0) {
+            paste(
+              "FYI:", nrow.diff,
+              ifelse(nrow.diff == 1, "row was", "rows were"),
+              "removed because of a exclude_count flag"
+            )
+          } else {
+            NULL
+          }
+
+          validate(
+            need(nrow(census.df) > 0,
+                 "No data to process after removing exclude_count rows")
+          )
+
+        } else {
+          vals$warning_na_records <- NULL
+        }
+
+        census.df
+      })
+
+
+      #-------------------------------------------------------------------------
       ### Filter data by location
       census_df_filter_location <- reactive({
-        census.df <- census_df_filter_season()
+        census.df <- census_df_filter_exclude()
 
         if (input$summary_location == "by_beach") {
           validate(need(input$location, "Please select at least one beach name"))
@@ -169,30 +212,36 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
 
       ##########################################################################
       # Process data
+      census_df_fs_single <- reactive({
+        census_df_filter_location() %>%
+          mutate(pup_total_count = pup_live_count + pup_dead_count) %>%
+          group_by(census_date, location) %>%
+          summarise(n_records = n(),
+                    count_mean = round(mean(pup_total_count), 1),
+                    count_live_mean = round(mean(pup_live_count), 1),
+                    count_dead_mean = round(mean(pup_dead_count), 1),
+                    count_range = diff(range(pup_total_count)),
+                    counts = paste(paste(observer, pup_total_count, sep = ": "),
+                                   collapse = "; "),
+                    notes_tmp = list(if_else(
+                      is.na(census_notes), NA_character_,
+                      paste(observer, census_notes, sep = ": ")
+                    )),
+                    notes = paste(na.omit(unlist(notes_tmp)), collapse = "; "),
+                    counts_live = paste(paste(observer, pup_dead_count, sep = ": "),
+                                        collapse = "; "),
+                    counts_dead = paste(paste(observer, pup_live_count, sep = ": "),
+                                        collapse = "; "),
+                    .groups = "drop") %>%
+          left_join(tbl_beaches_capewide(req(pool())), by = "location") %>%
+          arrange(census_afs_capewide_pup_sort) %>%
+          select(-c(census_afs_capewide_pup_sort, notes_tmp, beach_id))
+      })
+
+
       census_df <- reactive({
         if (input$summary_timing == "fs_single") {
-          census_df_filter_location() %>%
-            mutate(pup_total_count = pup_live_count + pup_dead_count) %>%
-            group_by(census_date, location) %>%
-            summarise(n_records = n(),
-                      counts_mean = round(mean(pup_total_count), 1),
-                      counts_range = diff(range(pup_total_count)),
-                      counts = paste(paste(observer, pup_total_count, sep = ": "),
-                                     collapse = "; "),
-                      notes_tmp = list(if_else(
-                        is.na(census_notes), NA_character_,
-                        paste(observer, census_notes, sep = ": ")
-                      )),
-                      notes = paste(na.omit(unlist(notes_tmp)), collapse = "; "),
-                      counts_live = paste(paste(observer, pup_dead_count, sep = ": "),
-                                          collapse = "; "),
-                      counts_dead = paste(paste(observer, pup_live_count, sep = ": "),
-                                          collapse = "; "),
-                      .groups = "drop") %>%
-            left_join(tbl_beaches_capewide(req(pool())), by = "location") %>%
-            arrange(census_afs_capewide_pup_sort) %>%
-            select(-c(census_afs_capewide_pup_sort, notes_tmp, beach_id))
-
+          census_df_fs_single()
         } else {
           validate(
             "This tab can currently only display 'single season' summaries"
@@ -203,6 +252,14 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
 
       ##########################################################################
       # Outputs
+
+      output$mean_count_uiOut_text <- renderUI({
+        census.df.summ <- census_df_fs_single()
+        paste(
+          "Total mean count:", round(sum(census.df.summ$count_mean), 0),
+          paste0("(", round(sum(census.df.summ$count_live_mean), 0), " live)")
+        )
+      })
 
       #-------------------------------------------------------------------------
       ### Output table
