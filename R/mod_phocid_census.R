@@ -275,8 +275,8 @@ mod_phocid_census_server <- function(id, pool, season.df) {
               unlist()
 
             vals$warning_date_single_filter <- paste(
-              "The following seasons do not have phocid census records within",
-              days.max, "days of the provided date",
+              "The following seasons have phocid census records,",
+              "but none within", days.max, "days of the provided date",
               paste0("(", fs$month(), " ", fs$day(), "):"),
               paste(seasons.rmd, collapse = ", ")
             )
@@ -464,6 +464,8 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ### Output plot
       plot_output <- reactive({
         #--------------------------------------------------------
+        fs <- filter_season()
+
         census.df.orig <- census_df() %>%
           mutate_factor_species(levels = amlrPinnipeds::pinniped.phocid.sp)
 
@@ -488,7 +490,6 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         y.lab <- if (input$plot_cumsum) "Count (cumulative sum)" else "Count"
 
-        fs <- filter_season()
         gg.title <- case_when(
           input$summary_timing == "fs_total" ~
             "Phocid Census - Totals by Season",
@@ -539,11 +540,9 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         validate(need(nrow(census.df) > 0, "No data to plot"))
 
-
         #--------------------------------------------------------
         # Plotting
         # Always: Species is color, shape is age/sex class, linetype is beach
-
         ggplot.out <- ggplot(census.df, aes(x = !!x.val, y = count_value)) +
           geom_point(aes(shape = count_class, color = species)) +
           geom_line(aes(group = interaction(species, count_class, location_lty),
@@ -553,18 +552,20 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           guides(color = guide_legend(title = "Species", order = 1),
                  linetype = lty_guide_legend,
                  shape = shape_guide_legend,
-                 size = "none")+
-          expand_limits(y = 0) +
+                 size = "none") +
           xlab(x.lab) +
           ylab(y.lab) +
           ggtitle(gg.title) +
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-
-        if (input$summary_timing %in% .summary.timing.single) {
-          ggplot.out <- ggplot.out +
+        ggplot.out <- if (input$summary_timing %in% .summary.timing.single) {
+          ggplot.out +
             scale_x_date(breaks = sort(unique(census.df[[census.date]])),
-                         date_labels = "%d %b %Y")
+                         date_labels = "%d %b %Y") +
+            expand_limits(y = 0)
+        } else if (input$summary_timing %in% .summary.timing.multiple){
+          ggplot.out +
+            expand_limits(x = req(fs$season()), y = 0)
         }
 
         # Output

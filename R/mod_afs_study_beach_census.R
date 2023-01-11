@@ -403,17 +403,19 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
           #                    drop = FALSE) +
           guides(color = guide_legend_color, linetype = "none",
                  shape = guide_legend_shape, size = "none")+
-          expand_limits(y = 0) +
           xlab(x.lab) +
           ylab(y.lab) +
           ggtitle(gg.title) +
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-
-        if (input$summary_timing %in% .summary.timing.single) {
-          ggplot.out <- ggplot.out +
-            scale_x_date(breaks = sort(unique(census.df[["census_date"]])),
-                         date_labels = "%d %b %Y")
+        ggplot.out <- if (input$summary_timing %in% .summary.timing.single) {
+          ggplot.out +
+            scale_x_date(breaks = sort(unique(census.df[[census.date]])),
+                         date_labels = "%d %b %Y") +
+            expand_limits(y = 0)
+        } else if (input$summary_timing %in% .summary.timing.multiple){
+          ggplot.out +
+            expand_limits(x = req(fs$season()), y = 0)
         }
 
         # Output
