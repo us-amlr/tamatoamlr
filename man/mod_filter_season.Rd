@@ -29,5 +29,5 @@ A list with following components:
 }
 }
 \description{
-Module for filtering data by multiple seasons (total or by week) or a single season
+Module for filtering Pinniped data by multiple and single season options
 }

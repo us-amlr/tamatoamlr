@@ -1,6 +1,6 @@
 #' Season filter selection
 #'
-#' Module for filtering data by multiple seasons (total or by week) or a single season
+#' Module for filtering Pinniped data by multiple and single season options
 #'
 #' @name mod_filter_season
 #'
@@ -17,8 +17,17 @@ mod_filter_season_ui <- function(id) {
       uiOutput(ns("date_range_uiOut_dateRange"))
     ),
     fluidRow(
-      column(6, uiOutput(ns("week_uiOut_select")))
+      column(6, uiOutput(ns("month_uiOut_select"))),
+      column(6, uiOutput(ns("day_uiOut_select")))
     )
+
+    # fluidRow(
+    #   uiOutput(ns("season_uiOut_select")),
+    #   uiOutput(ns("date_range_uiOut_dateRange"))
+    # ),
+    # fluidRow(
+    #   column(6, uiOutput(ns("week_uiOut_select")))
+    # )
   )
 }
 
@@ -40,7 +49,6 @@ mod_filter_season_ui <- function(id) {
 #'
 #' @export
 mod_filter_season_server <- function(id, summ.level, season.df) {
-  #browser()
   stopifnot(
     is.reactive(summ.level),
     is.reactive(season.df)
@@ -55,8 +63,17 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
         as.list(req(season.df())$season_name)
       })
 
+      # season_month_day_min <- reactive({
+      #   season.df <- req(season.df())
+      #
+      #   open.min <- season.df$season_open_date[which.min(lubridate::yday(season.df$season_open_date))]
+      #   close.max <- season.df$season_close_date[which.max(lubridate::yday(season.df$season_close_date))]
+      #
+      #   list()
+      # })
+
       #------------------------------------------------------------------------
-      # Select season dropdown - could combine with min season, but left separate for now
+      ### Select season dropdown - could combine with min season, but left separate for now
       output$season_uiOut_select <- renderUI({
         validate(
           need(summ.level() %in% .summary.timing.choices,
@@ -68,10 +85,10 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
           multi <- FALSE
           choices.sel <- max(unlist(season_list()))
           column.width = 6
-        } else if (summ.level() == "fs_date_series") {
-          multi <- TRUE
-          choices.sel <- utils::head(unlist(season_list()), 6)
-          column.width = 12
+          # } else if (summ.level() == "fs_date_single") {
+          #   multi <- TRUE
+          #   choices.sel <- utils::head(unlist(season_list()), 6)
+          #   column.width = 12
         } else {
           multi <- TRUE
           choices.sel <- unlist(season_list())
@@ -89,7 +106,7 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
       })
 
 
-      # Date range - for single season only
+      ### Date range - for single season only
       output$date_range_uiOut_dateRange <- renderUI({
         req(summ.level() == "fs_single", season.df(), input$season)
         season.curr <- season.df() %>%
@@ -117,15 +134,39 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
       })
 
 
-      # Week dropdown - for multiple season by week only
-      output$week_uiOut_select <- renderUI({
-        req(summ.level() == "fs_week", input$season)
+      ### Month dropdown
+      output$month_uiOut_select <- renderUI({
+        req(summ.level() == "fs_date_single", season.df())
+
+        months.named <- month.abb
+        names(months.named) <- month.name
 
         selectInput(
-          session$ns("week"), tags$h5("Select week (calendar year)"),
-          choices = 1:53, selected = 1, multiple = FALSE,
+          session$ns("month"), tags$h5("Select month"),
+          choices = months.named[c(10:12, 1:3)], selected = NULL
         )
       })
+
+      ### Day dropdown - depends on month value
+      output$day_uiOut_select <- renderUI({
+        req(summ.level() == "fs_date_single", season.df())
+        date.tmp <- ymd(paste("2000", req(input$month), "01", sep = "-"))
+        selectInput(
+          session$ns("day"), tags$h5("Select day"),
+          choices = 1:days_in_month(date.tmp), selected = NULL
+        )
+      })
+
+
+      # # Week dropdown - for multiple season by week only
+      # output$week_uiOut_select <- renderUI({
+      #   req(summ.level() == "fs_week", input$season)
+      #
+      #   selectInput(
+      #     session$ns("week"), tags$h5("Select week (calendar year)"),
+      #     choices = 1:53, selected = 1, multiple = FALSE,
+      #   )
+      # })
 
 
       #------------------------------------------------------------------------
@@ -133,7 +174,9 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
       list(
         season = reactive(input$season),
         date_range = reactive(input$date_range),
-        week = reactive(input$week)
+        # week = reactive(input$week),
+        month = reactive(input$month),
+        day = reactive(input$day)
       )
     }
   )

@@ -12,7 +12,7 @@ Description: This package contains a Shiny app that connects to the
     but the intent is for the Shiny app to provide the majority of the functionality for this package.
 Depends: R (>= 4.0.0)
 Imports: 
-    amlrDatabases (>= 0.4), 
+    amlrDatabases (>= 0.6), 
     dplyr (>= 1.0),
     DT, 
     glue,

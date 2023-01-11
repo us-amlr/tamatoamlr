@@ -20,7 +20,7 @@
 #'
 #' @importFrom DT DTOutput renderDT
 #' @importFrom glue glue
-#' @importFrom lubridate days is.Date month week year ymd ymd_hms
+#' @importFrom lubridate days days_in_month is.Date month week year ymd ymd_hms
 #' @importFrom pool dbIsValid dbGetQuery poolClose
 #' @importFrom purrr pmap_dbl pmap_lgl set_names
 #' @importFrom rlang .data enquo

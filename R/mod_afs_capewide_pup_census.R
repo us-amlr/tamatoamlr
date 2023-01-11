@@ -167,7 +167,7 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
           nrow.diff <- nrow(census.df.orig) - nrow(census.df)
           vals$warning_na_records <- if (nrow.diff != 0) {
             paste(
-              "FYI:", nrow.diff,
+              "Note:", nrow.diff,
               ifelse(nrow.diff == 1, "row was", "rows were"),
               "removed because of a exclude_count flag"
             )
@@ -276,21 +276,10 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
       #-------------------------------------------------------------------------
       ### Output plot
       plot_output <- reactive({
-        # census_df()
-        # print("plot1")
-        # print(input$summary_timing)
-        # if (input$summary_timing == "fs_single") {
-        #   validate("No plot for single season AFS Cape-wide Pup Census data")
-        # }
-        # # validate(
-        # #   need(input$summary_timing != "fs_single",
-        # #        "No plot for single season AFS Cape-wide Pup Census data")
-        # # )
-        # print("plot2")
-
-        ggplot(data.frame(x = 1:2, y = 1:2), aes(x, y)) +
-          geom_point() +
-          ggtitle("Ignore this plot")
+        # ggplot(data.frame(x = 1:2, y = 1:2), aes(x, y)) +
+        #   geom_point() +
+        #   ggtitle("Ignore this plot")
+        NULL
       })
 
       #-------------------------------------------------------------------------

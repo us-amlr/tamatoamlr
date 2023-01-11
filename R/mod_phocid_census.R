@@ -9,9 +9,9 @@ mod_phocid_census_ui <- function(id) {
       box(
         title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
         fluidRow(
-          column(8, mod_filter_season_ui(ns("filter_season"))),
+          column(9, mod_filter_season_ui(ns("filter_season"))),
           column(
-            width = 3, offset = 1,
+            width = 3, #offset = 1,
             checkboxGroupInput(ns("species"), label = tags$h5("Species"),
                                choices = amlrPinnipeds::pinniped.phocid.sp,
                                selected = amlrPinnipeds::pinniped.phocid.sp)
@@ -30,7 +30,7 @@ mod_phocid_census_ui <- function(id) {
         fluidRow(
           column(
             width = 4,
-            .summaryTimingUI(ns, c("fs_total", "fs_single")), #, "fs_week"
+            .summaryTimingUI(ns, c("fs_total", "fs_date_single", "fs_single")), #, "fs_week"
             # week currently doesn't have any guarantees that you'll only get one phocid census.
             # Idea: Do a distinct()
             conditionalPanel(
@@ -49,7 +49,11 @@ mod_phocid_census_ui <- function(id) {
         )
       )
     ),
-    mod_output_ui(ns("out"), tags$br(), uiOutput(ns("warning_na_records")))
+    mod_output_ui(
+      ns("out"),
+      tags$br(), uiOutput(ns("warning_na_records")),
+      uiOutput(ns("warning_date_single_filter"))
+    )
   )
 }
 
@@ -86,9 +90,8 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
       ### Census-specific common values
       vals <- reactiveValues(
-        # beaches_selected = NULL,
-        # census_tbl_columns_selected = NULL,
-        warning_na_records = NULL
+        warning_na_records = NULL,
+        warning_date_single_filter = NULL
       )
 
 
@@ -111,6 +114,10 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ### Warning messages
       output$warning_na_records <- renderUI({
         span(req(vals$warning_na_records), style = "color:red;")
+      })
+
+      output$warning_date_single_filter <- renderUI({
+        span(req(vals$warning_date_single_filter), style = "color:red;")
       })
 
       ### locations dropdown
@@ -217,10 +224,70 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           validate("invalid input$summary_timing value")
         }
 
-        if (input$summary_timing == "fs_week") {
-          census.df <- census.df %>%
-            filter(week_num == as.numeric(!!req(fs$week())))
+        #----------------------------------------------
+        # Do additional date single filtering, if necessary
+        if (input$summary_timing == "fs_date_single") {
+          req(fs$month(), fs$day())
+          fs.date.df <- data.frame(
+            season_name = fs$season(),
+            m = fs$month(),
+            d = fs$day()
+          )
+          days.max <- 14
+
+          census.df.ds.orig <- census.df %>%
+            left_join(fs.date.df, by = "season_name") %>%
+            mutate(season_date = amlr_date_from_season(season_name, m, d),
+                   days_diff = abs(as.numeric(
+                     difftime(census_date_start, season_date, units = "days")))) %>%
+            group_by(season_name) %>%
+            filter(days_diff == min(days_diff))
+
+          census.df <- census.df.ds.orig %>%
+            filter(days_diff <= days.max) %>%
+            select(-c(m, d, season_date)) %>%
+            ungroup()
+
+
+          if (length(unique(census.df$season_name)) != length(unique(census.df$census_phocid_header_id)))
+            validate(paste("Error in phocid census data single summaries -",
+                           "please contact the database manager"))
+
+          nrow.diff <- nrow(census.df.ds.orig) - nrow(census.df)
+
+          validate(
+            need(nrow(census.df) > 0,
+                 paste("There are no census records for the",
+                       "selected season(s) within", days.max,
+                       "days of the provided date",
+                       paste0("(", fs$month(), " ", fs$day(), ")")))
+          )
+
+          # Warning message for seasons w/o census record close enough
+          if (nrow.diff != 0) {
+            seasons.rmd <- census.df.ds.orig %>%
+              filter(!(season_name %in% unique(census.df$season_name))) %>%
+              distinct(season_name) %>%
+              arrange(season_name) %>%
+              select(season_name) %>%
+              unlist()
+
+            vals$warning_date_single_filter <- paste(
+              "The following seasons do not have phocid census records within",
+              days.max, "days of the provided date",
+              paste0("(", fs$month(), " ", fs$day(), "):"),
+              paste(seasons.rmd, collapse = ", ")
+            )
+          } else {
+            vals$warning_date_single_filter <- NULL
+          }
+
         }
+
+        # if (input$summary_timing == "fs_week") {
+        #   census.df <- census.df %>%
+        #     filter(week_num == as.numeric(!!req(fs$week())))
+        # }
 
         validate(
           need(nrow(census.df) > 0,
@@ -284,6 +351,9 @@ mod_phocid_census_server <- function(id, pool, season.df) {
             mutate(across(where(is.numeric), ~replace_na(.x, 0))) %>%
             arrange_season(season.df(), species)
         }
+
+        # phocid.single <- c(.summary.timing.single, "fs_date_single")
+        # phocid.multiple <- setdiff(.summary.timing.multiple, "fs_date_single")
 
         if (input$summary_location == "by_capewide" && input$summary_timing %in% .summary.timing.single) {
           vcs_summ_func(vcs, season_name, !!sym(census.date), species)
@@ -364,16 +434,24 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           filter(!.data$flag0) %>%
           unnest(cols = c(.data$data_lc)) %>%
           select(-.data$flag0) %>%
-          arrange(if("census_date" %in% names(.)) census_date else season_name,
+          arrange(if(census.date %in% names(.)) desc(!!sym(census.date)) else desc(season_name),
                   species)
 
-        if (input$summary_timing %in% .summary.timing.multiple) {
+        if (input$summary_timing == "fs_total") {
           census_df_filter_location() %>%
             group_by(season_name) %>%
             summarise(n_header_records = n_distinct(census_phocid_header_id)) %>%
             right_join(df.out, by = "season_name") %>%
             select(season_name, .data$n_header_records, everything())
-        } else {
+        } else if (input$summary_timing == "fs_date_single") {
+          census_df_filter_location() %>%
+            group_by(season_name) %>%
+            summarise(n_header_records = n_distinct(census_phocid_header_id),
+                      census_date_start = unique(census_date_start),
+                      census_date_end = unique(census_date_end)) %>%
+            right_join(df.out, by = "season_name") %>%
+            select(season_name, .data$n_header_records, everything())
+        } else{
           df.out %>% select(season_name, !!sym(census.date), everything())
         }
       })
@@ -406,15 +484,19 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         }
 
         y.lab <- if (input$plot_cumsum) "Count (cumulative sum)" else "Count"
+
+        fs <- filter_season()
         gg.title <- case_when(
           input$summary_timing == "fs_total" ~
             "Phocid Census - Totals by Season",
-          # input$summary_timing == "fs_date_single" ~ "Phocid Census - Closest to Date",
-          input$summary_timing == "fs_week" ~
-            paste("Phocid Census - Week", filter_season()$week(), "by Season"),
+          input$summary_timing == "fs_date_single" ~
+            paste("Phocid Census - Closest to", fs$month(), fs$day()),
+          # input$summary_timing == "fs_week" ~
+          #   paste("Phocid Census - Week", filter_season()$week(), "by Season"),
           input$summary_timing == "fs_single" ~
-            paste("Phocid Census -", filter_season()$season())
+            paste("Phocid Census -", fs$season()[1])
         )
+        #[1] in fs_single is so that other options always return a vector of length 1
 
         lty_guide_legend <- if (input$summary_location == "by_beach") {
           guide_legend(title = "Location")

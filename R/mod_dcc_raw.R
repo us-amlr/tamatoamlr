@@ -33,25 +33,24 @@ mod_dcc_raw_ui <- function(id) {
                                      "Trip lengths" = "trip_lengths",
                                      "Pings, by individual" = "pings"),
                          selected = "trips"),
-            column(
-              width = 12,
-              conditionalPanel(
-                condition = "input.summary_type == 'trips'", ns = ns,
-                tags$br(),
-                checkboxInput(ns("trips_completed"), "Show only maximum completed trips")
-              ),
-              conditionalPanel(
-                condition = "input.summary_type == 'trip_lengths'", ns = ns,
-                tags$br(),
-                radioButtons(ns("trip_lengths_summary_type"), tags$h5("Trip length summary type"),
-                             choices = c("For each seal, average across trips" = "by_pinniped",
-                                         "For each trip number, average across seals" = "by_trip",
-                                         "Average across all seals and trips" = "all"),
-                             selected = "by_pinniped"),
-                numericInput(ns("trip_num_max"), tags$h5("Maximum trip number to include"),
-                             value = 6, min = 1, step = 1)
-              )
+            # column(
+            #   width = 12,
+            tags$br(),
+            conditionalPanel(
+              condition = "input.summary_type == 'trips'", ns = ns,
+              checkboxInput(ns("trips_completed"), "Show only maximum completed trips")
+            ),
+            conditionalPanel(
+              condition = "input.summary_type == 'trip_lengths'", ns = ns,
+              radioButtons(ns("trip_lengths_summary_type"), tags$h5("Trip length summary type"),
+                           choices = c("For each seal, average across trips" = "by_pinniped",
+                                       "For each trip number, average across seals" = "by_trip",
+                                       "Average across all seals and trips" = "all"),
+                           selected = "by_pinniped"),
+              numericInput(ns("trip_num_max"), tags$h5("Maximum trip number to include"),
+                           value = 6, min = 1, step = 1)
             )
+            # )
           ),
           column(
             width = 6,
@@ -132,7 +131,9 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
       ### Female-transmitter key
       tx_key_df <- reactive({
         tx.key <- read.csv(req(input$tx_key$datapath))
-        tx.key.columns <- c("location", "tag", "pinniped_id", "attendance_study")
+        tx.key.columns <- c("capture_date", "capture_time", "location",
+                            "tag", "pinniped_id", "attendance_study",
+                            "capture_datetime")
 
         validate(
           need(all(tx.key.columns %in% names(tx.key)),
@@ -140,7 +141,9 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
                      paste(tx.key.columns, collapse = ", ")))
         )
 
-        tx.key
+        tx.key %>%
+          mutate(capture_date = ymd(capture_date),
+                 capture_datetime = ymd_hms(capture_datetime))
       })
 
       ### DCC data - general functions
@@ -165,13 +168,15 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
 
       ### DCC data - load CABO files
       dcc_files_cabo_load <- reactive({
-        dcc.cabo <- bind_rows(dcc_read_file(req(input$dcc_files_cabo$datapath), "CABO"))
+        dcc.cabo <- bind_rows(dcc_read_file(req(input$dcc_files_cabo$datapath),
+                                            "CABO"))
         dcc_validate(dcc.cabo)
       })
 
       ### DCC data - load MAD files
       dcc_files_mad_load <- reactive({
-        dcc.mad <- bind_rows(dcc_read_file(req(input$dcc_files_mad$datapath), "MAD"))
+        dcc.mad <- bind_rows(dcc_read_file(req(input$dcc_files_mad$datapath),
+                                           "MAD"))
         dcc_validate(dcc.mad)
       })
 
@@ -201,7 +206,7 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
           filter(between(as.Date(datetime),
                          input$dcc_date_range[1], input$dcc_date_range[2])) %>%
           inner_join(tx_key_df(), by = c("freq", "code")) %>%
-          filter(datetime > capture_datetime)
+          filter(datetime >= capture_datetime)
       })
 
       ### Add resight data to dcc data, if specified
@@ -238,7 +243,7 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
                       max_dt = max(datetime))
 
           tr.ping.resights <- tr.key.join %>%
-            mutate(datetime = lubridate::ymd_hms(paste(resight_date, resight_time))) %>%
+            mutate(datetime = ymd_hms(paste(resight_date, resight_time))) %>%
             left_join(dcc.tmp, by = "pinniped_id") %>%
             filter(datetime >= min_dt, datetime <= max_dt) %>%
             select(!!names(dcc))
