@@ -226,6 +226,8 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         #----------------------------------------------
         # Do additional date single filtering, if necessary
+        # NOTE: if this is updated,
+        #   you probably should update the code in mod_afs_study_beach_census
         if (input$summary_timing == "fs_date_single") {
           req(fs$month(), fs$day())
           fs.date.df <- data.frame(
@@ -238,25 +240,25 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           census.df.ds.orig <- census.df %>%
             left_join(fs.date.df, by = "season_name") %>%
             mutate(season_date = amlr_date_from_season(season_name, m, d),
-                   days_diff = abs(as.numeric(
-                     difftime(census_date_start, season_date, units = "days")))) %>%
+                   days_diff = as.numeric(
+                     difftime(census_date_start, season_date, units = "days")),
+                   days_diff = if_else(days_diff < 0, abs(days_diff)-0.5, days_diff)) %>%
             group_by(season_name) %>%
             filter(days_diff == min(days_diff))
 
-          census.df <- census.df.ds.orig %>%
+          census.df.ds <- census.df.ds.orig %>%
             filter(days_diff <= days.max) %>%
             select(-c(m, d, season_date)) %>%
             ungroup()
 
-
-          if (length(unique(census.df$season_name)) != length(unique(census.df$census_phocid_header_id)))
+          if (length(unique(census.df.ds$season_name)) != length(unique(census.df.ds$census_phocid_header_id)))
             validate(paste("Error in phocid census data single summaries -",
                            "please contact the database manager"))
 
-          nrow.diff <- nrow(census.df.ds.orig) - nrow(census.df)
+          nrow.diff <- nrow(census.df.ds.orig) - nrow(census.df.ds)
 
           validate(
-            need(nrow(census.df) > 0,
+            need(nrow(census.df.ds) > 0,
                  paste("There are no census records for the",
                        "selected season(s) within", days.max,
                        "days of the provided date",
@@ -266,7 +268,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           # Warning message for seasons w/o census record close enough
           if (nrow.diff != 0) {
             seasons.rmd <- census.df.ds.orig %>%
-              filter(!(season_name %in% unique(census.df$season_name))) %>%
+              filter(!(season_name %in% unique(census.df.ds$season_name))) %>%
               distinct(season_name) %>%
               arrange(season_name) %>%
               select(season_name) %>%
@@ -282,6 +284,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
             vals$warning_date_single_filter <- NULL
           }
 
+          census.df <- census.df.ds
         }
 
         # if (input$summary_timing == "fs_week") {

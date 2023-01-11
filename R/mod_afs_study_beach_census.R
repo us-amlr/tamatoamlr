@@ -23,7 +23,7 @@ mod_afs_study_beach_census_ui <- function(id) {
         fluidRow(
           column(
             width = 4,
-            .summaryTimingUI(ns, c("fs_single")),
+            .summaryTimingUI(ns, c("fs_date_single", "fs_single")),
             # TODO: .summaryTimingUI(ns, c("fs_total", "fs_date_single", "fs_single")),
             # conditionalPanel(
             #   condition = "input.summary_timing == 'fs_single'", ns = ns,
@@ -39,7 +39,11 @@ mod_afs_study_beach_census_ui <- function(id) {
                  "helptext todo")
       )
     ),
-    mod_output_ui(ns("out"), tags$br(), uiOutput(ns("warning_na_records")))
+    mod_output_ui(
+      ns("out"),
+      tags$br(), uiOutput(ns("warning_na_records")),
+      uiOutput(ns("warning_date_single_filter"))
+    )
   )
 }
 
@@ -76,7 +80,8 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Census-specific common values
       vals <- reactiveValues(
-        warning_na_records = NULL
+        warning_na_records = NULL,
+        warning_date_single_filter = NULL
       )
 
 
@@ -86,6 +91,10 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       ### Warning messages
       output$warning_na_records <- renderUI({
         span(req(vals$warning_na_records), style = "color:red;")
+      })
+
+      output$warning_date_single_filter <- renderUI({
+        span(req(vals$warning_date_single_filter), style = "color:red;")
       })
 
       ### Locations dropdown
@@ -179,6 +188,69 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
                            !!req(fs$date_range())[1], !!req(fs$date_range())[2]))
         } else {
           validate("invalid input$summary_timing value")
+        }
+
+        #----------------------------------------------
+        # Do additional date single filtering, if necessary
+        # NOTE: if this is updated,
+        #   you probably should update the code in mod_afs_study_beach_census
+        if (input$summary_timing == "fs_date_single") {
+          req(fs$month(), fs$day())
+          fs.date.df <- data.frame(
+            season_name = fs$season(),
+            m = fs$month(),
+            d = fs$day()
+          )
+          days.max <- 3
+
+          census.df.ds.orig <- census.df %>%
+            left_join(fs.date.df, by = "season_name") %>%
+            mutate(season_date = amlr_date_from_season(season_name, m, d),
+                   days_diff = as.numeric(
+                     difftime(census_date, season_date, units = "days")),
+                   days_diff = if_else(days_diff < 0, abs(days_diff)-0.5, days_diff)) %>%
+            group_by(season_name) %>%
+            filter(days_diff == min(days_diff))
+
+          census.df.ds <- census.df.ds.orig %>%
+            filter(days_diff <= days.max) %>%
+            select(-c(m, d, season_date)) %>%
+            ungroup()
+
+          if (length(unique(census.df.ds$season_name)) != length(unique(census.df.ds$census_date)))
+            validate(paste("Error in AFS study beach census data single summaries -",
+                           "please contact the database manager"))
+
+          nrow.diff <- nrow(census.df.ds.orig) - nrow(census.df.ds)
+
+          validate(
+            need(nrow(census.df.ds) > 0,
+                 paste("There are no census records for the",
+                       "selected season(s) within", days.max,
+                       "days of the provided date",
+                       paste0("(", fs$month(), " ", fs$day(), ")")))
+          )
+
+          # Warning message for seasons w/o census record close enough
+          if (nrow.diff != 0) {
+            seasons.rmd <- census.df.ds.orig %>%
+              filter(!(season_name %in% unique(census.df.ds$season_name))) %>%
+              distinct(season_name) %>%
+              arrange(season_name) %>%
+              select(season_name) %>%
+              unlist()
+
+            vals$warning_date_single_filter <- paste(
+              "The following seasons do not have phocid census records within",
+              days.max, "days of the provided date",
+              paste0("(", fs$month(), " ", fs$day(), "):"),
+              paste(seasons.rmd, collapse = ", ")
+            )
+          } else {
+            vals$warning_date_single_filter <- NULL
+          }
+
+          census.df <- census.df.ds
         }
 
         # if (input$summary_timing == "fs_week") {
@@ -278,12 +350,15 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
 
         y.lab <- "Count"
 
+        fs <- filter_season()
         gg.title <- case_when(
           input$summary_timing == "fs_total" ~
             "AFS Study Beach Census - Totals by Season",
+          input$summary_timing == "fs_date_single" ~
+            paste("AFS Study Beach Census - Closest to", fs$month(), fs$day()),
           # input$summary_timing == "fs_date_single" ~ "Phocid Census - Closest to Date",
           input$summary_timing == "fs_single" ~
-            paste("AFS Study Beach Census -", filter_season()$season()),
+            paste("AFS Study Beach Census -", fs$season()),
           TRUE ~ "Title todo"
         )
 
