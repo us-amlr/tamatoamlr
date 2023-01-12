@@ -138,6 +138,8 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
           group_by(season_name, round_num, round_date, time_start, time_end) %>%
           summarise(mass_kg_female = round(mean(mass_kg[sex == "F"]), 2),
                     mass_kg_male = round(mean(mass_kg[sex == "M"]), 2),
+                    n_female_weights = sum(sex == "F"),
+                    n_male_weights = sum(sex == "M"),
                     locations = paste(unique(location_group), collapse = ", "),
                     .groups = "drop")
       })
@@ -148,7 +150,12 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
       #-------------------------------------------------------------------------
       ### Output table
       tbl_output <- reactive({
-        cpw_df()
+        si.dmp <- season.df() %>% select(season_name, date_median_pupping)
+        cpw_df() %>%
+          left_join(si.dmp, by = "season_name") %>%
+          mutate(days_since_date_median_pupping = as.numeric(
+            difftime(round_date, date_median_pupping, units = "days"))) %>%
+          select(-date_median_pupping)
       })
 
 
