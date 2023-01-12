@@ -12,16 +12,19 @@
 
 .summary.timing.choices.list <- list(
   "Multiple seasons - total" = "fs_total",
-  "Multiple seasons - by week" = "fs_week",
-  "Multiple seasons - date series" = "fs_date_series",
+  # "Multiple seasons - by week" = "fs_week",
+  # "Multiple seasons - date series" = "fs_date_series",
   "Multiple seasons - by date" = "fs_date_single",
+  "Multiple seasons - facet view" = "fs_facet",
   "Single season" = "fs_single",
   "Raw data" = "fs_raw"
 )
 .summary.timing.choices <- unlist(unname(.summary.timing.choices.list))
 
-.summary.timing.multiple <- c("fs_total", "fs_week", "fs_date_series", "fs_date_single")
-.summary.timing.single <- c("fs_single")
+.summary.timing.multiple <- intersect(
+  .summary.timing.choices, c("fs_total", "fs_date_single", "fs_facet")
+)
+.summary.timing.single <- intersect(.summary.timing.choices, c("fs_single"))
 
 .tamatoa.csv.accept <- c(
   "text/csv",

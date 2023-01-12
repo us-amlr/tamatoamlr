@@ -30,9 +30,7 @@ mod_phocid_census_ui <- function(id) {
         fluidRow(
           column(
             width = 4,
-            .summaryTimingUI(ns, c("fs_total", "fs_date_single", "fs_single")), #, "fs_week"
-            # week currently doesn't have any guarantees that you'll only get one phocid census.
-            # Idea: Do a distinct()
+            .summaryTimingUI(ns, c("fs_total", "fs_date_single", "fs_single")), #"fs_facet",
             conditionalPanel(
               condition = "input.summary_timing == 'fs_single'", ns = ns,
               checkboxInput(ns("plot_cumsum"), "Plot cumulative sum", value = FALSE)
@@ -338,6 +336,9 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Process collected and filtered census data
 
+      phocid.single <- c(.summary.timing.single, "fs_facet")
+      phocid.multiple <- setdiff(.summary.timing.multiple, "fs_facet")
+
       ### Process data, part 1: group by/summarise/complete as desired
       #-------------------------------------------------------------------------
       census_df_summ <- reactive({
@@ -346,25 +347,28 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         #----------------------------------------------
         # Summarize as specified, and output
         vcs_summ_func <- function(y, ...) {
-          y %>%
+          y.summ <- y %>%
             group_by(...) %>%
             summarise(across(where(is.numeric), sum, na.rm = TRUE),
                       .groups = "drop") %>%
             complete(...) %>%
             mutate(across(where(is.numeric), ~replace_na(.x, 0))) %>%
             arrange_season(season.df(), species)
+          # if (!("season_name" %in% names(y.summ))) {
+          #   y.summ <- y.summ %>%
+          #     mutate(season_name = amlr_season_from_date(!!sym(census.date))) %>%
+          #     select(season_name, everything())
+          # }
+          # y.summ %>% arrange_season(season.df(), species)
         }
 
-        # phocid.single <- c(.summary.timing.single, "fs_date_single")
-        # phocid.multiple <- setdiff(.summary.timing.multiple, "fs_date_single")
-
-        if (input$summary_location == "by_capewide" && input$summary_timing %in% .summary.timing.single) {
+        if (input$summary_location == "by_capewide" && input$summary_timing %in% phocid.single) {
           vcs_summ_func(vcs, season_name, !!sym(census.date), species)
-        } else if (input$summary_location == "by_capewide" && input$summary_timing %in% .summary.timing.multiple) {
+        } else if (input$summary_location == "by_capewide" && input$summary_timing %in% phocid.multiple) {
           vcs_summ_func(vcs, season_name, species)
-        } else if (input$summary_location == "by_beach" && input$summary_timing %in% .summary.timing.single) {
+        } else if (input$summary_location == "by_beach" && input$summary_timing %in% phocid.single) {
           vcs_summ_func(vcs, season_name, !!sym(census.date), species, !!sym(loc_column()))
-        } else if (input$summary_location == "by_beach" && input$summary_timing %in% .summary.timing.multiple) {
+        } else if (input$summary_location == "by_beach" && input$summary_timing %in% phocid.multiple) {
           vcs_summ_func(vcs, season_name, species, !!sym(loc_column()))
         } else {
           validate("invalid input$summary_timing + input$summary_location combo")
@@ -377,6 +381,8 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       census_df <- reactive({
         # Get the names of the applicable census columns, and then summarize
         grp.names.all <- c("season_name", census.date, "species", loc_column())
+        # vcs.summ.orig <- census_df_summ() %>%
+        #   arrange_season(season.df(), species)
 
         if (input$summary_sas == "by_sp") {
           # Summarize by species only
@@ -478,10 +484,10 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
         #--------------------------------------------------------
         # Set some plot variable depending on user selections
-        if (input$summary_timing %in% .summary.timing.single) {
+        if (input$summary_timing %in% phocid.single) {
           x.val <- as.name(census.date)
           x.lab <- "Date"
-        } else if (input$summary_timing %in% .summary.timing.multiple) {
+        } else if (input$summary_timing %in% phocid.multiple) {
           x.val <- as.name("season_name")
           x.lab <- "Season"
         } else {
@@ -558,12 +564,17 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           ggtitle(gg.title) +
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-        ggplot.out <- if (input$summary_timing %in% .summary.timing.single) {
+        if (input$summary_timing == "fs_facet") {
+          ggplot.out <- ggplot.out +
+            facet_wrap(vars(season_name), scales = "free")
+        }
+
+        ggplot.out <- if (input$summary_timing %in% phocid.single) {
           ggplot.out +
             scale_x_date(breaks = sort(unique(census.df[[census.date]])),
                          date_labels = "%d %b %Y") +
             expand_limits(y = 0)
-        } else if (input$summary_timing %in% .summary.timing.multiple){
+        } else if (input$summary_timing %in% phocid.multiple){
           ggplot.out +
             expand_limits(x = req(fs$season()), y = 0)
         }
