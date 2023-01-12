@@ -8,7 +8,12 @@ mod_ccamlr_pup_weights_ui <- function(id) {
     fluidRow(
       box(
         title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
-        mod_filter_season_ui(ns("filter_season"))
+        column(9, mod_filter_season_ui(ns("filter_season"))),
+        column(
+          width = 3,
+          uiOutput(ns("round_num_uiOut_check")),
+          uiOutput(ns("sex_uiOut_check"))
+        )
       ),
       box(
         title = "Summary options", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
@@ -16,12 +21,17 @@ mod_ccamlr_pup_weights_ui <- function(id) {
                  "Select how you wish to summarize this data, ",
                  "and then specify any filters you would like to apply"),
         fluidRow(
+          column(4, .summaryTimingUI(ns, c("fs_total", "fs_single"))), #"fs_facet",
+          column(4, radioButtons(ns("summary_type"), tags$h5("Summarize by:"),
+                                 choices = c("Mean weight" = "weight",
+                                             "Growth rate" = "metric"),
+                                 selected = "weight")),
           column(
             width = 4,
-            .summaryTimingUI(ns, c("fs_single")) #"fs_facet",
-          ),
-          column(4, uiOutput(ns("round_num_uiOut_select"))),
-          # column(4, .summarySpAgeSexUI(ns, c("by_sp", "by_sp_age_sex"), "by_sp"))
+            tags$br(), tags$br(),
+            checkboxInput(ns("sex_grp"), "Separate weights by sex",
+                          value = TRUE)
+          )
         )
       )
     ),
@@ -45,9 +55,9 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
       ##########################################################################
       # General
 
-      vals <- reactiveValues(
-        warning_na_records = NULL
-      )
+      # vals <- reactiveValues(
+      #   warning_na_records = NULL
+      # )
 
       ### Get filter_season values
       filter_season <- reactive({
@@ -66,10 +76,18 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
       # })
 
       ### Round number
-      output$round_num_uiOut_select <- renderUI({
-        selectInput(session$ns("round_num"), tags$h5("Pup Weight Round(s)"),
-                    choices = sort(unique(req(cpw_df_collect())$round_num)),
-                    selected = c(1:4), multiple = TRUE)
+      output$round_num_uiOut_check <- renderUI({
+        checkboxGroupInput(session$ns("round_num"), tags$h5("Pup Weight Round"),
+                           choices = sort(unique(req(cpw_df_collect())$round_num)),
+                           selected = c(1:4), inline = TRUE)
+      })
+
+      ### Sex
+      output$sex_uiOut_check <- renderUI({
+        req(input$sex_grp)
+        checkboxGroupInput(session$ns("sex"), tags$h5("Sex"),
+                           choices = c("F", "M"), selected = c("F", "M"),
+                           inline = TRUE)
       })
 
 
@@ -97,7 +115,6 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
       ### Filter data by species, season/date, and remove NA values
       cpw_df_filter_season <- reactive({
         cpw.df.orig <- cpw_df_collect()
-        #----------------------------------------------
         # Filter by season/date/week num
         fs <- filter_season()
 
@@ -122,26 +139,43 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
       })
 
       #-------------------------------------------------------------------------
-      cpw_df_round <- reactive({
+      ### Filter by round and sex
+      cpw_df_round_sex <- reactive({
         validate(
-          need(input$round_num, "Please select at least one round number")
+          need(input$round_num, "Please select at least one round number"),
+          need(input$sex, "Please select at least one sex")
         )
         cpw_df_filter_season() %>%
-          filter(round_num %in% input$round_num)
+          filter(round_num %in% input$round_num,
+                 sex %in% input$sex)
       })
 
 
       ##########################################################################
       # Summarize
       cpw_df <- reactive({
-        cpw_df_round() %>%
-          group_by(season_name, round_num, round_date, time_start, time_end) %>%
-          summarise(mass_kg_female = round(mean(mass_kg[sex == "F"]), 2),
-                    mass_kg_male = round(mean(mass_kg[sex == "M"]), 2),
-                    n_female_weights = sum(sex == "F"),
-                    n_male_weights = sum(sex == "M"),
-                    locations = paste(unique(location_group), collapse = ", "),
-                    .groups = "drop")
+        cpw.grp <- cpw_df_round_sex() %>%
+          group_by(season_name, round_num, round_date, time_start, time_end)
+
+        if (input$sex_grp) cpw.grp <- cpw.grp %>% group_by(sex, .add = TRUE)
+
+        if (input$summary_type == "weight") {
+          cpw.grp %>%
+            summarise(mean_mass_kg = round(mean(mass_kg), 2),
+                      n_weights = n(),
+                      min_mass_kg = min(mass_kg),
+                      max_mass_kg = max(mass_kg),
+                      mass_std_deviation = round(sd(mass_kg), 2),
+                      mass_std_error = round(mass_std_deviation / sqrt(n_weights), 2),
+                      locations = paste(unique(location_group), collapse = ", "),
+                      .groups = "drop")
+
+        } else if (input$summary_type == "metric") {
+          validate("Metric value is not ready yet")
+
+        } else {
+          validate("Invlaid input$summary_type value")
+        }
       })
 
       ##########################################################################
@@ -151,11 +185,25 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
       ### Output table
       tbl_output <- reactive({
         si.dmp <- season.df() %>% select(season_name, date_median_pupping)
-        cpw_df() %>%
+
+        cpw.df <- cpw_df() %>%
           left_join(si.dmp, by = "season_name") %>%
           mutate(days_since_date_median_pupping = as.numeric(
             difftime(round_date, date_median_pupping, units = "days"))) %>%
           select(-date_median_pupping)
+
+        if (input$sex_grp) {
+          cpw.df %>%
+            mutate(sex = case_when(
+              sex == "M" ~ "male",
+              sex == "F" ~ "female"
+            )) %>%
+            pivot_wider(id_cols = season_name:time_end, names_from = sex,
+                        values_from = mean_mass_kg:mass_std_error,
+                        names_glue = "{.value}_{sex}")
+        } else {
+          cpw.df
+        }
       })
 
 
@@ -163,22 +211,34 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
       ### Output plot
       plot_output <- reactive({
         cpw.df <- cpw_df() %>%
-          pivot_longer(c(mass_kg_female, mass_kg_male),
-                       names_to = "sex", values_to = "mass_kg") %>%
-          mutate(sex = case_when(
-            sex == "mass_kg_female" ~ "F",
-            sex == "mass_kg_male" ~ "M"
-          ))
+          mutate(round_num = factor(round_num, levels = input$round_num))
 
-        ggplot(cpw.df, aes(round_num, mass_kg)) +
-          geom_point(aes(color = sex)) +
+        ggplot.title <- case_when(
+          input$summary_timing == "fs_single" ~
+            paste("CCAMLR Pup Weights -", filter_season()$season()),
+          input$summary_timing == "fs_total" ~ "CCAMLR Pup Weights"
+        )
+
+        if (input$sex_grp) {
+          shape_guide_legend <- guide_legend(title = "Sex")
+        } else {
+          cpw.df <- cpw.df %>% mutate(sex = "1")
+          shape_guide_legend <- "none"
+          ggplot.title <- paste(ggplot.title, "- across sexes")
+        }
+
+        ggplot(cpw.df, aes(round_num, mean_mass_kg)) +
+          geom_point(aes(color = season_name, shape = sex)) +
           # geom_smooth(method = lm, se = FALSE) +
-          geom_line(aes(group = sex, color = sex)) +
-          ggtitle(paste("CCAMLR Pup Weights:", unique(cpw.df$season_name))) +
+          geom_line(aes(group = interaction(season_name, sex),
+                        color = season_name)) +
+          ggtitle(ggplot.title) +
+          guides(color = guide_legend(title = "Season name", order = 1),
+                 shape = shape_guide_legend) +
           xlab("Round number") +
           ylab("Mass (kg)") +
           ylim(0, NA) +
-          scale_x_continuous(breaks = as.numeric(input$round_num))
+          expand_limits(x = input$round_num)
       })
 
 
