@@ -17,8 +17,6 @@ mod_phocid_census_ui <- function(id) {
                                selected = amlrPinnipeds::pinniped.phocid.sp)
           )
         ),
-
-        uiOutput(ns("week_num_uiOut_select")),
         uiOutput(ns("age_sex_uiOut_selectize")),
         uiOutput(ns("location_uiOut_selectize"))
       ),

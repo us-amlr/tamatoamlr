@@ -67,6 +67,18 @@ tbl_vCensus_AFS_Capewide_Pup <- function(src) {
 
 #' @name extract
 #' @export
+tbl_vCCAMLR_Pup_Weights <- function(src) {
+  tbl(src, "vCCAMLR_Pup_Weights") %>%
+    select(season_name, round_num, round_date, time_start, time_end,
+           location, location_group, beach_id,
+           pup_num, sex, mass_total_kg, tare_kg, mass_kg, tare_check,
+           # pinniped_id, tag_unqiue_mother_primary, attendance_pup_id,
+           ccamlr_pup_weights_notes, header_notes, research_program) %>%
+    collect()
+}
+
+#' @name extract
+#' @export
 tbl_beaches_capewide <- function(src) {
   tbl(src, "vBeaches") %>%
     filter(!is.na(census_afs_capewide_pup_sort)) %>%

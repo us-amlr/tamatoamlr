@@ -307,6 +307,7 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
           c("season_name", "census_date", "species")
         }
       })
+
       census_df <- reactive({
         census_df_filter_location() %>%
           mutate(location = location_group,

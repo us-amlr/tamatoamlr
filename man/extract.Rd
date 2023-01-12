@@ -5,6 +5,7 @@
 \alias{tbl_vCensus_Phocid}
 \alias{tbl_vCensus_AFS_Study_Beach}
 \alias{tbl_vCensus_AFS_Capewide_Pup}
+\alias{tbl_vCCAMLR_Pup_Weights}
 \alias{tbl_beaches_capewide}
 \title{Extract data from database}
 \usage{
@@ -13,6 +14,8 @@ tbl_vCensus_Phocid(src)
 tbl_vCensus_AFS_Study_Beach(src)
 
 tbl_vCensus_AFS_Capewide_Pup(src)
+
+tbl_vCCAMLR_Pup_Weights(src)
 
 tbl_beaches_capewide(src)
 }
