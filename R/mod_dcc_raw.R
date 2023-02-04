@@ -11,8 +11,19 @@ mod_dcc_raw_ui <- function(id) {
         fluidRow(
           column(
             width = 6,
-            fileInput(ns("tx_key"), tags$h5("Load female-transmitter key"),
-                      accept = .tamatoa.csv.accept)
+            radioButtons(ns("tx_key_type"), tags$h5("Key source"),
+                         choices = c("Database", "File"),
+                         selected = "File"),
+            conditionalPanel(
+              condition = "input.tx_key_type == 'Database'", ns = ns,
+              helpText("Tamatoa will now pull...science"),
+              helpText("Todo: add thing to download key from database")
+            ),
+            conditionalPanel(
+              condition = "input.tx_key_type == 'File'", ns = ns,
+              fileInput(ns("tx_key"), tags$h5("Load female-transmitter key"),
+                        accept = .tamatoa.csv.accept)
+            )
           ),
           column(
             width = 6,
@@ -54,6 +65,7 @@ mod_dcc_raw_ui <- function(id) {
           ),
           column(
             width = 6,
+            uiOutput(ns("season")),
             dateRangeInput(ns("dcc_date_range"), tags$h5("Date range"),
                            start = "2022-11-28"),
             numericInput(ns("trip_hours"), tags$h5("Trip time gap (hours)"),
@@ -77,6 +89,15 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
     is.reactive(pool),
     is.reactive(season.df)
   )
+
+  # TODO
+  # How to structure this to pull key (tx and other info) from db. Thoughts:
+  #   Will need to make user select single season.
+  #   When they do that, then the code pulls capture data and checks devices
+  #   for all 'micro-vhf tx' devices that were still deployed at the start of the selected season.
+  #   Then for those pinnipeds, pull in pinniped_season data to get pup_mortality_date.
+  #   The end date used in the (individual) filter is pup_mortality_date or device recovered date
+
 
   moduleServer(
     id,
@@ -124,29 +145,71 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
                     multiple = multiple)
       })
 
+      ### Season dropdown
+      output$season <- renderUI({
+        req(input$tx_key_type == "Database")
+        selectInput(session$ns("season"), tags$h5("Season"),
+                    choices = req(season.df())$season_name)
+      })
+
 
       ##########################################################################
       # Input data
 
-      ### Female-transmitter key
-      tx_key_df <- reactive({
+      #-------------------------------------------------------------------------
+      # Female-transmitter key...
+
+      ### ...from database
+      tx_key_database <- reactive({
+        browser()
+      })
+
+      ### ...from file
+      tx_key_file <- reactive({
         tx.key <- read.csv(req(input$tx_key$datapath))
-        tx.key.columns <- c("capture_date", "capture_time", "location",
-                            "tag", "pinniped_id", "attendance_study",
-                            "capture_datetime")
+        tx.key.columns <- c("capture_date", "capture_datetime",
+                            "pup_mortality_date")
 
         validate(
           need(all(tx.key.columns %in% names(tx.key)),
-               paste("The female-transmitter key file does not have all of the expected columns: ",
+               paste("The key file does not have the required columns: ",
                      paste(tx.key.columns, collapse = ", ")))
         )
 
         tx.key %>%
-          mutate(capture_date = ymd(capture_date),
-                 capture_datetime = ymd_hms(capture_datetime))
+          mutate(capture_date = mdy(capture_date),
+                 capture_datetime = mdy_hms(capture_datetime),
+                 pup_mortality_date = mdy(pup_mortality_date))
       })
 
-      ### DCC data - general functions
+      ### Pick key and check for columns
+      tx_key_df <- reactive({
+        tx.key.df <- if (input$tx_key_type == "Database") {
+          tx_key_database()
+        } else if (input$tx_key_type == "File") {
+          tx_key_file()
+        } else {
+          validate("Invalid input$tx_key_type value - please report this issue")
+        }
+
+        tx.key.columns <- c("capture_date", "capture_time", "location",
+                            "tag", "pinniped_id", "attendance_study",
+                            "capture_datetime", "pup_mortality_date")
+        validate(
+          need(all(tx.key.columns %in% names(tx.key.df)),
+               paste("The female-transmitter key file does not",
+                     "have all of the expected columns: ",
+                     paste(tx.key.columns, collapse = ", ")))
+        )
+
+        tx.key.df
+      })
+
+      #-------------------------------------------------------------------------
+      # DCC data
+
+
+      ### Read in data from DCC file
       dcc_read_file <- function(x, y) {
         lapply(x, function(i) {
           read.csv(i, skip = 6) %>%
@@ -168,16 +231,16 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
 
       ### DCC data - load CABO files
       dcc_files_cabo_load <- reactive({
-        dcc.cabo <- bind_rows(dcc_read_file(req(input$dcc_files_cabo$datapath),
-                                            "CABO"))
-        dcc_validate(dcc.cabo)
+        dcc_read_file(req(input$dcc_files_cabo$datapath), "CABO") %>%
+          bind_rows() %>%
+          dcc_validate()
       })
 
       ### DCC data - load MAD files
       dcc_files_mad_load <- reactive({
-        dcc.mad <- bind_rows(dcc_read_file(req(input$dcc_files_mad$datapath),
-                                           "MAD"))
-        dcc_validate(dcc.mad)
+        dcc_read_file(req(input$dcc_files_mad$datapath), "MAD") %>%
+          bind_rows() %>%
+          dcc_validate()
       })
 
 
@@ -212,8 +275,6 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
       ### Add resight data to dcc data, if specified
       dcc_resight_df <- reactive({
         dcc <- dcc_df_join()
-        # filter(between(as.Date(datetime),
-        #         input$dcc_date_range[1], input$dcc_date_range[2]))
 
         if (input$include_resights) {
           tr.key.join <- tbl(pool(), "vTag_Resights") %>%
@@ -293,11 +354,13 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
       ### Customized output for trips
       dcc_df_trips <- reactive({
         dcc.trips.out <- dcc_df() %>%
-          filter(time_diff_hr > input$trip_hours) %>%
+          filter(time_diff_hr > input$trip_hours,
+                 is.na(pup_mortality_date) |
+                   as.Date(datetime_prev) < pup_mortality_date) %>%
           select(tag, freq, code,
                  trip_num = trip_num_completed, trip_length_hr = time_diff_hr,
                  departure_dt = datetime_prev, arrival_dt = datetime,
-                 capture_location = location)
+                 capture_location = location, pinniped_id)
 
         validate(
           need(nrow(dcc.trips.out) > 0,
@@ -350,10 +413,11 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
 
         pings.out <- dcc_df() %>%
           mutate(date = as.Date(datetime),
-                 time = format(datetime, "%H:%M:%S")) %>%
+                 time = format(datetime, "%H:%M:%S"),
+                 pup_alive = is.na(pup_mortality_date) | date < pup_mortality_date) %>%
           select(-datetime_prev) %>%
           select(tag, freq, code, sig, station, datetime, date, time,
-                 time_diff_hr, trip_num_completed, everything())
+                 time_diff_hr, trip_num_completed, pup_alive, everything())
 
         validate(
           need(nrow(pings.out) > 0,
@@ -472,9 +536,9 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
         dcc_df_pings() %>%
           filter(time_diff_hr < input$trip_hours) %>%
           ggplot(aes(datetime)) +
-          geom_point(aes(y = time_diff_hr, size = sig)) +
-          geom_line(aes(y = time_diff_hr)) +
-          guides(color = "none",
+          geom_point(aes(y = time_diff_hr, size = sig, color = pup_alive)) +
+          geom_line(aes(y = time_diff_hr, color = pup_alive)) +
+          guides(color = guide_legend(title = "Pup alive?"),
                  size = guide_legend(title = "Signal")) +
           scale_x_datetime(date_breaks = "1 day", date_minor_breaks = "6 hours",
                            date_labels = "%d %b %Y") +

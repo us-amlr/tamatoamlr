@@ -96,8 +96,7 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
       ##########################################################################
       # Collect all cpw data - one time run, then all data is collected
       cpw_df_collect <- reactive({
-        vals$warning_na_records <- NULL
-
+        # vals$warning_na_records <- NULL
         validate(
           need(try(tbl(req(pool()), "vCCAMLR_Pup_Weights"), silent = TRUE),
                "Unable to find vCCAMLR_Pup_Weights on specified database")
