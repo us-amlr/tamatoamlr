@@ -13,11 +13,12 @@ mod_dcc_raw_ui <- function(id) {
             width = 6,
             radioButtons(ns("tx_key_type"), tags$h5("Key source"),
                          choices = c("Database", "File"),
-                         selected = "File"),
+                         selected = "Database"),
             conditionalPanel(
               condition = "input.tx_key_type == 'Database'", ns = ns,
+
               helpText("Tamatoa will now pull...science"),
-              helpText("Todo: add thing to download key from database")
+              downloadButton(ns("tx_key_database_download"), "Download database key")
             ),
             conditionalPanel(
               condition = "input.tx_key_type == 'File'", ns = ns,
@@ -161,8 +162,56 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
 
       ### ...from database
       tx_key_database <- reactive({
-        browser()
+        ### Read in info
+        # Device info
+        devices <- tbl(req(pool()), "vCaptures_Devices") %>%
+          filter(device_type == "Transmitter - Micro-VHF") %>%
+          mutate(code = as.numeric(str_sub(device_num, 3, 4))) %>%
+          collect()
+
+        devices.removed <- devices %>%
+          filter(action == "Removed") %>%
+          select(device_inventory_id, pinniped_id, capture_date_rm = capture_date,
+                 capture_time_rm = capture_time)
+
+        # Pinniped_season
+        ps <- tbl(req(pool()), "pinniped_season") %>%
+          select(pinniped_season_id, pinniped_id, season_info_id,
+                 attendance_study, parturition, parturition_date,
+                 pup_mortality, pup_mortality_date) %>%
+          collect()
+
+        # Season info
+        si <- season.info.id <- tbl(req(pool()), "season_info") %>%
+          filter(season_name == !!req(input$season)) %>%
+          collect()
+
+        season.info.id <- si$ID
+        season.open.date <- si$season_open_date
+
+        # Resights - number of resights by seal
+        tr.summ <- tbl(req(pool()), "vTag_Resights_Season_Summary") %>%
+          filter(season_info_id == season.info.id,
+                 species == "Fur seal") %>%
+          select(pinniped_id, sex, n_resights) %>%
+          collect()
+
+        ### Final processing, and return the female-tx key
+        devices %>%
+          filter(action == "Deployed") %>%
+          left_join(devices.removed, by = c("pinniped_id", "device_inventory_id")) %>%
+          mutate(season_info_id = season.info.id,
+                 capture_datetime = lubridate::ymd_hms(paste(capture_date, capture_time))) %>%
+          select(season_info_id, capture_season_name = season_name,
+                 capture_date, capture_time, capture_datetime, location, location_group,
+                 pinniped_id, species, tag,
+                 device_type, device_num, freq = frequency, code, combined_number,
+                 capture_date_rm, capture_time_rm) %>%
+          left_join(ps, by = c("season_info_id", "pinniped_id")) %>%
+          inner_join(tr.summ, by = "pinniped_id") %>%
+          filter(is.na(capture_date_rm) | capture_date_rm > season.open.date)
       })
+
 
       ### ...from file
       tx_key_file <- reactive({
@@ -204,6 +253,12 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
 
         tx.key.df
       })
+
+      ### Download database key
+      output$tx_key_database_download <- downloadHandler(
+        filename = function() paste0("d atabase_key", ".csv"),
+        content = function(file) write.csv(tx_key_database(), file)
+      )
 
       #-------------------------------------------------------------------------
       # DCC data
