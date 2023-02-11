@@ -11,8 +11,8 @@ mod_ccamlr_pup_weights_ui <- function(id) {
         column(9, mod_filter_season_ui(ns("filter_season"))),
         column(
           width = 3,
-          uiOutput(ns("round_num_uiOut_check")),
-          uiOutput(ns("sex_uiOut_check"))
+          uiOutput(ns("round_num_uiOut")),
+          uiOutput(ns("sex_uiOut"))
         )
       ),
       box(
@@ -76,14 +76,14 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
       # })
 
       ### Round number
-      output$round_num_uiOut_check <- renderUI({
-        checkboxGroupInput(session$ns("round_num"), tags$h5("Pup Weight Round"),
-                           choices = sort(unique(req(cpw_df_collect())$round_num)),
-                           selected = c(1:4), inline = TRUE)
+      output$round_num_uiOut<- renderUI({
+        selectInput(session$ns("round_num"), tags$h5("Pup Weight Round"),
+                    choices = sort(unique(req(cpw_df_collect())$round_num)),
+                    selected = c(1:4), multiple = TRUE)
       })
 
       ### Sex
-      output$sex_uiOut_check <- renderUI({
+      output$sex_uiOut <- renderUI({
         req(input$sex_grp)
         checkboxGroupInput(session$ns("sex"), tags$h5("Sex"),
                            choices = c("F", "M"), selected = c("F", "M"),

@@ -411,7 +411,7 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
 
         ggplot.out <- if (input$summary_timing %in% .summary.timing.single) {
           ggplot.out +
-            scale_x_date(breaks = sort(unique(census.df[[census.date]])),
+            scale_x_date(breaks = sort(unique(census.df$census_date)),
                          date_labels = "%d %b %Y") +
             expand_limits(y = 0)
         } else if (input$summary_timing %in% .summary.timing.multiple){

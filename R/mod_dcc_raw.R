@@ -266,10 +266,10 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
 
       ### Read in data from DCC file
       dcc_read_file <- function(x, y) {
-        lapply(x, function(i) {
+        bind_rows(lapply(x, function(i) {
           read.csv(i, skip = 6) %>%
             mutate(station = y)
-        })
+        }))
       }
 
       dcc_validate <- function(dcc.df) {
@@ -287,14 +287,12 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
       ### DCC data - load CABO files
       dcc_files_cabo_load <- reactive({
         dcc_read_file(req(input$dcc_files_cabo$datapath), "CABO") %>%
-          bind_rows() %>%
           dcc_validate()
       })
 
       ### DCC data - load MAD files
       dcc_files_mad_load <- reactive({
         dcc_read_file(req(input$dcc_files_mad$datapath), "MAD") %>%
-          bind_rows() %>%
           dcc_validate()
       })
 
