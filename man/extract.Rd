@@ -7,6 +7,8 @@
 \alias{tbl_vCensus_AFS_Capewide_Pup}
 \alias{tbl_vCCAMLR_Pup_Weights}
 \alias{tbl_beaches_capewide}
+\alias{tbl_vTag_Resights_Season_Summary}
+\alias{tbl_pinniped_season}
 \title{Extract data from database}
 \usage{
 tbl_vCensus_Phocid(src)
@@ -18,6 +20,10 @@ tbl_vCensus_AFS_Capewide_Pup(src)
 tbl_vCCAMLR_Pup_Weights(src)
 
 tbl_beaches_capewide(src)
+
+tbl_vTag_Resights_Season_Summary(src)
+
+tbl_pinniped_season(src)
 }
 \arguments{
 \item{src}{a data source; likely a \code{\link[pool]{pool}} object

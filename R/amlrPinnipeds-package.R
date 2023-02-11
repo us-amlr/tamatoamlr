@@ -30,7 +30,8 @@
 #'   dashboardHeader dashboardPage dashboardSidebar sidebarMenu menuItem
 #' @importFrom shinyjs useShinyjs extendShinyjs js
 #' @importFrom stats na.omit
-#' @importFrom stringr str_length str_replace_all str_sub str_to_lower str_to_sentence
+#' @importFrom stringr str_length str_match str_remove_all str_replace_all
+#' str_replace_na str_sub str_to_lower str_to_sentence
 #' @importFrom tidyr complete nest unnest pivot_longer pivot_wider replace_na
 #' @importFrom utils globalVariables write.csv
 #'

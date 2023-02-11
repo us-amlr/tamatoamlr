@@ -86,3 +86,21 @@ tbl_beaches_capewide <- function(src) {
     select(beach_id, location = name, census_afs_capewide_pup_sort) %>%
     collect()
 }
+
+#' @name extract
+#' @export
+tbl_vTag_Resights_Season_Summary <- function(src) {
+  tbl(src, "vTag_Resights_Season_Summary") %>%
+    arrange(season_open_date, species, tag_sort) %>%
+    collect()
+}
+
+#' @name extract
+#' @export
+tbl_pinniped_season <- function(src) {
+  tbl(src, "pinniped_season") %>%
+    select(pinniped_season_id, pinniped_id, season_info_id,
+           attendance_study, parturition, parturition_date,
+           pup_mortality, pup_mortality_date) %>%
+    collect()
+}

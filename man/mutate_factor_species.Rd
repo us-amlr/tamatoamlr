@@ -9,7 +9,7 @@ mutate_factor_species(x, levels = names(amlrPinnipeds::pinniped.sp))
 \arguments{
 \item{x}{data frame that at minimum contains a 'species' column}
 
-\item{levels}{character; passed to 'levels' argument of \link[base]{factor}.
+\item{levels}{character; passed to 'levels' argument of \code{\link[base]{factor}}.
 Default is \code{names(\link{pinniped.sp})}}
 }
 \value{

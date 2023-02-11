@@ -3,7 +3,7 @@
 #' A 'wrapper' around mutate that converts the species column to a factor with the specified levels
 #'
 #' @param x data frame that at minimum contains a 'species' column
-#' @param levels character; passed to 'levels' argument of \link[base]{factor}.
+#' @param levels character; passed to 'levels' argument of \code{\link[base]{factor}}.
 #'   Default is \code{names(\link{pinniped.sp})}
 #'
 #' @details A wrapper around \code{\link[dplyr]{mutate}} that converts
