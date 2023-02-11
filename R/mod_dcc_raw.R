@@ -45,8 +45,6 @@ mod_dcc_raw_ui <- function(id) {
                                      "Trip lengths" = "trip_lengths",
                                      "Pings, by individual" = "pings"),
                          selected = "trips"),
-            # column(
-            #   width = 12,
             tags$br(),
             conditionalPanel(
               condition = "input.summary_type == 'trips'", ns = ns,
@@ -62,7 +60,6 @@ mod_dcc_raw_ui <- function(id) {
               numericInput(ns("trip_num_max"), tags$h5("Maximum trip number to include"),
                            value = 6, min = 1, step = 1)
             )
-            # )
           ),
           column(
             width = 6,
@@ -106,8 +103,18 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
       ##########################################################################
       # General
       vals <- reactiveValues(
-        warning_na_records = NULL
+        warning_na_records = NULL,
+        tag_freq_code_single = NULL,
+        tag_freq_code_multiple = NULL
       )
+
+      observeEvent(input$tag_freq_code, {
+        if (input$summary_type != "pings") {
+          vals$tag_freq_code_multiple <- input$tag_freq_code
+        } else {
+          vals$tag_freq_code_single <- input$tag_freq_code
+        }
+      })
 
       ### Warning messages
       output$warning_na_records <- renderUI({
@@ -123,26 +130,35 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
         x <- dcc_df_join() %>%
           mutate_tag_freq_code()
 
-        choices.attendance <- x %>%
-          filter(attendance_study) %>%
-          arrange(tag_freq_code) %>%
+        tag.freq.code.part <- x %>%
+          distinct(tag_freq_code, parturition) %>%
+          arrange(tag_freq_code)
+
+        choices.pupped <- tag.freq.code.part %>%
+          filter(parturition) %>%
+          select(tag_freq_code) %>%
           unlist() %>% unname()
 
-        choices.list <- x %>%
-          distinct(tag_freq_code) %>%
-          arrange(tag_freq_code) %>%
+        choices.all <- tag.freq.code.part %>%
+          select(tag_freq_code) %>%
           unlist() %>% unname()
 
         multiple <- input$summary_type != "pings"
-        selected <- if (multiple) choices.attendance else NULL
         select.name <- if_else(
           multiple,
           "Select at least one 'tag | frequency | code'",
-          "Select one 'tag | frequency | code'",
+          "Select exactly one 'tag | frequency | code'",
         )
+        selected <- isolate({
+          if (multiple) {
+            if (is.null(vals$tag_freq_code_multiple)) choices.pupped else vals$tag_freq_code_multiple
+          } else {
+            if (is.null(vals$tag_freq_code_single)) NULL else vals$tag_freq_code_single
+          }
+        })
 
         selectInput(session$ns("tag_freq_code"), tags$h5(select.name),
-                    choices = choices.list, selected = selected,
+                    choices = choices.all, selected = selected,
                     multiple = multiple)
       })
 
@@ -175,14 +191,10 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
                  capture_time_rm = capture_time)
 
         # Pinniped_season
-        ps <- tbl(req(pool()), "pinniped_season") %>%
-          select(pinniped_season_id, pinniped_id, season_info_id,
-                 attendance_study, parturition, parturition_date,
-                 pup_mortality, pup_mortality_date) %>%
-          collect()
+        ps <- tbl_pinniped_season(req(pool()))
 
         # Season info
-        si <- season.info.id <- tbl(req(pool()), "season_info") %>%
+        si <- tbl(req(pool()), "season_info") %>%
           filter(season_name == !!req(input$season)) %>%
           collect()
 
@@ -190,11 +202,10 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
         season.open.date <- si$season_open_date
 
         # Resights - number of resights by seal
-        tr.summ <- tbl(req(pool()), "vTag_Resights_Season_Summary") %>%
+        tr.summ <- tbl_vTag_Resights_Season_Summary(req(pool())) %>%
           filter(season_info_id == season.info.id,
                  species == "Fur seal") %>%
-          select(pinniped_id, sex, n_resights) %>%
-          collect()
+          select(pinniped_id, sex, n_resights)
 
         ### Final processing, and return the female-tx key
         devices %>%
@@ -256,7 +267,7 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
 
       ### Download database key
       output$tx_key_database_download <- downloadHandler(
-        filename = function() paste0("d atabase_key", ".csv"),
+        filename = function() paste0("database_key", ".csv"),
         content = function(file) write.csv(tx_key_database(), file)
       )
 
