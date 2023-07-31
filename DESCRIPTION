@@ -1,6 +1,6 @@
 Package: amlrPinnipeds
 Title: Analyze and Visualize US AMLR Pinniped Data
-Version: 0.3.0
+Version: 0.4.0.9000
 Date: 2022-01-01
 Authors@R: 
         c(person("Sam", "Woodman", email = "sam.woodman@noaa.gov", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6071-8186")),

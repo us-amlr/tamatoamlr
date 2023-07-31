@@ -1,3 +1,6 @@
+# amlrPinnipeds 0.4.0.9000 (in dev)
+
+
 # amlrPinnipeds 0.3.0
 
 * Requires [amlrDatabases](https://github.com/us-amlr/amlrDatabases) >= v0.6.0
