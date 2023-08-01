@@ -1,4 +1,4 @@
-# amlrPinnipeds 0.4.0.9000 (in dev)
+# amlrPinnipeds 0.4.0
 
 * amlrPinnipeds now depends on the following additional packages: [hms](https://github.com/tidyverse/hms), [forcats](https://github.com/tidyverse/forcats), and [stringi](https://github.com/gagolews/stringi)
 
