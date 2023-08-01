@@ -24,3 +24,15 @@
 #'
 #' @format A (named) character vector
 "pinniped.sp.colors"
+
+
+#' CS-PHOC core census locations
+#'
+#' Names of Cape Shirreff Phocid Census (CS-PHOC) core census locations.
+#' Note that while the majority of these correspond directly to a row in the
+#' ***REMOVED***.beaches table, officially these are all location group values.
+#' This means they have been designed to correspond to the
+#' location_group column in the ***REMOVED***.vCensus_Phocid view.
+#'
+#' @format A character vector
+"csphoc.core.location.groups"

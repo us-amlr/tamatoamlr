@@ -19,6 +19,7 @@
 #' @import shiny
 #'
 #' @importFrom DT DTOutput renderDT
+#' @importFrom forcats fct
 #' @importFrom glue glue
 #' @importFrom lubridate days days_in_month is.Date month week year mdy mdy_hms ymd ymd_hms
 #' @importFrom pool dbIsValid dbGetQuery poolClose
@@ -30,10 +31,11 @@
 #'   dashboardHeader dashboardPage dashboardSidebar sidebarMenu menuItem
 #' @importFrom shinyjs useShinyjs extendShinyjs js
 #' @importFrom stats na.omit
+#' @importFrom stringi stri_escape_unicode
 #' @importFrom stringr str_length str_match str_remove_all str_replace_all
 #' str_replace_na str_sub str_to_lower str_to_sentence
 #' @importFrom tidyr complete nest unnest pivot_longer pivot_wider replace_na
-#' @importFrom utils globalVariables write.csv
+#' @importFrom utils globalVariables read.csv write.csv
 #'
 #' @keywords package
 NULL

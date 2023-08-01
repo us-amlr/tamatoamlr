@@ -7,10 +7,11 @@
 mutate_location(x)
 }
 \arguments{
-\item{x}{data.frame, must contain character column location}
+\item{x}{data.frame, must contain character column 'location'}
 }
 \value{
-A data frame, with the same columns and types.
+A data frame, with an updated 'locations' column
+but otherwise the same columns and types.
 }
 \description{
 Convert AMLR location strings to accepted values
@@ -20,6 +21,15 @@ AMLR (pinniped) data is frequently messy, including having non-standard
 location information (location names). This function is a 'repository'
 of approved conversions to standardize location names
 in an ***REMOVED*** dataset.
+This function was built for the tag resight reimport effort,
+but is applicable to other location renaming as well
+
+Input data are processed as followed before being matched:
+\itemize{
+\item '.' characters are removed (i.e., replaced with '')
+\item Non-ASCII text is escaped using
+\code{\link[stringi:stri_escape_unicode]{stri_escape_unicode}}
+}
 }
 \examples{
 x <- data.frame(id = 1:3, location = c("P Bahamonde", "Bahamonde", "Chung"))

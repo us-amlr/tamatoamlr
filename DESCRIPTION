@@ -1,22 +1,24 @@
 Package: amlrPinnipeds
 Title: Analyze and Visualize US AMLR Pinniped Data
 Version: 0.4.0.9000
-Date: 2022-01-01
 Authors@R: 
         c(person("Sam", "Woodman", email = "sam.woodman@noaa.gov", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6071-8186")),
         person("Karen", "Snyder", email = "ksnyder@g.hmc.edu", role = c("aut")))
-Description: This package contains a Shiny app that connects to the 
+Description: This package contains Tamatoa, a Shiny app that connects to the 
     US AMLR ***REMOVED*** database, 
     and allows users to analyze and visualize data from this database.
-    There are some exported functions that are helpful for processing certain AMLR Pinniped data,
-    but the intent is for the Shiny app to provide the majority of the functionality for this package.
+    There are some exported functions that are helpful for processing 
+    AMLR Pinniped data for more familiar users, but the intent
+    is for the Shiny app to provide the mainfunctionality for this package.
 Depends: R (>= 4.0.0)
 Imports: 
     amlrDatabases (>= 0.6), 
     dplyr (>= 1.0),
     DT, 
+    forcats, 
     glue,
     ggplot2,
+    hms, 
     lubridate, 
     pool,
     purrr,
@@ -26,6 +28,7 @@ Imports:
     shinybusy,
     shinydashboard, 
     shinyjs, 
+    stringi, 
     stringr, 
     tidyr
 Remotes:

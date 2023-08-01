@@ -1,5 +1,17 @@
 # amlrPinnipeds 0.4.0.9000 (in dev)
 
+* amlrPinnipeds now depends on the following additional packages: [hms](https://github.com/tidyverse/hms), [forcats](https://github.com/tidyverse/forcats), and [stringi](https://github.com/gagolews/stringi)
+
+* Updated `mutate_location` to keep in step with name column in ***REMOVED***.beaches
+
+* `mutate_location` now uses `stringi::stri_escape_unicode` to escape all non-ASCII characters
+
+* Added `csphoc.core.location.groups` variable to define core census locations for CS-PHOC data paper
+
+* Added 'census_counts' functions `sum_count` and `total_count` to handle common situations when working with US AMLR Pinniped census data
+
+* Added `csphoc_complete_aggregated` to complete aggregated US AMLR CS-PHOC data, by header ID and species
+
 
 # amlrPinnipeds 0.3.0
 
