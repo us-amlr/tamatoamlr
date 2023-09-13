@@ -58,9 +58,9 @@ tbl_vCensus_AFS_Capewide_Pup <- function(src) {
   tbl(src, "vCensus_AFS_Capewide_Pup") %>%
     select(season_name, census_id, census_type,
            observer, census_date, time_start, time_end,
-           location, location_group, beach_id, species,
-           pup_live_count, pup_dead_count, exclude_count,
-           census_notes, census_created_dt) %>%
+           location, location_group, beach_id, census_afs_capewide_pup_sort,
+           species, pup_live_count, pup_dead_count, pup_count, exclude_count,
+           research_program, census_notes, census_created_dt) %>%
     collect() %>%
     mutate(species = str_to_sentence(species))
 }

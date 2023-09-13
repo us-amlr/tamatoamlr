@@ -22,7 +22,8 @@
 .summary.timing.choices <- unlist(unname(.summary.timing.choices.list))
 
 .summary.timing.multiple <- intersect(
-  .summary.timing.choices, c("fs_total", "fs_date_single", "fs_facet")
+  .summary.timing.choices,
+  c("fs_total", "fs_date_single", "fs_facet", "fs_raw")
 )
 .summary.timing.single <- intersect(.summary.timing.choices, c("fs_single"))
 
