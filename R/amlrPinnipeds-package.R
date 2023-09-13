@@ -30,7 +30,7 @@
 #' @importFrom shinydashboard box dashboardBody tabItems tabItem
 #'   dashboardHeader dashboardPage dashboardSidebar sidebarMenu menuItem
 #' @importFrom shinyjs useShinyjs extendShinyjs js
-#' @importFrom stats na.omit
+#' @importFrom stats na.omit var
 #' @importFrom stringi stri_escape_unicode
 #' @importFrom stringr str_length str_match str_remove_all str_replace_all
 #' str_replace_na str_sub str_to_lower str_to_sentence

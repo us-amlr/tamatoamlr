@@ -24,6 +24,11 @@ utils::globalVariables(c(
   "census_notes", "census_created_dt",
 
 
+  # AFS Capewide Pup Census
+  "pup_count", "pup_live_count", "pup_dead_count", "date_min",
+  "count_loc_mean", "count_loc_var", "count_loc_sd", "study_beach_count",
+  "count_mean", "count_var", "count_sd",
+
   # AFS Study Beach Census
   "ad_male_count_sum", "adult_male_non_terr_count", "adult_male_terr_count",
   "adult_male_terr_noFem_count", "adult_male_terr_wFem_count",
