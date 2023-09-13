@@ -94,7 +94,7 @@ tamatoa <- function(...,
         # menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
         # menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
         menuItem("AFS DCC", tabName = "tab_dcc_raw", icon = icon("th")),
-        menuItem("AFS Cape-wide Pup Census", tabName = "tab_afs_capewide_pup_census", icon = icon("th", lib = "font-awesome")),
+        menuItem("AFS Capewide Pup Census", tabName = "tab_afs_capewide_pup_census", icon = icon("th", lib = "font-awesome")),
         menuItem("AFS Study Beach Census", tabName = "tab_afs_study_beach_census", icon = icon("th", lib = "font-awesome")),
         # menuItem("Tag Resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
         # menuItem("Pinnipeds + Tags", tabName = "tab_pt", icon = icon("th", lib = "font-awesome")),
@@ -175,7 +175,9 @@ tamatoa <- function(...,
       `***REMOVED*** - SQLExpress` = if (local.prod) pool.local.prod else NULL
     ))
 
-    db.pool <- mod_database_server("db", pool.list, db.driver)
+    db.pool <- mod_database_server(
+      "db", pool.list, db.driver, db.selected = "***REMOVED***_Test - ***REMOVED***"
+    )
 
     si.list <- mod_season_info_server("si", db.pool)
 
@@ -183,7 +185,7 @@ tamatoa <- function(...,
     # mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
     mod_dcc_raw_server("dcc_raw", db.pool, si.list$season.df)
     mod_afs_capewide_pup_census_server("afs_capewide_pup_census", db.pool, si.list$season.df)
-    mod_afs_study_beach_census_server("afs_study_beach_census", db.pool, si.list$season.df)
+    # mod_afs_study_beach_census_server("afs_study_beach_census", db.pool, si.list$season.df)
     captures_server("captures", db.pool)
     mod_ccamlr_pup_weights_server("ccamlr_pup_weights", db.pool, si.list$season.df)
     mod_phocid_census_server("phocid_census", db.pool, si.list$season.df)

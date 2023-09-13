@@ -6,11 +6,12 @@
 #' @param col.diet.scat.date tidy-select (one unquoted expression) column with the (corresponding) diet study start date
 #' @param col.collection.date tidy-select (one unquoted expression) column with the scat collection date
 #'
-#' @return The data frame \code{x}, with two additional columns: 'week_num' and 'week_start_date'.
-#'   'week_num' is the week number in which this scat was collected,
-#'   calculated using \code{(\link[base:Round]{floor}(col.collection.date - col.diet.scat.date) / 7) + 1},
-#'   and 'week_start_date' is the date of the start of the 'week_num' week,
-#'   specifically \code{col.diet.scat.date + \link[lubridate:period]{days}((week_num - 1) * 7)}
+#' @return
+#' The data frame \code{x}, with two additional columns: 'week_num' and 'week_start_date'.
+#' 'week_num' is the week number in which this scat was collected,
+#' calculated using \code{(\link[base:Round]{floor}(col.collection.date - col.diet.scat.date) / 7) + 1},
+#' and 'week_start_date' is the date of the start of the 'week_num' week,
+#' specifically \code{col.diet.scat.date + \link[lubridate:period]{days}((week_num - 1) * 7)}
 #'
 #' @examples
 #' x <- data.frame(
