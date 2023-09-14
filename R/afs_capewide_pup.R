@@ -97,8 +97,8 @@ afs_cwp_single <- function(x) { #}, by.observer) {
 #' @export
 afs_cwp_totals_bylocation <- function(x) {
   columns.names <- c(
-    "season_name", "census_afs_capewide_pup_sort", "location", "census_date",
-    "pup_count"
+    "season_name", "census_afs_capewide_pup_sort", "location",
+    "census_date", "pup_count", "research_program"
   )
 
   stopifnot(
@@ -112,6 +112,7 @@ afs_cwp_totals_bylocation <- function(x) {
               count_loc_mean = mean(pup_count),
               count_loc_var = var(pup_count),
               date_min = min(census_date),
+              research_program = unique(research_program),
               .groups = "drop") %>%
     mutate(study_beach_count = between(date_min,
                                        ymd("2008-07-01"), ymd("2011-07-01")) &
@@ -131,7 +132,8 @@ afs_cwp_totals <- function(x, x.bylocation = FALSE) {
   y <- if (x.bylocation) {
     stopifnot(identical(
       c("season_name", "location",
-        "num_records", "count_loc_mean", "count_loc_var", "date_min"),
+        "num_records", "count_loc_mean", "count_loc_var", "date_min",
+        "research_program"),
       names(x)
     ))
     x
@@ -145,6 +147,7 @@ afs_cwp_totals <- function(x, x.bylocation = FALSE) {
               count_var = if_else(min(date_min) < as.Date("2011-07-01"),
                                   NA_real_, sum(count_loc_var, na.rm = TRUE)),
               count_sd = round(sqrt(count_var), 0),
+              research_program = unique(research_program),
               .groups = "drop") %>%
     select(-count_var)
 }

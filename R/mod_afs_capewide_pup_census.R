@@ -76,7 +76,7 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
       output$location_uiOut_selectize <- renderUI({
         req(input$summary_location == "by_beach", pool())
         # beaches.list <- tbl_beaches_capewide(pool())$location
-        beaches.list <-  sort(unique(census_df_filter_season()$location))
+        beaches.list <-  sort(unique(census_df_collect()$location))
 
         selectInput(
           session$ns("location"), tags$h5("Location(s)"),
@@ -175,7 +175,8 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
                "There are no data for the given season filter(s)")
         )
 
-        census.df
+        census.df %>%
+          mutate(season_name = factor(season_name))
       })
 
 
@@ -231,7 +232,8 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
                "There are no data for the given location filter")
         )
 
-        census.df
+        census.df%>%
+          mutate(location = factor(location, levels = input$location))
       })
 
 
@@ -302,6 +304,48 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
       #   }
       # })
 
+      ### Table and plot for fs_total summaries
+      census_df_fs_total <- reactive({
+        census.df <- census_df_filter_location()
+
+        if (input$summary_location == "by_beach") {
+          afs_cwp_totals_bylocation(census.df) %>%
+            rename(count_mean = count_loc_mean,
+                   count_var = count_loc_var,
+                   count_sd = count_loc_sd) %>%
+            select(-date_min)
+
+        } else {
+          afs_cwp_totals(census.df)
+        }
+      })
+
+      plot_fs_total <- reactive({
+        x <- census_df_fs_total() %>% mutate(group = 1)
+
+        g.out <- if (input$summary_location == "by_beach") {
+          ggplot(x, aes(season_name, count_mean,
+                        group = location, color = location)) +
+            guides(color = guide_legend(title = "Location"))
+        } else {
+          ggplot(x, aes(season_name, count_mean, group = group))
+        }
+
+        g.out +
+          geom_point() +
+          geom_line() +
+          geom_errorbar(aes(ymin = count_mean-count_sd,
+                            ymax = count_mean+count_sd),
+                        width = 0.2) +
+          scale_x_discrete(drop = FALSE) +
+          theme(axis.text.x = element_text(angle = 90)) +
+          ggtitle("Cape Shirreff AFS Capewide Pup Census") +
+          xlab("Season") +
+          ylab("Count (mean)") +
+          expand_limits(y = 0)
+      })
+
+
 
       ##########################################################################
       # Outputs
@@ -321,23 +365,11 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
         census.df <- census_df_filter_location()
 
         if (input$summary_timing == "fs_raw") {
-          census.df %>%
-            select(-c(census_afs_capewide_pup_sort, pup_count))
-
+          census.df %>% select(-c(census_afs_capewide_pup_sort, pup_count))
         } else if (input$summary_timing == "fs_single") {
           afs_cwp_single(census.df)
-
         } else if (input$summary_timing == "fs_total") {
-          if (input$summary_location == "by_beach") {
-            afs_cwp_totals_bylocation(census.df) %>%
-              rename(count_mean = count_loc_mean,
-                     count_var = count_loc_var,
-                     count_sd = count_loc_sd) %>%
-              select(-date_min)
-          } else {
-            afs_cwp_totals(census.df)
-          }
-
+          census_df_fs_total()
         } else {
           validate(
             "This summary is in development"
@@ -352,7 +384,20 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
         # ggplot(data.frame(x = 1:2, y = 1:2), aes(x, y)) +
         #   geom_point() +
         #   ggtitle("Ignore this plot")
-        NULL
+        # NULL
+        if (input$summary_timing == "fs_raw") {
+          validate("No plot for raw data summary")
+
+          # } else if (input$summary_timing == "fs_single") {
+          #   afs_cwp_single(census.df)
+
+        } else if (input$summary_timing == "fs_total") {
+          plot_fs_total()
+
+
+        } else {
+          validate("This plot is in development")
+        }
       })
 
       #-------------------------------------------------------------------------
