@@ -18,8 +18,14 @@
 #' \code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]], server.sql)}
 #'
 #'
-#' @examples
-#' if (interactive()) tamatoa()
+#' @examplesIf interactive()
+#' tamatoa()
+#'
+#' # Testing
+#' tamatoa(remote.prod = FALSE, remote.test = TRUE)
+#'
+#' # In the field
+#' tamatoa(remote.prod = FALSE, remote.test = FALSE, local.prod = TRUE)
 #'
 #' @seealso \url{https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center}
 #'
@@ -175,9 +181,10 @@ tamatoa <- function(...,
       `***REMOVED*** - SQLExpress` = if (local.prod) pool.local.prod else NULL
     ))
 
-    db.pool <- mod_database_server(
-      "db", pool.list, db.driver, db.selected = "***REMOVED***_Test - ***REMOVED***"
-    )
+    # db.pool <- mod_database_server(
+    #   "db", pool.list, db.driver, db.selected = "***REMOVED***_Test - ***REMOVED***"
+    # )
+    db.pool <- mod_database_server("db", pool.list, db.driver)
 
     si.list <- mod_season_info_server("si", db.pool)
 

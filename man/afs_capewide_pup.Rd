@@ -22,7 +22,7 @@ indicates if \code{x} is the output of \code{afs_cwp_totals_bylocation}.
 Default is \code{FALSE}}
 }
 \value{
-A data frame with the summarized AFS Capewide Pup Census data.
+An ungrouped data frame with the summarized AFS Capewide Pup Census data.
 The summary types are described in 'Details'.
 }
 \description{
@@ -39,4 +39,16 @@ Var and SD follow CS/AMLR-specific rules about when it must be NA
 
 afs_cwp_totals: after running afs_cwp_totals_bylocation,
 group by season name and return counts and standard deviations
+}
+\examples{
+\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+# Only will run if on SWFSC network
+x <- tbl_vCensus_AFS_Capewide_Pup(amlr_dbConnect("***REMOVED***_Test"))
+
+afs_cwp_single(x[x$season_name == "2016/17", ])
+afs_cwp_totals(x)
+
+x.byloc <- afs_cwp_totals_bylocation(x)
+afs_cwp_totals(x.byloc, x.bylocation = TRUE)
+\dontshow{\}) # examplesIf}
 }

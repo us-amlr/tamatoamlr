@@ -299,7 +299,7 @@ captures_server <- function(id, con) {
 
       #Uses mod_output to implement the graph and table produced above
       observe({
-        mod_output_server("table_and_plot", session, summary_table_reactive, summary_plot_reactive)
+        mod_output_server("table_and_plot", summary_table_reactive, summary_plot_reactive)
       })
     }
   )

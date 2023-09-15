@@ -74,9 +74,7 @@ mod_season_info_server <- function(id, pool, si.name = "season_info") {
 
       # Download table
       output$tbl_download <- downloadHandler(
-        filename = function() {
-          "season_info_table.csv"
-        },
+        filename = function() "season_info_table.csv",
         content = function(file) {
           write.csv(season_info_out(), file = file, row.names = FALSE, na = "")
         }

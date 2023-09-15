@@ -25,7 +25,7 @@ mod_afs_capewide_pup_census_ui <- function(id) {
         conditionalPanel(
           condition = "input.summary_timing == 'fs_total'", ns = ns,
           checkboxInput(ns("all_seasons"), "Include all all seasons", value = TRUE),
-          helpText("THe 'all seasons' checkbox will override the seaosn filter")
+          helpText("The 'all seasons' checkbox will override the season filter")
         ),
         conditionalPanel(
           condition = "input.summary_timing == 'fs_single'", ns = ns,
@@ -89,14 +89,16 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
         req(input$summary_timing)
 
         if (input$summary_timing == "fs_single") {
-          helpText("This 'Single Season' ",
-                   "view is for checking data for count consistency")
+          helpText("The 'Single Season'",
+                   "summary is for checking data for count consistency.",
+                   "In the table below, the order of the data in the columns",
+                   "with multiple datais is consistent across all columns")
         } else if (input$summary_timing == "fs_total") {
           helpText("Data with the 'exclude_count' flag will always",
                    "be removed when plotting over multiple seasons")
         }  else if (input$summary_timing == "fs_raw") {
-          helpText("All data, including data with the 'exclude_count'",
-                   "flag, are included in the raw data output")
+          helpText("All data, including entries where the 'exclude_count' flag",
+                   "is TRUE, are included in the raw data output")
         } else {
           stop("Invalid input$summary_timing")
         }
@@ -115,7 +117,7 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
 
         validate(
           need(census.df.collect,
-               "Unable to find vCensus_AFS_Capewide_Pup on specified database")
+               "Unable to find and load vCensus_AFS_Capewide_Pup from the specified database")
         )
 
 
@@ -224,7 +226,9 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
 
         if (input$summary_location == "by_beach") {
           validate(need(input$location, "Please select at least one beach name"))
-          census.df <- census.df %>% filter(location %in% input$location)
+          census.df <- census.df %>%
+            filter(location %in% input$location) %>%
+            mutate(location = factor(location, levels = input$location))
         }
 
         validate(
@@ -232,77 +236,40 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
                "There are no data for the given location filter")
         )
 
-        census.df%>%
-          mutate(location = factor(location, levels = input$location))
+        census.df
       })
 
 
       # ##########################################################################
-      # # Process data
-      # census_df_fs_single <- reactive({
-      #   census.df.out <- census_df_filter_location() %>%
-      #     # mutate(pup_total_count = pup_live_count + pup_dead_count) %>%
-      #     group_by(census_date, census_afs_capewide_pup_sort, location) %>%
-      #     summarise(n_records = n(),
-      #               count_mean = round(mean(pup_count), 1),
-      #               count_live_mean = round(mean(pup_live_count), 1),
-      #               count_dead_mean = round(mean(pup_dead_count), 1),
-      #               count_range = diff(range(pup_count)),
-      #               counts = paste(paste(observer, pup_count, sep = ": "),
-      #                              collapse = "; "),
-      #               notes_tmp = list(if_else(
-      #                 is.na(census_notes), NA_character_,
-      #                 paste(observer, census_notes, sep = ": ")
-      #               )),
-      #               notes = paste(na.omit(unlist(notes_tmp)), collapse = "; "),
-      #               counts_live = paste(paste(observer, pup_dead_count, sep = ": "),
-      #                                   collapse = "; "),
-      #               counts_dead = paste(paste(observer, pup_live_count, sep = ": "),
-      #                                   collapse = "; "),
-      #               .groups = "drop") %>%
-      #     # left_join(tbl_beaches_capewide(req(pool())), by = "location") %>%
-      #     arrange(census_afs_capewide_pup_sort) %>%
-      #     select(-c(census_afs_capewide_pup_sort, notes_tmp)) #, beach_id))
-      #
-      #   bind_rows(
-      #     data.frame(location = "Capewide",
-      #                count_mean = sum(census.df.out$count_mean),
-      #                count_live_mean = sum(census.df.out$count_live_mean),
-      #                count_dead_mean = sum(census.df.out$count_dead_mean)),
-      #     census.df.out
-      #   )
-      # })
-      #
-      #
-      # census_df_fs_total <- reactive({
-      #   census.df.out <- census_df_filter_location() %>%
-      #     filter(!exclude_count) %>%
-      #     # mutate(season_name = amlr_season_from_date(census_date))
-      #     # z.summ.loc <- z %>%
-      #     group_by(season_name, census_afs_capewide_pup_sort, location) %>%
-      #     summarise(num_records = n(),
-      #               count_loc_mean = mean(pup_count),
-      #               count_loc_var = var(pup_count),
-      #               tmp_date = min(census_date),
-      #               .groups = "drop")
-      #
-      #   if (input$summary_location == "by_beach") {
-      #     census.df.out %>%
-      #       rename(count_mean = count_loc_mean,
-      #              count_var = count_loc_var) %>%
-      #       select(-tmp_date)
-      #
-      #   } else {
-      #     census.df.out %>%
-      #       group_by(season_name) %>%
-      #       summarise(count_mean = round(sum(count_loc_mean), 0),
-      #                 count_var = if_else(min(tmp_date) < as.Date("2011-07-01"),
-      #                                     NA_real_, sum(count_loc_var, na.rm = TRUE)),
-      #                 count_sd = round(sqrt(count_var), 0),
-      #                 .groups = "drop") %>%
-      #       select(-count_var)
-      #   }
-      # })
+      # Process data for plot / table
+
+      ### Plot for fs_single summaries
+      plot_fs_single <- reactive({
+        x <- census_df_filter_location() %>%
+          mutate(exclude_count = factor(exclude_count, levels = c("FALSE", "TRUE")))
+
+        g.out <-  if (input$exclude_count) {
+          ggplot(x) +
+            geom_col(aes(location, pup_count, fill = observer),
+                     position = "dodge")
+
+        } else {
+          ggplot(x) +
+            geom_col(aes(location, pup_count, fill = observer,
+                         alpha = exclude_count),
+                     position = "dodge") +
+            scale_alpha_manual(values = c(1, 0.3), drop = FALSE)
+        }
+
+        g.out +
+          guides(fill = guide_legend(title = "Observer", order = 1)) +
+          theme(axis.text.x = element_text(angle = 90)) +
+          ggtitle(paste("Cape Shirreff AFS Capewide Pup Census Individual Counts",
+                        unique(x$season_name), sep = " - ")) +
+          xlab("Location") +
+          ylab("Pup count")
+      })
+
 
       ### Table and plot for fs_total summaries
       census_df_fs_total <- reactive({
@@ -341,7 +308,7 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
           theme(axis.text.x = element_text(angle = 90)) +
           ggtitle("Cape Shirreff AFS Capewide Pup Census") +
           xlab("Season") +
-          ylab("Count (mean)") +
+          ylab("Pup count (mean)") +
           expand_limits(y = 0)
       })
 
@@ -361,19 +328,16 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
       #-------------------------------------------------------------------------
       ### Output table
       tbl_output <- reactive({
-        req(input$summary_timing)
         census.df <- census_df_filter_location()
 
-        if (input$summary_timing == "fs_raw") {
+        if (req(input$summary_timing) == "fs_raw") {
           census.df %>% select(-c(census_afs_capewide_pup_sort, pup_count))
         } else if (input$summary_timing == "fs_single") {
           afs_cwp_single(census.df)
         } else if (input$summary_timing == "fs_total") {
           census_df_fs_total()
         } else {
-          validate(
-            "This summary is in development"
-          )
+          validate("This summary is in development")
         }
       })
 
@@ -381,20 +345,12 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
       #-------------------------------------------------------------------------
       ### Output plot
       plot_output <- reactive({
-        # ggplot(data.frame(x = 1:2, y = 1:2), aes(x, y)) +
-        #   geom_point() +
-        #   ggtitle("Ignore this plot")
-        # NULL
-        if (input$summary_timing == "fs_raw") {
-          validate("No plot for raw data summary")
-
-          # } else if (input$summary_timing == "fs_single") {
-          #   afs_cwp_single(census.df)
-
+        if (req(input$summary_timing) == "fs_raw") {
+          validate("There is no plot for raw data summary")
+        } else if (input$summary_timing == "fs_single") {
+          plot_fs_single()
         } else if (input$summary_timing == "fs_total") {
           plot_fs_total()
-
-
         } else {
           validate("This plot is in development")
         }
@@ -402,7 +358,7 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
 
       #-------------------------------------------------------------------------
       ### Send off
-      observe(mod_output_server("out", session, tbl_output, plot_output))
+      observe(mod_output_server("out", tbl_output, plot_output))
     }
   )
 }

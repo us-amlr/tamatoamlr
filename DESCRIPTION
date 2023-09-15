@@ -12,7 +12,7 @@ Description: This package contains Tamatoa, a Shiny app that connects to the
     is for the Shiny app to provide the mainfunctionality for this package.
 Depends: R (>= 4.0.0)
 Imports: 
-    amlrDatabases (>= 0.6), 
+    amlrDatabases (>= 0.7), 
     dplyr (>= 1.0),
     DT, 
     forcats, 

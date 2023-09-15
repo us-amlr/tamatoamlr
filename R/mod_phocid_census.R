@@ -584,7 +584,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
 
       #-------------------------------------------------------------------------
       ### Send off
-      observe(mod_output_server("out", session, tbl_output, plot_output))
+      observe(mod_output_server("out", tbl_output, plot_output))
     }
   )
 }

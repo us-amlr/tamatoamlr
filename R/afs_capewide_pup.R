@@ -21,8 +21,18 @@
 #' group by season name and return counts and standard deviations
 #'
 #' @return
-#' A data frame with the summarized AFS Capewide Pup Census data.
+#' An ungrouped data frame with the summarized AFS Capewide Pup Census data.
 #' The summary types are described in 'Details'.
+#'
+#' @examplesIf FALSE
+#' # Only will run if on SWFSC network
+#' x <- tbl_vCensus_AFS_Capewide_Pup(amlr_dbConnect("***REMOVED***_Test"))
+#'
+#' afs_cwp_single(x[x$season_name == "2016/17", ])
+#' afs_cwp_totals(x)
+#'
+#' x.byloc <- afs_cwp_totals_bylocation(x)
+#' afs_cwp_totals(x.byloc, x.bylocation = TRUE)
 #'
 #' @name afs_capewide_pup
 #' @export
@@ -34,63 +44,41 @@ afs_cwp_single <- function(x) { #}, by.observer) {
   )
 
   stopifnot(
-    all(c(columns.names %in% names(x)))
+    all(c(columns.names %in% names(x))),
+    n_distinct(x$season_name) == 1
   )
 
-  # if (by.observer) {
-  #   x %>%
-  #     group_by(season_name, observer, census_date,
-  #              census_afs_capewide_pup_sort, location) %>%
-  #     summarise(n_records = n(),
-  #               pup_count = paste(pup_count, sep = "; "),
-  #               pup_count = paste(pup_live_count, sep = "; "),
-  #               pup_count = paste(pup_dead_count, sep = "; "),
-  #
-  #               count_mean = round(mean(pup_count), 1),
-  #               count_live_mean = round(mean(pup_live_count), 1),
-  #               count_dead_mean = round(mean(pup_dead_count), 1),
-  #               count_range = diff(range(pup_count)),
-  #               counts = paste(paste(observer, pup_count, sep = ": "),
-  #                              collapse = "; "),
-  #               exclude_count = paste(as.integer(exclude_count), sep = "; "),
-  #               notes_tmp = list(if_else(
-  #                 is.na(census_notes), NA_character_,
-  #                 paste(observer, census_notes, sep = ": ")
-  #               )),
-  #               notes = paste(na.omit(unlist(notes_tmp)), collapse = "; "),
-  #               counts_live = paste(paste(observer, pup_live_count, sep = ": "),
-  #                                   collapse = "; "),
-  #               counts_dead = paste(paste(observer, pup_dead_count, sep = ": "),
-  #                                   collapse = "; "),
-  #               .groups = "drop") %>%
-  #     arrange(census_afs_capewide_pup_sort) %>%
-  #     select(-c(census_afs_capewide_pup_sort, notes_tmp))
-  #
-  # } else {
   x %>%
-    group_by(season_name, census_date,
-             census_afs_capewide_pup_sort, location) %>%
+    group_by(season_name, census_afs_capewide_pup_sort, location) %>%
+    arrange(observer) %>% #so that collapsed data are always in the same order
     summarise(n_records = n(),
               count_mean = round(mean(pup_count), 1),
-              count_live_mean = round(mean(pup_live_count), 1),
-              count_dead_mean = round(mean(pup_dead_count), 1),
               count_range = diff(range(pup_count)),
-              counts = paste(paste(observer, pup_count, sep = ": "),
-                             collapse = "; "),
-              exclude_count = paste(as.integer(exclude_count), sep = "; "),
-              notes_tmp = list(if_else(
-                is.na(census_notes), NA_character_,
-                paste(observer, census_notes, sep = ": ")
-              )),
-              notes = paste(na.omit(unlist(notes_tmp)), collapse = "; "),
-              counts_live = paste(paste(observer, pup_dead_count, sep = ": "),
-                                  collapse = "; "),
-              counts_dead = paste(paste(observer, pup_live_count, sep = ": "),
-                                  collapse = "; "),
+              count_range_perc_diff = if_else(
+                count_mean == 0, 0,
+                round(count_range / count_mean * 100, 2)),
+              observers = paste(observer, collapse = "; "),
+              counts = paste(pup_count, collapse = "; "),
+              exclude_count = paste(as.integer(exclude_count), collapse = "; "),
+              notes = paste(census_notes, collapse = "; "),
+              counts_live = paste(pup_live_count, collapse = "; "),
+              counts_dead = paste(pup_dead_count, collapse = "; "),
+              # counts = paste(paste(observer, pup_count, sep = ": "),
+              #                collapse = "; "),
+              # exclude_count = paste(as.integer(exclude_count), collapse = "; "),
+              # notes = paste(na.omit(
+              #   if_else(
+              #     is.na(census_notes), NA_character_,
+              #     paste(observer, census_notes, sep = ": ")
+              #   )
+              # ), collapse = "; "),
+              # counts_live = paste(paste(observer, pup_dead_count, sep = ": "),
+              #                     collapse = "; "),
+              # counts_dead = paste(paste(observer, pup_live_count, sep = ": "),
+              #                     collapse = "; "),
               .groups = "drop") %>%
     arrange(census_afs_capewide_pup_sort) %>%
-    select(-c(census_afs_capewide_pup_sort, notes_tmp))
-  # }
+    select(-c(census_afs_capewide_pup_sort))
 }
 
 #' @name afs_capewide_pup
@@ -101,10 +89,10 @@ afs_cwp_totals_bylocation <- function(x) {
     "census_date", "pup_count", "research_program"
   )
 
-  stopifnot(
-    !any(x$exclude_count),
-    all(c(columns.names %in% names(x)))
-  )
+  stopifnot(all(c(columns.names %in% names(x))))
+  if (any(x$exclude_count))
+    warning("Some rows in x have a TRUE value for the 'exclude_count' flag",
+            immediate. = TRUE)
 
   x %>%
     group_by(season_name, census_afs_capewide_pup_sort, location) %>%
@@ -123,6 +111,7 @@ afs_cwp_totals_bylocation <- function(x) {
              .default = count_loc_var
            ),
            count_loc_sd = sqrt(count_loc_var)) %>%
+    relocate(count_loc_sd, .before = count_loc_var) %>%
     select(-c(census_afs_capewide_pup_sort, study_beach_count))
 }
 
@@ -132,8 +121,8 @@ afs_cwp_totals <- function(x, x.bylocation = FALSE) {
   y <- if (x.bylocation) {
     stopifnot(identical(
       c("season_name", "location",
-        "num_records", "count_loc_mean", "count_loc_var", "date_min",
-        "research_program"),
+        "num_records", "count_loc_mean", "count_loc_sd", "count_loc_var",
+        "date_min", "research_program"),
       names(x)
     ))
     x

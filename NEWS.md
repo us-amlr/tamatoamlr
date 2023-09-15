@@ -1,6 +1,11 @@
 # amlrPinnipeds 0.5.0.9000
 
-* Adding to Capewide tab
+* Requires [amlrDatabases](https://github.com/us-amlr/amlrDatabases) >= v0.7.0. Specifically, `amlrDatabases::mod_output_server` now does not take `parent` argument
+
+* Updated afs_capewide_pup_census module to handle new SQL table structures, and added new plots and displays for single and multiple seasons
+
+* Added `afs_capewide_pup` functions
+
 
 # amlrPinnipeds 0.4.0
 
