@@ -18,6 +18,7 @@ mod_afs_capewide_pup_census_ui <- function(id) {
         helpText("This tab allows you to summarize and visualize AFS Capewide Pup Census data. ",
                  "Select how you wish to summarize this data, ",
                  "and then specify any filters you would like to apply"),
+        # TODO: add notes about CWP data from other years and eg SSI surveys
         fluidRow(
           column(4, .summaryTimingUI(ns, c("fs_total", "fs_single", "fs_raw"))),
           column(4, .summaryLocationUI(ns, c("by_capewide", "by_beach"), "by_capewide", FALSE))
@@ -172,6 +173,8 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
           validate("invalid input$summary_timing value")
         }
 
+        # TODO: add warning message about time of year if 2021/22 data is included
+
         validate(
           need(nrow(census.df) > 0,
                "There are no data for the given season filter(s)")
@@ -264,8 +267,9 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
         g.out +
           guides(fill = guide_legend(title = "Observer", order = 1)) +
           theme(axis.text.x = element_text(angle = 90)) +
-          ggtitle(paste("Cape Shirreff AFS Capewide Pup Census Individual Counts",
-                        unique(x$season_name), sep = " - ")) +
+          ggtitle(paste("Cape Shirreff AFS Capewide Pup Census",
+                        "Individual Counts", unique(x$season_name),
+                        sep = " - ")) +
           xlab("Location") +
           ylab("Pup count")
       })

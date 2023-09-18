@@ -4,7 +4,7 @@
 
 <!-- badges: end -->
 
-amlrPinnipeds and Tamatoa, its accompanying Shiny app, are for analyzing and visualizing data collected by the [AERD](https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center) [Pinniped Research Program](https://www.fisheries.noaa.gov/international/science-data/pinniped-research-antarctic).
+amlrPinnipeds and Tamatoa, the package's accompanying Shiny app, are for analyzing and visualizing data collected by the [U.S. AMLR Program's](https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center) [Pinniped Research Program](https://www.fisheries.noaa.gov/international/science-data/pinniped-research-antarctic).
 
 ## Installation
 
@@ -17,19 +17,19 @@ devtools::install_github("us-amlr/amlrPinnipeds")
 
 ## Tamatoa: Shiny app
 
-To run Tamatoa, the amlrPinnipeds Shiny app, locally, you currently must have [RStudio](https://www.rstudio.com/products/rstudio/download/#download) installed. From within RStudio, install amlrPinnipeds as described above, and then run the following code in your RStudio console:
+To run Tamatoa, the amlrPinnipeds Shiny app, locally, you must have R and [RStudio](https://www.rstudio.com/products/rstudio/download/#download) installed. From within RStudio, install amlrPinnipeds as described above, and then run the following code in your RStudio console to launch the Shiny app:
 
 ``` r
-amlrPinnipeds::amlr_pinnipeds_gui()
+amlrPinnipeds::tamatoa()
 ```
 
 By default, Tamatoa attempts to connect to the database on the SWFSC server. For it to connect, you must be logged into VPN on whatever computer you are using to run the app. You can also choose to connect to a local copy of the database, if appropriate.
 
 ### Shiny app overview and guiding principles, for developers:
 
-* mod_database_server(), from [amlrDatabases](https://github.com/us-amlr/amlrDatabases), returns the connection to the user-specified database via a [pool](https://github.com/rstudio/pool) object that is used by the rest of the amlrPinnipeds Shiny App modules. Pool connections to the four possible databases (remote/local and ***REMOVED***/***REMOVED***_Test) are generated at the top of the amlrPinnipeds app.R code, and then passed to mod_database_server. 
+* `mod_database_server`, from [amlrDatabases](https://github.com/us-amlr/amlrDatabases), returns the connection to the user-specified database via a [pool](https://github.com/rstudio/pool) object that is used by the rest of the amlrPinnipeds Shiny App modules. Pool connections to the four possible databases (remote/local and ***REMOVED***/***REMOVED***_Test) may be generated and passed to `mod_database_server`, depending on the arguments passed to `tamatoa()`. 
 
-* mod_season_info_server returns the season information data for the rest of the modules
+* `mod_season_info_server` returns the season information data for the rest of the modules
 
 * The 'Database and season info' tab relies on mod_database and mod_season_info. The rest of the tabs all have a dedicated module that takes at least the pool object from mod_database, and generally season.df and season.id.list from mod_season_info_server, as inputs. These modules pass both a table and a plot to mod_output_server from  [amlrDatabases](https://github.com/us-amlr/amlrDatabases), which displays the table and plot along with associated visualization and download options. These modules generally depend on views created in the database.
 TODO: this needs a system that is more robust to changes in the SQL server views. For instance, each view has a function that checks for required column names, and returns a df with standardized capitalization things?
