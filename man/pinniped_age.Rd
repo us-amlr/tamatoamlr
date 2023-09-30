@@ -9,7 +9,7 @@ pinniped_age(event.date, cohort)
 \arguments{
 \item{event.date}{object of class \code{Date}; the date at which you wish to determine the pinniped's age}
 
-\item{cohort}{object interpretable as number(s),
+\item{cohort}{object that can be interpreted as number(s),
 meaning \code{\link[base:numeric]{is.numeric}(cohort)} must be \code{TRUE}.
 The cohort year of the pinniped.}
 }

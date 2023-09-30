@@ -3,7 +3,7 @@
 #' Calculate the age of a pinniped based on a given date and cohort year
 #'
 #' @param event.date object of class \code{Date}; the date at which you wish to determine the pinniped's age
-#' @param cohort object interpretable as number(s),
+#' @param cohort object that can be interpreted as number(s),
 #'   meaning \code{\link[base:numeric]{is.numeric}(cohort)} must be \code{TRUE}.
 #'   The cohort year of the pinniped.
 #'

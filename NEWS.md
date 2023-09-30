@@ -1,10 +1,12 @@
 # amlrPinnipeds 0.5.0.9000
 
-* Requires [amlrDatabases](https://github.com/us-amlr/amlrDatabases) >= v0.7.0. Specifically, `amlrDatabases::mod_output_server` now does not take `parent` argument
+* Requires [amlrDatabases](https://github.com/us-amlr/amlrDatabases) >= v0.7.0. Specifically, `amlrDatabases::mod_output_server` now does not take a `parent` argument
 
 * Updated afs_capewide_pup_census module to handle new SQL table structures, and added new plots and displays for single and multiple seasons
 
 * Added `afs_capewide_pup` functions
+
+* Renamed `csphoc_complete_aggregated` to `complete_csphoc` for consistency with other function names. `complete_csphoc` now does not do its own factor logic before using `complete`. In addition, users now only pass the counts data frame to the function.
 
 
 # amlrPinnipeds 0.4.0

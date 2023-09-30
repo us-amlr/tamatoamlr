@@ -9,7 +9,7 @@ Description: This package contains Tamatoa, a Shiny app that connects to the
     and allows users to analyze and visualize data from this database.
     There are some exported functions that are helpful for processing 
     AMLR Pinniped data for more familiar users, but the intent
-    is for the Shiny app to provide the mainfunctionality for this package.
+    is for the Shiny app to provide the main functionality for this package.
 Depends: R (>= 4.0.0)
 Imports: 
     amlrDatabases (>= 0.7), 
