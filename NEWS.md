@@ -1,4 +1,4 @@
-# amlrPinnipeds 0.5.0.9000
+# amlrPinnipeds 0.5.0
 
 * Requires [amlrDatabases](https://github.com/us-amlr/amlrDatabases) >= v0.7.0. Specifically, `amlrDatabases::mod_output_server` now does not take a `parent` argument
 
