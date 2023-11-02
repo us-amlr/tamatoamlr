@@ -2,9 +2,13 @@
 
 * Renamed package to `tamatoamlr`
 
-* 2023/24 Cape Shirreff field season
+* Added `dbplyr` to Imports to explicitly require it for database work
 
-* Update captures tab.....in progress
+* Version for 2023/24 Cape Shirreff field season
+
+* Update captures tab (in progress)
+
+* Update Capewide pup census tab (in progress)
 
 
 # amlrPinnipeds 0.5.0

@@ -114,7 +114,7 @@
 #-------------------------------------------------------------------------------
 ### Returns a list of all the species/color pairs present in a table
 .colorsPresent <- function(table) {
-  colors.all <- amlrPinnipeds::pinniped.sp.colors
+  colors.all <- tamatoamlr::pinniped.sp.colors
   color.values <- colors.all[names(colors.all) %in% table$species]
   return(color.values)
 }

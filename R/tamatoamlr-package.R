@@ -39,3 +39,8 @@
 #'
 #' @keywords package
 NULL
+
+# https://github.com/hadley/r-pkgs/issues/828
+ignore_unused_imports <- function() {
+  dbplyr::sql
+}

@@ -14,6 +14,7 @@ Depends: R (>= 4.0.0)
 Imports: 
     amlrDatabases (>= 0.7), 
     dplyr (>= 1.0),
+    dbplyr, 
     DT, 
     forcats, 
     glue,

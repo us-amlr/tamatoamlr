@@ -1,7 +1,7 @@
 #' @name shiny_modules
 #' @export
 mod_captures_ui <- function(id) {
-  pinniped.sp.captures <- amlrPinnipeds::pinniped.sp[
+  pinniped.sp.captures <- tamatoamlr::pinniped.sp[
     c("Fur seal", "Elephant seal", "Leopard seal", "Weddell seal")
   ]
 
@@ -173,7 +173,7 @@ mod_captures_server <- function(id, pool, season.df) {
       # output$species_uiOut_checkbox <- renderUI({
       #   req() # TODO
       #
-      #   pinniped.sp.captures <- amlrPinnipeds::pinniped.sp[
+      #   pinniped.sp.captures <- tamatoamlr::pinniped.sp[
       #     c("Fur seal", "Elephant seal", "Leopard seal", "Weddell seal")
       #   ]
       #
