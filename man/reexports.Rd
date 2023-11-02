@@ -6,6 +6,7 @@
 \alias{amlr_dbConnect}
 \alias{amlr_date_from_season}
 \alias{amlr_season_from_date}
+\alias{round_logical}
 \alias{tableNA}
 \title{Objects exported from other packages}
 \keyword{internal}
@@ -14,6 +15,6 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{amlrDatabases}{\code{\link[amlrDatabases:amlr_season]{amlr_date_from_season}}, \code{\link[amlrDatabases:amlr_db]{amlr_dbConnect}}, \code{\link[amlrDatabases:amlr_season]{amlr_season_from_date}}, \code{\link[amlrDatabases]{tableNA}}}
+  \item{amlrDatabases}{\code{\link[amlrDatabases:amlr_season]{amlr_date_from_season}}, \code{\link[amlrDatabases:amlr_db]{amlr_dbConnect}}, \code{\link[amlrDatabases:amlr_season]{amlr_season_from_date}}, \code{\link[amlrDatabases]{round_logical}}, \code{\link[amlrDatabases]{tableNA}}}
 }}
 

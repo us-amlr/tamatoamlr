@@ -5,6 +5,9 @@
 \alias{tbl_vCensus_Phocid}
 \alias{tbl_vCensus_AFS_Study_Beach}
 \alias{tbl_vCensus_AFS_Capewide_Pup}
+\alias{tbl_vCaptures}
+\alias{tbl_vCaptures_Drugs}
+\alias{tbl_vCaptures_Samples}
 \alias{tbl_vCCAMLR_Pup_Weights}
 \alias{tbl_beaches_capewide}
 \alias{tbl_vTag_Resights_Season_Summary}
@@ -16,6 +19,12 @@ tbl_vCensus_Phocid(src)
 tbl_vCensus_AFS_Study_Beach(src)
 
 tbl_vCensus_AFS_Capewide_Pup(src)
+
+tbl_vCaptures(src)
+
+tbl_vCaptures_Drugs(src)
+
+tbl_vCaptures_Samples(src)
 
 tbl_vCCAMLR_Pup_Weights(src)
 

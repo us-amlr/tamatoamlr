@@ -16,6 +16,7 @@
   # "Multiple seasons - date series" = "fs_date_series",
   "Multiple seasons - by date" = "fs_date_single",
   "Multiple seasons - facet view" = "fs_facet",
+  "Individual capture" = "fs_capture_ind",
   "Single season" = "fs_single",
   "Raw data" = "fs_raw"
 )

@@ -24,14 +24,9 @@ mod_afs_capewide_pup_census_ui <- function(id) {
           column(4, .summaryLocationUI(ns, c("by_capewide", "by_beach"), "by_capewide", FALSE))
         ),
         conditionalPanel(
-          condition = "input.summary_timing == 'fs_total'", ns = ns,
-          checkboxInput(ns("all_seasons"), "Include all all seasons", value = TRUE),
-          helpText("The 'all seasons' checkbox will override the season filter")
-        ),
-        conditionalPanel(
           condition = "input.summary_timing == 'fs_single'", ns = ns,
           checkboxInput(ns("exclude_count"), "Remove data with the 'exclude_count' flag",
-                        value = TRUE)
+                        value = FALSE)
         ),
         uiOutput(ns("exclude_count_uiOut_helptext"))
       )
@@ -95,11 +90,11 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
                    "In the table below, the order of the data in the columns",
                    "with multiple datais is consistent across all columns")
         } else if (input$summary_timing == "fs_total") {
-          helpText("Data with the 'exclude_count' flag will always",
+          helpText("Note: Data with the 'exclude_count' flag will always",
                    "be removed when plotting over multiple seasons")
         }  else if (input$summary_timing == "fs_raw") {
-          helpText("All data, including entries where the 'exclude_count' flag",
-                   "is TRUE, are included in the raw data output")
+          helpText("Note: All data, including entries where the 'exclude_count'",
+                   " flag is TRUE, are included in the raw data output")
         } else {
           stop("Invalid input$summary_timing")
         }
@@ -284,10 +279,15 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
             rename(count_mean = count_loc_mean,
                    count_var = count_loc_var,
                    count_sd = count_loc_sd) %>%
+            mutate(count_mean = round_logical(count_mean, 0),
+                   count_var = round_logical(count_var, 2),
+                   count_sd = round_logical(count_sd, 2)) %>%
             select(-date_min)
 
         } else {
-          afs_cwp_totals(census.df)
+          afs_cwp_totals(census.df) %>%
+            mutate(count_mean = round_logical(count_mean, 0),
+                   count_sd = round_logical(count_sd, 2))
         }
       })
 
@@ -296,10 +296,12 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
 
         g.out <- if (input$summary_location == "by_beach") {
           ggplot(x, aes(season_name, count_mean,
-                        group = location, color = location)) +
+                        group = location, color = location,
+                        text = paste("count_sd:", count_sd))) +
             guides(color = guide_legend(title = "Location"))
         } else {
-          ggplot(x, aes(season_name, count_mean, group = group))
+          ggplot(x, aes(season_name, count_mean, group = group,
+                        text = paste("count_sd:", count_sd)))
         }
 
         g.out +
@@ -307,7 +309,7 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
           geom_line() +
           geom_errorbar(aes(ymin = count_mean-count_sd,
                             ymax = count_mean+count_sd),
-                        width = 0.2) +
+                        width = 0.5) +
           scale_x_discrete(drop = FALSE) +
           theme(axis.text.x = element_text(angle = 90)) +
           ggtitle("Cape Shirreff AFS Capewide Pup Census") +
@@ -337,7 +339,9 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
         if (req(input$summary_timing) == "fs_raw") {
           census.df %>% select(-c(census_afs_capewide_pup_sort, pup_count))
         } else if (input$summary_timing == "fs_single") {
-          afs_cwp_single(census.df)
+          afs_cwp_single(census.df) %>%
+            mutate(count_mean = round_logical(count_mean, 0),
+                   count_range_perc_diff = round_logical(count_range_perc_diff, 2))
         } else if (input$summary_timing == "fs_total") {
           census_df_fs_total()
         } else {

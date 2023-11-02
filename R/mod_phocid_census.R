@@ -8,15 +8,18 @@ mod_phocid_census_ui <- function(id) {
     fluidRow(
       box(
         title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
-        fluidRow(
-          column(9, mod_filter_season_ui(ns("filter_season"))),
-          column(
-            width = 3, #offset = 1,
-            checkboxGroupInput(ns("species"), label = tags$h5("Species"),
-                               choices = amlrPinnipeds::pinniped.phocid.sp,
-                               selected = amlrPinnipeds::pinniped.phocid.sp)
-          )
-        ),
+        # fluidRow(
+        #   column(9, mod_filter_season_ui(ns("filter_season"))),
+        #   column(
+        #     width = 3, #offset = 1,
+        #     checkboxGroupInput(ns("species"), label = tags$h5("Species"),
+        #                        choices = amlrPinnipeds::pinniped.phocid.sp,
+        #                        selected = amlrPinnipeds::pinniped.phocid.sp)
+        #   )
+        mod_filter_season_ui(ns("filter_season")),
+        checkboxGroupInput(ns("species"), tags$h5("Species"), inline = TRUE,
+                           choices = amlrPinnipeds::pinniped.phocid.sp,
+                           selected = amlrPinnipeds::pinniped.phocid.sp),
         uiOutput(ns("age_sex_uiOut_selectize")),
         uiOutput(ns("location_uiOut_selectize"))
       ),
@@ -200,7 +203,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       # Filter collected data
 
       #-------------------------------------------------------------------------
-      ### Filter data by species, season/date, and remove NA values
+      ### Filter data by season/date
       census_df_filter_season <- reactive({
         census.df.orig <- census_df_collect()
 

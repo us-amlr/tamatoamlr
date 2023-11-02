@@ -85,7 +85,6 @@ tamatoa <- function(...,
   # options("digits" = 1)   # for proper display of decimals
 
 
-
   ##############################################################################
   ##### UI
   ui <- dashboardPage(
@@ -104,7 +103,7 @@ tamatoa <- function(...,
         menuItem("AFS Study Beach Census", tabName = "tab_afs_study_beach_census", icon = icon("th", lib = "font-awesome")),
         # menuItem("Tag Resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
         # menuItem("Pinnipeds + Tags", tabName = "tab_pt", icon = icon("th", lib = "font-awesome")),
-        menuItem("Captures", tabName = "tab_captures_summaries", icon = icon("th")),
+        menuItem("Captures", tabName = "tab_captures", icon = icon("th")),
         menuItem("CCAMLR Pup Weights", tabName = "tab_ccamlr_pup_weights", icon = icon("th")),
         menuItem("Phocid Census", tabName = "tab_phocid_census", icon = icon("th")),
         tags$br(), tags$br(),
@@ -141,7 +140,7 @@ tamatoa <- function(...,
         # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
         tabItem("tab_afs_capewide_pup_census", mod_afs_capewide_pup_census_ui("afs_capewide_pup_census")),
         tabItem("tab_afs_study_beach_census", mod_afs_study_beach_census_ui("afs_study_beach_census")),
-        tabItem("tab_captures_summaries", captures_ui("captures")),
+        tabItem("tab_captures", mod_captures_ui("captures")),
         tabItem("tab_ccamlr_pup_weights", mod_ccamlr_pup_weights_ui("ccamlr_pup_weights")),
         tabItem("tab_phocid_census", mod_phocid_census_ui("phocid_census"))
         # tabItem("tab_tr", mod_tag_resights_ui("tag_resights")),
@@ -193,7 +192,7 @@ tamatoa <- function(...,
     mod_dcc_raw_server("dcc_raw", db.pool, si.list$season.df)
     mod_afs_capewide_pup_census_server("afs_capewide_pup_census", db.pool, si.list$season.df)
     # mod_afs_study_beach_census_server("afs_study_beach_census", db.pool, si.list$season.df)
-    captures_server("captures", db.pool)
+    mod_captures_server("captures", db.pool, si.list$season.df)
     mod_ccamlr_pup_weights_server("ccamlr_pup_weights", db.pool, si.list$season.df)
     mod_phocid_census_server("phocid_census", db.pool, si.list$season.df)
     # mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)

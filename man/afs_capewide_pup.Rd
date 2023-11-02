@@ -35,14 +35,20 @@ intended to help determine if recounts need to happen
 
 afs_cwp_totals_bylocation: group by season_name and location;
 return count mean, variance, SD, and min date.
-Var and SD follow CS/AMLR-specific rules about when it must be NA
+Var and SD follow CS/AMLR-specific rules about when it must be NA.
+census_date_min is the earliest census date for that season/location group.
 
 afs_cwp_totals: after running afs_cwp_totals_bylocation,
 group by season name and return counts and standard deviations
+
+Note that none of these functions do any rounding. To round values,
+for instance to get a whole number for pup counts,
+use either \code{\link[base]{round}}
+or \code{\link[amlrDatabases]{round_logical}}
 }
 \examples{
 \dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-# Only will run if on SWFSC network
+# Not run; examples only will run if on SWFSC network
 x <- tbl_vCensus_AFS_Capewide_Pup(amlr_dbConnect("***REMOVED***_Test"))
 
 afs_cwp_single(x[x$season_name == "2016/17", ])

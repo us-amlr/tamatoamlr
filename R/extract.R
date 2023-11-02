@@ -67,6 +67,35 @@ tbl_vCensus_AFS_Capewide_Pup <- function(src) {
 
 #' @name extract
 #' @export
+tbl_vCaptures <- function(src) {
+  tbl(src, "vCaptures") %>%
+    select(season_name, capture_id, pinniped_id, species, sex, cohort,
+           everything()) %>%
+    collect()
+}
+
+#' @name extract
+#' @export
+tbl_vCaptures_Drugs <- function(src) {
+  tbl(src, "vCaptures_Drugs") %>%
+    # select(season_name, capture_id, capture_date, capture_time,
+    #        everything()) %>%
+    arrange(capture_date, capture_time) %>%
+    collect()
+}
+
+#' @name extract
+#' @export
+tbl_vCaptures_Samples <- function(src) {
+  tbl(src, "vCaptures_Samples") %>%
+    # select(season_name, capture_id, capture_date, capture_time,
+    #        everything()) %>%
+    arrange(capture_date, capture_time) %>%
+    collect()
+}
+
+#' @name extract
+#' @export
 tbl_vCCAMLR_Pup_Weights <- function(src) {
   tbl(src, "vCCAMLR_Pup_Weights") %>%
     select(season_name, round_num, round_date, time_start, time_end,

@@ -10,6 +10,10 @@ amlrDatabases::amlr_date_from_season
 #' @export
 amlrDatabases::amlr_season_from_date
 
+#' @importFrom amlrDatabases round_logical
+#' @export
+amlrDatabases::round_logical
+
 #' @importFrom amlrDatabases tableNA
 #' @export
 amlrDatabases::tableNA

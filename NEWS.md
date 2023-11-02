@@ -1,5 +1,7 @@
 # amlrPinnipeds 0.6.0.9000 (in development)
 
+* Update captures tab.....in progress
+
 
 # amlrPinnipeds 0.5.0
 
