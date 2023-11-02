@@ -1,6 +1,6 @@
-#' Open Tamatoa, the amlrPinnipeds Shiny app
+#' Open Tamatoa, the package Shiny app
 #'
-#' Open Tamatoa, the amlrPinnipeds Shiny app
+#' Open Tamatoa, the package Shiny app
 #'
 #' @param ... passed to \code{\link[shiny]{shinyApp}}
 #' @param remote.prod logical; default is TRUE. Should tamatoa create an

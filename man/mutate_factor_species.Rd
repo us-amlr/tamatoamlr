@@ -4,7 +4,7 @@
 \alias{mutate_factor_species}
 \title{Convert species column to a factor}
 \usage{
-mutate_factor_species(x, levels = names(amlrPinnipeds::pinniped.sp))
+mutate_factor_species(x, levels = names(tamatoamlr::pinniped.sp))
 }
 \arguments{
 \item{x}{data frame that at minimum contains a 'species' column}

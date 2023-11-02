@@ -62,7 +62,7 @@
 #'
 #' count.df <- data.frame(
 #'   header_id = header.id,
-#'   species = amlrPinnipeds::pinniped.phocid.sp[c(1, 2, 1, 3, 4, 2)],
+#'   species = tamatoamlr::pinniped.phocid.sp[c(1, 2, 1, 3, 4, 2)],
 #'   location = "test",
 #'   ad_female_count = c(5, 3, 7, 3, 6, 3),
 #'   ad_male_count = c(NA, 4, 2, NA, 0, 3),
@@ -109,8 +109,8 @@ complete_csphoc <- function(x) {
   if (!all(x$research_program == "USAMLR"))
     stop("csphoc_complete_aggregated is only intended for USAMLR records")
 
-  if (!all(x$species %in% amlrPinnipeds::pinniped.phocid.sp))
-    stop("All species values must be one of amlrPinnipeds::pinniped.phocid.sp")
+  if (!all(x$species %in% tamatoamlr::pinniped.phocid.sp))
+    stop("All species values must be one of tamatoamlr::pinniped.phocid.sp")
 
 
   # Check that x is already grouped and summed by header ID and species

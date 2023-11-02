@@ -17,7 +17,7 @@
 \alias{mod_dcc_raw_server}
 \alias{mod_phocid_census_ui}
 \alias{mod_phocid_census_server}
-\title{Modules for the different tabs of Tamatoa, the amlrPinnipeds Shiny app}
+\title{Modules for the different tabs of Tamatoa, the tamatoamlr Shiny app}
 \usage{
 mod_afs_capewide_pup_census_ui(id)
 
@@ -54,5 +54,5 @@ Intended to be the first element (\code{season.df}) of
 the (list) output of \code{\link{mod_filter_season_server}}}
 }
 \description{
-Modules for the different tabs of Tamatoa, the amlrPinnipeds Shiny app
+Modules for the different tabs of Tamatoa, the tamatoamlr Shiny app
 }

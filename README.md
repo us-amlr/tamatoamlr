@@ -1,33 +1,33 @@
-# amlrPinnipeds
+# tamatoamlr
 
 <!-- badges: start -->
 
 <!-- badges: end -->
 
-amlrPinnipeds and Tamatoa, the package's accompanying Shiny app, are for analyzing and visualizing data collected by the [U.S. AMLR Program's](https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center) [Pinniped Research Program](https://www.fisheries.noaa.gov/international/science-data/pinniped-research-antarctic).
+tamatoamlr and Tamatoa, the package's accompanying Shiny app, are for analyzing and visualizing data collected by the [U.S. AMLR Program's](https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center) [Pinniped Research Group](https://www.fisheries.noaa.gov/international/science-data/pinniped-research-antarctic).
 
 ## Installation
 
-You can install the development version of amlrPinnipeds from [GitHub](https://github.com/) with:
+You can install the development version of tamatoamlr from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("us-amlr/amlrPinnipeds")
+devtools::install_github("us-amlr/tamatoamlr")
 ```
 
 ## Tamatoa: Shiny app
 
-To run Tamatoa, the amlrPinnipeds Shiny app, locally, you must have R and [RStudio](https://www.rstudio.com/products/rstudio/download/#download) installed. From within RStudio, install amlrPinnipeds as described above, and then run the following code in your RStudio console to launch the Shiny app:
+To run Tamatoa, the tamatoamlr Shiny app, locally, you must have R and [RStudio](https://www.rstudio.com/products/rstudio/download/#download) installed. From within RStudio, install tamatoamlr as described above, and then run the following code in your RStudio console to launch the Shiny app:
 
 ``` r
-amlrPinnipeds::tamatoa()
+tamatoamlr::tamatoa()
 ```
 
 By default, Tamatoa attempts to connect to the database on the SWFSC server. For it to connect, you must be logged into VPN on whatever computer you are using to run the app. You can also choose to connect to a local copy of the database, if appropriate.
 
 ### Shiny app overview and guiding principles, for developers:
 
-* `mod_database_server`, from [amlrDatabases](https://github.com/us-amlr/amlrDatabases), returns the connection to the user-specified database via a [pool](https://github.com/rstudio/pool) object that is used by the rest of the amlrPinnipeds Shiny App modules. Pool connections to the four possible databases (remote/local and ***REMOVED***/***REMOVED***_Test) may be generated and passed to `mod_database_server`, depending on the arguments passed to `tamatoa()`. 
+* `mod_database_server`, from [amlrDatabases](https://github.com/us-amlr/amlrDatabases), returns the connection to the user-specified database via a [pool](https://github.com/rstudio/pool) object that is used by the rest of the tamatoamlr Shiny App modules. Pool connections to the four possible databases (remote/local and ***REMOVED***/***REMOVED***_Test) may be generated and passed to `mod_database_server`, depending on the arguments passed to `tamatoa()`. 
 
 * `mod_season_info_server` returns the season information data for the rest of the modules
 

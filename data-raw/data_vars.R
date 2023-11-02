@@ -44,7 +44,7 @@ csphoc.core.location.groups <- c(
 )
 stopifnot(all(csphoc.core.location.groups %in% beaches$name))
 waldo::compare(csphoc.core.location.groups,
-               amlrPinnipeds::csphoc.core.location.groups)
+               tamatoamlr::csphoc.core.location.groups)
 
 # Sanity check
 z <- tbl(con, "vCensus_Phocid") %>%

@@ -72,7 +72,7 @@ census.dates <- as.Date(c("2000-01-01", "2000-01-08", "2000-01-15"))
 
 count.df <- data.frame(
   header_id = header.id,
-  species = amlrPinnipeds::pinniped.phocid.sp[c(1, 2, 1, 3, 4, 2)],
+  species = tamatoamlr::pinniped.phocid.sp[c(1, 2, 1, 3, 4, 2)],
   location = "test",
   ad_female_count = c(5, 3, 7, 3, 6, 3),
   ad_male_count = c(NA, 4, 2, NA, 0, 3),

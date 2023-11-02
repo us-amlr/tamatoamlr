@@ -1,4 +1,4 @@
-#' amlrPinnipeds: Analyze and Visualize US AMLR Pinniped Data
+#' tamatoamlr: Analyze and Visualize US AMLR Pinniped Data
 #'
 #' This package contains \code{\link{tamatoa}},
 #' a Shiny app that connects to the ***REMOVED*** database,
@@ -6,10 +6,10 @@
 #' There are also several stand-alone functions,
 #' such as for calculating krill lengths from carapace measurements.
 #'
-#' @name amlrPinnipeds-package
-#' @aliases amlrPinnipeds
+#' @name tamatoamlr-package
+#' @aliases tamatoamlr
 #' @docType package
-#' @title US AMLR Pinniped Program data processing and analysis
+#' @title US AMLR Program Pinniped data processing and analysis
 #' @author Sam Woodman \email{sam.woodman@@noaa.gov}
 #' @author Karen Snyder \email{ksnyder@@g.hmc.edu}
 #'

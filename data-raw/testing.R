@@ -3,7 +3,7 @@
 library(DBI)
 library(odbc)
 
-library(amlrPinnipeds)
+library(tamatoamlr)
 library(tidyverse)
 # library(lubridate)
 # library(readxl)

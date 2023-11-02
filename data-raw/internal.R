@@ -1,4 +1,4 @@
-# This script creates internal data used by Tamatoa and amlrPinnipeds functions
+# This script creates internal data used by Tamatoa and other package functions
 #   These include:
 
 #-------------------------------------------------------------------------------

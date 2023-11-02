@@ -40,4 +40,3 @@ krill_length_regression <- function(x, col.length, col.width) {
                                             11.6 + 2.13 * !!col_length,
                                             0.62 + 3.13 * !!col_length)))
 }
-

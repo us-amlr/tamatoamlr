@@ -400,7 +400,7 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
           geom_point(aes(color = !!color.val, shape = !!shape.val)) +
           geom_line(aes(group = interaction(count_class, location_fctr),
                         color = !!color.val)) +
-          # scale_color_manual(values = amlrPinnipeds::pinniped.sp.colors[input$species],
+          # scale_color_manual(values = tamatoamlr::pinniped.sp.colors[input$species],
           #                    drop = FALSE) +
           guides(color = guide_legend_color, linetype = "none",
                  shape = guide_legend_shape, size = "none")+

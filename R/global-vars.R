@@ -5,6 +5,7 @@ utils::globalVariables(c(
   # Commonly used variables
   "observer", "location", "location_group", "beach_id", "species",
   "Beach", "Beaches", "loc_lower", "loc_clean", "week_num", "header_id",
+  "capture_id",
 
   # Plotting
   "count_class", "count_value", "species_lty",
@@ -28,6 +29,7 @@ utils::globalVariables(c(
   "pup_count", "pup_live_count", "pup_dead_count", "date_min",
   "count_loc_mean", "count_loc_var", "count_loc_sd", "study_beach_count",
   "count_mean", "count_var", "count_sd", "count_range", "group",
+  "census_date_min", "count_range_perc_diff",
 
   # AFS Study Beach Census
   "ad_male_count_sum", "adult_male_non_terr_count", "adult_male_terr_count",

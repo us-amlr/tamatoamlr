@@ -1,4 +1,8 @@
-# amlrPinnipeds 0.6.0.9000 (in development)
+# tamatoamlr 1.0.0.9000 (in development)
+
+* Renamed package to `tamatoamlr`
+
+* 2023/24 Cape Shirreff field season
 
 * Update captures tab.....in progress
 

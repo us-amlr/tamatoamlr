@@ -13,13 +13,13 @@ mod_phocid_census_ui <- function(id) {
         #   column(
         #     width = 3, #offset = 1,
         #     checkboxGroupInput(ns("species"), label = tags$h5("Species"),
-        #                        choices = amlrPinnipeds::pinniped.phocid.sp,
-        #                        selected = amlrPinnipeds::pinniped.phocid.sp)
+        #                        choices = tamatoamlr::pinniped.phocid.sp,
+        #                        selected = tamatoamlr::pinniped.phocid.sp)
         #   )
         mod_filter_season_ui(ns("filter_season")),
         checkboxGroupInput(ns("species"), tags$h5("Species"), inline = TRUE,
-                           choices = amlrPinnipeds::pinniped.phocid.sp,
-                           selected = amlrPinnipeds::pinniped.phocid.sp),
+                           choices = tamatoamlr::pinniped.phocid.sp,
+                           selected = tamatoamlr::pinniped.phocid.sp),
         uiOutput(ns("age_sex_uiOut_selectize")),
         uiOutput(ns("location_uiOut_selectize"))
       ),
@@ -474,7 +474,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
         fs <- filter_season()
 
         census.df.orig <- census_df() %>%
-          mutate_factor_species(levels = amlrPinnipeds::pinniped.phocid.sp)
+          mutate_factor_species(levels = tamatoamlr::pinniped.phocid.sp)
 
         if (input$summary_sas == "by_sp_age_sex") {
           validate(
@@ -554,7 +554,7 @@ mod_phocid_census_server <- function(id, pool, season.df) {
           geom_point(aes(shape = count_class, color = species)) +
           geom_line(aes(group = interaction(species, count_class, location_lty),
                         color = species, linetype = location_lty)) +
-          scale_color_manual(values = amlrPinnipeds::pinniped.sp.colors[input$species],
+          scale_color_manual(values = tamatoamlr::pinniped.sp.colors[input$species],
                              drop = FALSE) +
           guides(color = guide_legend(title = "Species", order = 1),
                  linetype = lty_guide_legend,

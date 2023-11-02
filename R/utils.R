@@ -1,4 +1,4 @@
-# amlrPinnipeds internal functions
+# Package internal functions
 
 # Internal data are created in data-raw/internal.R
 

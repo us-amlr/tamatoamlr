@@ -2,7 +2,7 @@
 % Please edit documentation in R/tamatoa.R
 \name{tamatoa}
 \alias{tamatoa}
-\title{Open Tamatoa, the amlrPinnipeds Shiny app}
+\title{Open Tamatoa, the package Shiny app}
 \usage{
 tamatoa(
   ...,
@@ -28,7 +28,7 @@ the local SQL Express (see Details for more info)?}
 \item{server.sql}{character; SQL server suffix. Default is '\\SQLEXPRESS'}
 }
 \description{
-Open Tamatoa, the amlrPinnipeds Shiny app
+Open Tamatoa, the package Shiny app
 }
 \details{
 If \code{local.prod} is TRUE, then Tamatoa will attempt to connect to the

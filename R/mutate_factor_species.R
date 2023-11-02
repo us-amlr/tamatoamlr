@@ -20,7 +20,7 @@
 #' mutate_factor_species(x, levels = c("Fur seal", "Weddell seal", "Eseal"))
 #'
 #' @export
-mutate_factor_species <- function(x, levels = names(amlrPinnipeds::pinniped.sp)) {
+mutate_factor_species <- function(x, levels = names(tamatoamlr::pinniped.sp)) {
   stopifnot(
     inherits(x, "data.frame"),
     "species" %in% names(x),
