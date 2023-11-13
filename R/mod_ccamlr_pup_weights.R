@@ -160,6 +160,8 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
 
         if (input$summary_type == "weight") {
           cpw.grp %>%
+            filter(!is.na(mass_kg)) %>%
+            # TODO: make warning message
             summarise(mean_mass_kg = round(mean(mass_kg), 2),
                       n_weights = n(),
                       min_mass_kg = min(mass_kg),

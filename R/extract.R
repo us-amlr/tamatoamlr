@@ -102,7 +102,7 @@ tbl_vCCAMLR_Pup_Weights <- function(src) {
            location, location_group, beach_id,
            pup_num, sex, mass_total_kg, tare_kg, mass_kg, tare_check,
            # pinniped_id, tag_unqiue_mother_primary, attendance_pup_id,
-           ccamlr_pup_weights_notes, header_notes, research_program) %>%
+           notes, header_notes, research_program) %>%
     collect()
 }
 
@@ -118,7 +118,7 @@ tbl_beaches_capewide <- function(src) {
 
 #' @name extract
 #' @export
-tbl_vTag_Resights_Season_Summary <- function(src) {
+tbl_vTag_Resights <- function(src) {
   tbl(src, "vTag_Resights_Season_Summary") %>%
     arrange(season_open_date, species, tag_sort) %>%
     collect()
