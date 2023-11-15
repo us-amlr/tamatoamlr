@@ -10,7 +10,7 @@
 \alias{tbl_vCaptures_Samples}
 \alias{tbl_vCCAMLR_Pup_Weights}
 \alias{tbl_beaches_capewide}
-\alias{tbl_vTag_Resights_Season_Summary}
+\alias{tbl_vTag_Resights}
 \alias{tbl_pinniped_season}
 \title{Extract data from database}
 \usage{
@@ -30,7 +30,7 @@ tbl_vCCAMLR_Pup_Weights(src)
 
 tbl_beaches_capewide(src)
 
-tbl_vTag_Resights_Season_Summary(src)
+tbl_vTag_Resights(src)
 
 tbl_pinniped_season(src)
 }
