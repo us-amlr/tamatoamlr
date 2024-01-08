@@ -1,20 +1,12 @@
 #' Vector of relevant pinniped species
 #'
-#' The vector contents are lowercase, while the vector names are 'sentence'
+#' The vector contents and vector names are 'sentence'
 #' case (via \code{\link[stringr]{str_to_sentence}}).
 #' The species included in this list are: Fur seal (Antarctic fur seal),
 #' Crabeater seal, Elephant seal (Southern elephant seal), Leopard seal, and Weddell seal
 #'
 #' @format A (named) character vector
 "pinniped.sp"
-
-
-#' Vector of relevant phocid species
-#'
-#' The same as \code{\link{pinniped.sp}}, except only phocids (i.e., not Fur seals)
-#'
-#' @format A (named) character vector
-"pinniped.phocid.sp"
 
 
 #' Colors used in plots by pinniped species
@@ -24,6 +16,23 @@
 #'
 #' @format A (named) character vector
 "pinniped.sp.colors"
+
+
+#' Vector of relevant phocid species
+#'
+#' The same as \code{\link{pinniped.sp}}, except only phocids (i.e., not Fur seals)
+#'
+#' @format A (named) character vector
+"pinniped.phocid.sp"
+
+#' Vector of study pinniped species
+#'
+#' The same as \code{\link{pinniped.sp}}, except only US AMLR study species:
+#' Antarctic fur seals, southern elephant seals, leopard seals, and Weddell seals
+#'
+#' @format A (named) character vector
+"pinniped.sp.study"
+
 
 
 #' CS-PHOC core census locations
@@ -36,3 +45,12 @@
 #'
 #' @format A character vector
 "csphoc.core.location.groups"
+
+
+#' AFS Study Beach census columns
+#'
+#' Names of the AFS study beach census columns, in order,
+#' to select for and display
+#'
+#' @format A character vector
+"afs.study.beach.counts"

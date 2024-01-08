@@ -6,9 +6,9 @@
 \usage{
 tamatoa(
   ...,
-  remote.prod = TRUE,
-  remote.test = TRUE,
-  local.prod = FALSE,
+  remote.prod = FALSE,
+  remote.test = FALSE,
+  local.prod = TRUE,
   server.sql = "\\\\SQLEXPRESS"
 )
 }

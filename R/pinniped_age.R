@@ -31,7 +31,7 @@
 #' @export
 pinniped_age <- function(event.date, cohort) {
   stopifnot(
-    length(event.date) == length(cohort),
+    (length(event.date) == length(cohort)) | length(event.date) == 1,
     inherits(event.date, "Date"),
     is.numeric(cohort)
   )

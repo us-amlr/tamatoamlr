@@ -56,6 +56,6 @@ utils::globalVariables(c(
   "season_info_id", "sex", "sig", "station", "std_length_cm", "tag_freq_code", "tag_letter",
   "tag_numeric", "tag_sort", "tag_type", "tagging_date", "tare_check", "tare_kg", "time",
   "time_diff_hr", "trip_length_hr", "trip_length_hr_mean", "trip_num",
-  "trip_num_completed", "trip_num_completed_max"
+  "trip_num_completed", "trip_num_completed_max", "notes"
 ))
 

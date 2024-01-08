@@ -42,11 +42,12 @@ tbl_vCensus_AFS_Study_Beach <- function(src) {
            observer, census_date, time_start, time_end,
            location, location_group, beach_id, species,
            ad_female_count, pup_live_count, pup_dead_count,
-           ad_male_count_sum,
+           ad_male_sum,
            juv_female_count, juv_male_count, juv_unk_count,
+           ad_male_count, ad_unk_count,
            adult_male_terr_count,
            adult_male_terr_wFem_count, adult_male_terr_noFem_count,
-           adult_male_non_terr_count, adult_male_unk_count, ad_unk_count,
+           adult_male_non_terr_count, adult_male_unk_count,
            census_notes, census_created_dt) %>%
     collect() %>%
     mutate(species = str_to_sentence(species))
@@ -106,22 +107,37 @@ tbl_vCCAMLR_Pup_Weights <- function(src) {
     collect()
 }
 
-#' @name extract
-#' @export
-tbl_beaches_capewide <- function(src) {
-  tbl(src, "vBeaches") %>%
-    filter(!is.na(census_afs_capewide_pup_sort)) %>%
-    arrange(census_afs_capewide_pup_sort) %>%
-    select(beach_id, location = name, census_afs_capewide_pup_sort) %>%
-    collect()
-}
+#  #' @name extract
+#  #' @export
+#  tbl_vBeaches_capewide <- function(src) {
+#   tbl(src, "vBeaches") %>%
+#     filter(!is.na(census_afs_capewide_pup_sort)) %>%
+#     arrange(census_afs_capewide_pup_sort) %>%
+#     select(beach_id, location = name, census_afs_capewide_pup_sort) %>%
+#     collect()
+# }
 
 #' @name extract
 #' @export
 tbl_vTag_Resights <- function(src) {
-  tbl(src, "vTag_Resights_Season_Summary") %>%
-    arrange(season_open_date, species, tag_sort) %>%
-    collect()
+  tbl(src, "vTag_Resights") %>%
+    arrange(species) %>%
+    collect() %>%
+    tag_sort(tag.sort = TRUE, tag.sort.primary = TRUE) %>%
+    mutate(species = str_to_sentence(species),
+           species = factor(species, levels = sort(unique(species))))
+}
+
+#' @name extract
+#' @export
+tbl_vTag_Resights_Leopards <- function(src) {
+  tbl(src, "vTag_Resights_Leopards") %>%
+    arrange(species) %>%
+    collect() %>%
+    tag_sort(tag.sort = TRUE, tag.sort.primary = TRUE) %>%
+    mutate(species = str_to_sentence(species),
+           species = factor(species, levels = sort(unique(species)))) %>%
+    rename(tag_resight_id = tag_resights_leopards_id)
 }
 
 #' @name extract

@@ -36,7 +36,7 @@
   if (!(choices.selected %in% choices.list))
     stop("choices.selected must be one of the choices")
 
-  radioButtons(ns("summary_timing"), label = tags$h5("Summary type"),
+  radioButtons(ns("summary_timing"), label = tags$h5("Summary timing"),
                choices = choices.list, selected = choices.selected)
 }
 

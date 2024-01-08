@@ -202,9 +202,12 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
         season.open.date <- si$season_open_date
 
         # Resights - number of resights by seal
-        tr.summ <- tbl_vTag_Resights_Season_Summary(req(pool())) %>%
+        tr.summ <- tbl_vTag_Resights(req(pool())) %>%
           filter(season_info_id == season.info.id,
                  species == "Fur seal") %>%
+          group_by(pinniped_id, sex = pinniped_sex) %>%
+          summarise(n_resights = n(),
+                    .groups = "drop") %>%
           select(pinniped_id, sex, n_resights)
 
         ### Final processing, and return the female-tx key
@@ -453,7 +456,6 @@ mod_dcc_raw_server <- function(id, pool, season.df) {
           .data %>%
             group_by(...) %>%
             summarise(n_trips = n(),
-                      # {{n_records_name}} := n(),
                       trip_length_hr_mean = round(mean(trip_length_hr), 2),
                       trip_length_day_mean = round(trip_length_hr_mean/24, 2),
                       .groups = "drop")

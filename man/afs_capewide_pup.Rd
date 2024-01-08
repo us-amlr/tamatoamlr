@@ -30,7 +30,7 @@ Summarize AFS Capewide Pup Census Data
 }
 \details{
 afs_cwp_single: group by census_date and location;
-output is lots of conglomerations that are
+output is various conglomerations that are
 intended to help determine if recounts need to happen
 
 afs_cwp_totals_bylocation: group by season_name and location;

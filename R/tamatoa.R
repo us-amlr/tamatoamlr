@@ -17,7 +17,6 @@
 #' ***REMOVED*** database on the following server:
 #' \code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]], server.sql)}
 #'
-#'
 #' @examplesIf interactive()
 #' tamatoa()
 #'
@@ -31,8 +30,11 @@
 #'
 #' @export
 tamatoa <- function(...,
-                    remote.prod = TRUE, remote.test = TRUE,
-                    local.prod = FALSE, server.sql = "\\SQLEXPRESS") {
+                    remote.prod = FALSE, remote.test = FALSE,
+                    local.prod = TRUE, server.sql = "\\SQLEXPRESS") {
+  # tamatoa <- function(...,
+  #                     remote.prod = TRUE, remote.test = TRUE,
+  #                     local.prod = FALSE, server.sql = "\\SQLEXPRESS") {
   ##############################################################################
   ##### Set connections to dbs, as specified by the user
   db.driver <- "ODBC Driver 18 for SQL Server"
@@ -98,14 +100,14 @@ tamatoa <- function(...,
         menuItem("Database and Season Info", tabName = "tab_info", icon = icon("th")),
         # menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
         # menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
-        menuItem("AFS DCC", tabName = "tab_dcc_raw", icon = icon("th")),
+        menuItem("AFS DCC", tabName = "tab_dcc_pinniped", icon = icon("th")),
         menuItem("AFS Capewide Pup Census", tabName = "tab_afs_capewide_pup_census", icon = icon("th", lib = "font-awesome")),
         menuItem("AFS Study Beach Census", tabName = "tab_afs_study_beach_census", icon = icon("th", lib = "font-awesome")),
-        # menuItem("Tag Resights", tabName = "tab_tr", icon = icon("th", lib = "font-awesome")),
         # menuItem("Pinnipeds + Tags", tabName = "tab_pt", icon = icon("th", lib = "font-awesome")),
         menuItem("Captures", tabName = "tab_captures", icon = icon("th")),
         menuItem("CCAMLR Pup Weights", tabName = "tab_ccamlr_pup_weights", icon = icon("th")),
         menuItem("Phocid Census", tabName = "tab_phocid_census", icon = icon("th")),
+        menuItem("Tag Resights", tabName = "tab_tag_resights", icon = icon("th", lib = "font-awesome")),
         tags$br(), tags$br(),
         column(12, uiOutput("tabs_warning")),
         actionButton("stop", "Close")
@@ -135,15 +137,15 @@ tamatoa <- function(...,
 
       tabItems(
         tabItem("tab_info", fluidRow(mod_database_ui("db"), mod_season_info_ui("si"))),
-        tabItem("tab_dcc_raw", mod_dcc_raw_ui("dcc_raw")),
+        tabItem("tab_dcc_pinniped", mod_dcc_pinniped_ui("dcc_pinniped")),
         # tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
         # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
         tabItem("tab_afs_capewide_pup_census", mod_afs_capewide_pup_census_ui("afs_capewide_pup_census")),
         tabItem("tab_afs_study_beach_census", mod_afs_study_beach_census_ui("afs_study_beach_census")),
         tabItem("tab_captures", mod_captures_ui("captures")),
         tabItem("tab_ccamlr_pup_weights", mod_ccamlr_pup_weights_ui("ccamlr_pup_weights")),
-        tabItem("tab_phocid_census", mod_phocid_census_ui("phocid_census"))
-        # tabItem("tab_tr", mod_tag_resights_ui("tag_resights")),
+        tabItem("tab_phocid_census", mod_phocid_census_ui("phocid_census")),
+        tabItem("tab_tag_resights", mod_tag_resights_ui("tag_resights"))
         # tabItem("tab_pt", mod_pinnipeds_tags_ui("pinnipeds_tags"))
       )
     )
@@ -180,22 +182,18 @@ tamatoa <- function(...,
       `***REMOVED*** - SQLExpress` = if (local.prod) pool.local.prod else NULL
     ))
 
-    # db.pool <- mod_database_server(
-    #   "db", pool.list, db.driver, db.selected = "***REMOVED***_Test - ***REMOVED***"
-    # )
     db.pool <- mod_database_server("db", pool.list, db.driver)
-
     si.list <- mod_season_info_server("si", db.pool)
 
     # mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
     # mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
-    mod_dcc_raw_server("dcc_raw", db.pool, si.list$season.df)
+    mod_dcc_pinniped_server("dcc_pinniped", db.pool, si.list$season.df)
     mod_afs_capewide_pup_census_server("afs_capewide_pup_census", db.pool, si.list$season.df)
-    # mod_afs_study_beach_census_server("afs_study_beach_census", db.pool, si.list$season.df)
+    mod_afs_study_beach_census_server("afs_study_beach_census", db.pool, si.list$season.df)
     mod_captures_server("captures", db.pool, si.list$season.df)
     mod_ccamlr_pup_weights_server("ccamlr_pup_weights", db.pool, si.list$season.df)
     mod_phocid_census_server("phocid_census", db.pool, si.list$season.df)
-    # mod_tag_resights_server("tag_resights", pool, si.list$season.df, si.list$season.id.list)
+    mod_tag_resights_server("tag_resights", db.pool, si.list$season.df)
     # mod_pinnipeds_tags_server("pinnipeds_tags", db.pool)
     #----------------------------------------------------------------------------
     output$tabs_warning <- renderUI({

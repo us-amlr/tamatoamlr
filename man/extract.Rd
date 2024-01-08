@@ -9,7 +9,6 @@
 \alias{tbl_vCaptures_Drugs}
 \alias{tbl_vCaptures_Samples}
 \alias{tbl_vCCAMLR_Pup_Weights}
-\alias{tbl_beaches_capewide}
 \alias{tbl_vTag_Resights}
 \alias{tbl_pinniped_season}
 \title{Extract data from database}
@@ -27,8 +26,6 @@ tbl_vCaptures_Drugs(src)
 tbl_vCaptures_Samples(src)
 
 tbl_vCCAMLR_Pup_Weights(src)
-
-tbl_beaches_capewide(src)
 
 tbl_vTag_Resights(src)
 

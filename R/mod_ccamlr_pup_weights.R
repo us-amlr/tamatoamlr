@@ -236,7 +236,7 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
           ggtitle(ggplot.title) +
           guides(color = guide_legend(title = "Season name", order = 1),
                  shape = shape_guide_legend) +
-          xlab("Round number") +
+          xlab("Pup weight round") +
           ylab("Mass (kg)") +
           ylim(0, NA) +
           expand_limits(x = input$round_num)

@@ -23,12 +23,8 @@ mod_afs_study_beach_census_ui <- function(id) {
         fluidRow(
           column(
             width = 4,
-            .summaryTimingUI(ns, c("fs_date_single", "fs_single")),
-            # TODO: .summaryTimingUI(ns, c("fs_total", "fs_date_single", "fs_single")),
-            # conditionalPanel(
-            #   condition = "input.summary_timing == 'fs_single'", ns = ns,
-            #   checkboxInput(ns("plot_cumsum"), "Plot cumulative sum", value = FALSE)
-            # )
+            # .summaryTimingUI(ns, c("fs_date_single", "fs_single")),
+            .summaryTimingUI(ns, c("fs_single")),
           ),
           column(4, .summaryLocationUI(ns, c("by_amlr", "by_capewide", "by_beach"), "by_amlr", FALSE)),
           column(4, .summarySpAgeSexUI(ns, c("by_sp_age_sex"), "by_sp_age_sex"))
@@ -112,13 +108,21 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       ### Columns dropdown
       output$age_sex_uiOut_selectize <- renderUI({
         req(input$summary_sas == "by_sp_age_sex", pool())
+        census.names <- names(census_df_collect())
+        choices.names.cs <- census.names[
+          grepl("_count", census.names) | grepl("_sum", census.names)]
+
+        validate(
+          need(all(afs.study.beach.counts %in% census.names) &
+                 all(choices.names.cs %in% afs.study.beach.counts),
+               paste("The column names from afs.study.beach.counts",
+                     "and names(census_df_collect()) are not identical -",
+                     "please adjust the afs.study.beach.counts variable"))
+        )
 
         selectInput(
           session$ns("age_sex"), tags$h5("Columns to plot"),
-          choices = c("pup_total_count", "pup_live_count", "pup_dead_count",
-                      "ad_female_count", "ad_male_count_sum",
-                      "juv_female_count", "juv_male_count", "juv_unk_count"),
-          selected = c("pup_total_count"),
+          choices = afs.study.beach.counts, selected = c("pup_live_count"),
           multiple = TRUE, selectize = TRUE
         )
       })
@@ -131,12 +135,13 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       census_df_collect <- reactive({
         vals$warning_na_records <- NULL
 
+        census.df.collect <- try(tbl_vCensus_AFS_Study_Beach(req(pool())),
+                                 silent = TRUE)
         validate(
-          need(try(tbl(req(pool()), "vCensus_AFS_Study_Beach"), silent = TRUE),
+          need(census.df.collect,
                "Unable to find vCensus_AFS_Study_Beach on specified database")
         )
-
-        census.df.collect <- tbl_vCensus_AFS_Study_Beach(pool())
+        census.df.collect
 
         #----------------------------------------------
         # Filter records for non-NA values, verbosely as appropriate
@@ -365,11 +370,11 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
 
         if (input$summary_location == "by_beach") {
           guide_legend_color <- guide_legend(title = "Location")
-          guide_legend_shape <- guide_legend(title = "Sex / Age Class", order = 1)
+          guide_legend_shape <- guide_legend(title = "Sex / age class", order = 1)
           color.val <- as.name("location_fctr")
           shape.val <- as.name("count_class")
         } else {
-          guide_legend_color <- guide_legend(title = "Sex / Age Class")
+          guide_legend_color <- guide_legend(title = "Sex / age class")
           guide_legend_shape <- "none"
           color.val <- as.name("count_class")
           shape.val <- as.name("location_fctr")
