@@ -82,11 +82,8 @@ mod_dcc_pinniped_ui <- function(id) {
 
 #' @name shiny_modules
 #' @export
-mod_dcc_pinniped_server <- function(id, src, season.df) {
-  stopifnot(
-    is.reactive(src),
-    is.reactive(season.df)
-  )
+mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
+  .mod_check(src, season.df, tab)
 
   # How to structure this to pull key (tx and other info) from db. Thoughts:
   #   Will need to make user select single season.

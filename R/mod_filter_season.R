@@ -17,8 +17,9 @@ mod_filter_season_ui <- function(id) {
       uiOutput(ns("date_range_uiOut_dateRange"))
     ),
     fluidRow(
-      column(6, uiOutput(ns("month_uiOut_select"))),
-      column(6, uiOutput(ns("day_uiOut_select")))
+      column(4, uiOutput(ns("month_uiOut_select"))),
+      column(4, uiOutput(ns("day_uiOut_select"))),
+      column(4, uiOutput(ns("today_uiOut_action")))
     )
 
     # fluidRow(
@@ -155,6 +156,12 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
           session$ns("day"), tags$h5("Select day"),
           choices = 1:days_in_month(date.tmp), selected = NULL
         )
+      })
+
+      ### Action button to select today
+      output$today_uiOut_action <- renderUI({
+        req(summ.level() == "fs_date_single", season.df())
+        action(session$ns("today"), "Select today (todo)")
       })
 
 

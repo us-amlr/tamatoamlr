@@ -90,12 +90,8 @@ mod_captures_ui <- function(id) {
 
 #' @name shiny_modules
 #' @export
-mod_captures_server <- function(id, pool, season.df) {
-  stopifnot(
-    is.reactive(pool),
-    is.reactive(season.df)
-  )
-
+mod_captures_server <- function(id, src, season.df, tab) {
+  .mod_check(src, season.df, tab)
 
   moduleServer(
     id,
@@ -190,10 +186,12 @@ mod_captures_server <- function(id, pool, season.df) {
       ##########################################################################
       # Collect all capture data - one time run, then all data is collected
       captures_df_collect <- reactive({
+        req(src(), tab() == .ids$captures)
         vals$warning_na_records <- NULL
 
+        # TODO: split these into their own reactive functions
         captures.df.collect <- if (input$data_type == "drugs") {
-          captures.drugs <- try(tbl_vCaptures_Drugs(pool()), silent = TRUE)
+          captures.drugs <- try(tbl_vCaptures_Drugs(src()), silent = TRUE)
           validate(
             need(captures.drugs,
                  "Unable to find and load vCaptures_Drugs from specified database")
@@ -201,7 +199,7 @@ mod_captures_server <- function(id, pool, season.df) {
           captures.drugs
 
         } else if (input$data_type == "samples") {
-          captures.samples <- try(tbl_vCaptures_Samples(pool()), silent = TRUE)
+          captures.samples <- try(tbl_vCaptures_Samples(src()), silent = TRUE)
           validate(
             need(captures.samples,
                  "Unable to find and load vCaptures_Samples from specified database")
@@ -209,7 +207,7 @@ mod_captures_server <- function(id, pool, season.df) {
           captures.samples
 
         } else {
-          captures <- try(tbl_vCaptures(pool()), silent = TRUE)
+          captures <- try(tbl_vCaptures(src()), silent = TRUE)
           validate(
             need(captures,
                  "Unable to find vCaptures on specified database")

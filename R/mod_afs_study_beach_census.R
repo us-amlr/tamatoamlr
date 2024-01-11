@@ -47,11 +47,8 @@ mod_afs_study_beach_census_ui <- function(id) {
 
 #' @name shiny_modules
 #' @export
-mod_afs_study_beach_census_server <- function(id, pool, season.df) {
-  stopifnot(
-    is.reactive(pool),
-    is.reactive(season.df)
-  )
+mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
+  .mod_check(src, season.df, tab)
 
   moduleServer(
     id,
@@ -107,7 +104,7 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
 
       ### Columns dropdown
       output$age_sex_uiOut_selectize <- renderUI({
-        req(input$summary_sas == "by_sp_age_sex", pool())
+        req(input$summary_sas == "by_sp_age_sex", src())
         census.names <- names(census_df_collect())
         choices.names.cs <- census.names[
           grepl("_count", census.names) | grepl("_sum", census.names)]
@@ -133,9 +130,10 @@ mod_afs_study_beach_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Collect all census data - one time run, then all data is collected
       census_df_collect <- reactive({
+        req(src(), tab() == .ids$afs_study_beach_census)
         vals$warning_na_records <- NULL
 
-        census.df.collect <- try(tbl_vCensus_AFS_Study_Beach(req(pool())),
+        census.df.collect <- try(tbl_vCensus_AFS_Study_Beach(req(src())),
                                  silent = TRUE)
         validate(
           need(census.df.collect,

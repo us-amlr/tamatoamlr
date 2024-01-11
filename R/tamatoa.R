@@ -91,23 +91,23 @@ tamatoa <- function(...,
   ##### UI
   ui <- dashboardPage(
     title = "Tamatoa",
-    dashboardHeader(title = "Tamatoa: Analyze and Visualize US AMLR Pinniped Data",
+    dashboardHeader(title = "Tamatoa: Analyze and Visualize U.S. AMLR Pinniped Data",
                     titleWidth = "540"),
 
     dashboardSidebar(
       sidebarMenu(
         id = "tabs",
-        menuItem("Database and Season Info", tabName = "tab_info", icon = icon("th")),
+        menuItem("Database and Season Info", tabName = .ids$info, icon = icon("th")),
         # menuItem("AFS Diet", tabName = "tab_afs_diet", icon = icon("th", lib = "font-awesome")),
         # menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
-        menuItem("AFS DCC", tabName = "tab_dcc_pinniped", icon = icon("th")),
-        menuItem("AFS Capewide Pup Census", tabName = "tab_afs_capewide_pup_census", icon = icon("th", lib = "font-awesome")),
-        menuItem("AFS Study Beach Census", tabName = "tab_afs_study_beach_census", icon = icon("th", lib = "font-awesome")),
+        menuItem("AFS DCC", tabName = .ids$dcc_pinniped, icon = icon("th")),
+        menuItem("AFS Capewide Pup Census", tabName = .ids$afs_capewide_pup_census, icon = icon("th", lib = "font-awesome")),
+        menuItem("AFS Study Beach Census", tabName = .ids$afs_capewide_pup_census, icon = icon("th", lib = "font-awesome")),
         # menuItem("Pinnipeds + Tags", tabName = "tab_pt", icon = icon("th", lib = "font-awesome")),
-        menuItem("Captures", tabName = "tab_captures", icon = icon("th")),
-        menuItem("CCAMLR Pup Weights", tabName = "tab_ccamlr_pup_weights", icon = icon("th")),
-        menuItem("Phocid Census", tabName = "tab_phocid_census", icon = icon("th")),
-        menuItem("Tag Resights", tabName = "tab_tag_resights", icon = icon("th", lib = "font-awesome")),
+        menuItem("Captures", tabName = .ids$captures, icon = icon("th")),
+        menuItem("CCAMLR Pup Weights", tabName = .ids$ccamlr_pup_weights, icon = icon("th")),
+        menuItem("CS-PHOC: Phocid Census", tabName = .ids$csphoc, icon = icon("th")),
+        menuItem("Tag Resights", tabName = .ids$tag_resights, icon = icon("th", lib = "font-awesome")),
         tags$br(), tags$br(),
         column(12, uiOutput("tabs_warning")),
         actionButton("stop", "Close")
@@ -136,16 +136,16 @@ tamatoa <- function(...,
       "))),
 
       tabItems(
-        tabItem("tab_info", fluidRow(mod_database_ui("db"), mod_season_info_ui("si"))),
-        tabItem("tab_dcc_pinniped", mod_dcc_pinniped_ui("dcc_pinniped")),
+        tabItem(.ids$info, fluidRow(mod_database_ui("db"), mod_season_info_ui("si"))),
+        tabItem(.ids$dcc_pinniped, mod_dcc_pinniped_ui(.ids$dcc_pinniped)),
         # tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
         # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
-        tabItem("tab_afs_capewide_pup_census", mod_afs_capewide_pup_census_ui("afs_capewide_pup_census")),
-        tabItem("tab_afs_study_beach_census", mod_afs_study_beach_census_ui("afs_study_beach_census")),
-        tabItem("tab_captures", mod_captures_ui("captures")),
-        tabItem("tab_ccamlr_pup_weights", mod_ccamlr_pup_weights_ui("ccamlr_pup_weights")),
-        tabItem("tab_phocid_census", mod_phocid_census_ui("phocid_census")),
-        tabItem("tab_tag_resights", mod_tag_resights_ui("tag_resights"))
+        tabItem(.ids$afs_capewide_pup_census, mod_afs_capewide_pup_census_ui(.ids$afs_capewide_pup_census)),
+        tabItem(.ids$afs_study_beach_census, mod_afs_study_beach_census_ui(.ids$afs_study_beach_census)),
+        tabItem(.ids$captures, mod_captures_ui(.ids$captures)),
+        tabItem(.ids$ccamlr_pup_weights, mod_ccamlr_pup_weights_ui(.ids$ccamlr_pup_weights)),
+        tabItem(.ids$csphoc, mod_phocid_census_ui(.ids$csphoc)),
+        tabItem(.ids$tag_resights, mod_tag_resights_ui(.ids$tag_resights))
         # tabItem("tab_pt", mod_pinnipeds_tags_ui("pinnipeds_tags"))
       )
     )
@@ -184,16 +184,24 @@ tamatoa <- function(...,
 
     db.pool <- mod_database_server("db", pool.list, db.driver)
     si.list <- mod_season_info_server("si", db.pool)
+    tab <- reactive(input$tabs)
 
-    # mod_afs_diet_server("afs_diet", pool, si.list$season.df, si.list$season.id.list)
-    # mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df, si.list$season.id.list)
-    mod_dcc_pinniped_server("dcc_pinniped", db.pool, si.list$season.df)
-    mod_afs_capewide_pup_census_server("afs_capewide_pup_census", db.pool, si.list$season.df)
-    mod_afs_study_beach_census_server("afs_study_beach_census", db.pool, si.list$season.df)
-    mod_captures_server("captures", db.pool, si.list$season.df)
-    mod_ccamlr_pup_weights_server("ccamlr_pup_weights", db.pool, si.list$season.df)
-    mod_phocid_census_server("phocid_census", db.pool, si.list$season.df)
-    mod_tag_resights_server("tag_resights", db.pool, si.list$season.df)
+    # mod_afs_diet_server("afs_diet", pool, si.list$season.df)
+    # mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df)
+    mod_dcc_pinniped_server(
+      .ids$dcc_pinniped, db.pool, si.list$season.df, tab)
+    mod_afs_capewide_pup_census_server(
+      .ids$afs_capewide_pup_census, db.pool, si.list$season.df, tab)
+    mod_afs_study_beach_census_server(
+      .ids$afs_study_beach_census, db.pool, si.list$season.df, tab)
+    mod_captures_server(
+      .ids$captures, db.pool, si.list$season.df, tab)
+    mod_ccamlr_pup_weights_server(
+      .ids$ccamlr_pup_weights, db.pool, si.list$season.df, tab)
+    mod_phocid_census_server(
+      .ids$csphoc, db.pool, si.list$season.df, tab)
+    mod_tag_resights_server(
+      .ids$tag_resights, db.pool, si.list$season.df, tab)
     # mod_pinnipeds_tags_server("pinnipeds_tags", db.pool)
     #----------------------------------------------------------------------------
     output$tabs_warning <- renderUI({

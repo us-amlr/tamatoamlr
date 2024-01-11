@@ -21,7 +21,15 @@ mod_afs_capewide_pup_census_ui <- function(id) {
         # TODO: add notes about CWP data from other years and eg SSI surveys
         fluidRow(
           column(4, .summaryTimingUI(ns, c("fs_total", "fs_single", "fs_raw"))),
-          column(4, .summaryLocationUI(ns, c("by_capewide", "by_beach"), "by_capewide", FALSE))
+          column(4, .summaryLocationUI(ns, c("by_capewide", "by_beach"), "by_capewide", FALSE)),
+          column(
+            width = 4,
+            conditionalPanel(
+              condition = "input.summary_location == 'by_beach'", ns = ns,
+              checkboxInput(ns("by_beach_group"), "Group all selected beaches together",
+                            value = FALSE)
+            )
+          )
         ),
         conditionalPanel(
           condition = "input.summary_timing == 'fs_single'", ns = ns,
@@ -39,11 +47,8 @@ mod_afs_capewide_pup_census_ui <- function(id) {
 
 #' @name shiny_modules
 #' @export
-mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
-  stopifnot(
-    is.reactive(pool),
-    is.reactive(season.df)
-  )
+mod_afs_capewide_pup_census_server <- function(id, src, season.df, tab) {
+  .mod_check(src, season.df, tab)
 
   moduleServer(
     id,
@@ -106,9 +111,10 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Collect all census data - one time run, then all data is collected
       census_df_collect <- reactive({
+        req(src(), tab() == .ids$afs_capewide_pup_census)
         vals$warning_na_records <- NULL
 
-        census.df.collect <- try(tbl_vCensus_AFS_Capewide_Pup(pool()),
+        census.df.collect <- try(tbl_vCensus_AFS_Capewide_Pup(src()),
                                  silent = TRUE)
 
         validate(
@@ -227,6 +233,12 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
           census.df <- census.df %>%
             filter(location %in% input$location) %>%
             mutate(location = factor(location, levels = input$location))
+
+          if (input$by_beach_group) {
+            census.df <- census.df %>%
+              mutate(census_afs_capewide_pup_sort = 1,
+                     location = "Selected beaches")
+          }
         }
 
         validate(
@@ -281,8 +293,7 @@ mod_afs_capewide_pup_census_server <- function(id, pool, season.df) {
                    count_sd = count_loc_sd) %>%
             mutate(count_mean = round_logical(count_mean, 0),
                    count_var = round_logical(count_var, 2),
-                   count_sd = round_logical(count_sd, 2)) %>%
-            select(-date_min)
+                   count_sd = round_logical(count_sd, 2))
 
         } else {
           afs_cwp_totals(census.df) %>%

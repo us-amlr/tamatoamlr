@@ -4,6 +4,15 @@
 
 
 #-------------------------------------------------------------------------------
+#
+.mod_check <- function(...) {
+  for (i in list(...)) {
+    stopifnot(is.reactive(i))
+  }
+}
+
+
+#-------------------------------------------------------------------------------
 ### Summary function used by census tabs
 .vcs_summ_func <- function(y, ..., season.df, beach.chr = FALSE) {
   df.out <-  y %>%

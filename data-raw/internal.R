@@ -34,10 +34,21 @@
   ".csv"
 )
 
+.ids <- list(
+  "info" = "tab_info",
+  "dcc_pinniped" = "tab_dcc_pinniped",
+  "afs_capewide_pup_census" = "tab_afs_capewide_pup_census",
+  "afs_study_beach_census" = "tab_afs_study_beach_census",
+  "captures" = "tab_captures",
+  "ccamlr_pup_weights" = "tab_ccamlr_pup_weights",
+  "csphoc" = "tab_csphoc",
+  "tag_resights" = "tab_tag_resights"
+)
 
 #-------------------------------------------------------------------------------
 usethis::use_data(
   .census.cols.phocid, .summary.timing.choices.list, .summary.timing.choices,
   .summary.timing.multiple, .summary.timing.single, .tamatoa.csv.accept,
+  .ids,
   internal = TRUE, overwrite = TRUE
 )

@@ -7,7 +7,8 @@ mod_tag_resights_ui <- function(id) {
   tagList(
     fluidRow(
       box(
-        title = "Filters", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
+        title = "Filters", status = "warning", solidHeader = FALSE,
+        width = 6, collapsible = TRUE,
         mod_filter_season_ui(ns("filter_season")),
         fluidRow(
           column(6, selectInput(ns("species"), tags$h5("Species"), #inline = TRUE,
@@ -29,7 +30,8 @@ mod_tag_resights_ui <- function(id) {
         # )
       ),
       box(
-        title = "Summary options", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
+        title = "Summary options", status = "warning", solidHeader = FALSE,
+        width = 6, collapsible = TRUE,
         helpText("This tab allows you to summarize and visualize tag resight data. ",
                  "Select how you wish to summarize this data, ",
                  "and then specify any filters you would like to apply"),
@@ -54,10 +56,11 @@ mod_tag_resights_ui <- function(id) {
 
 #' @name shiny_modules
 #' @export
-mod_tag_resights_server <- function(id, src, season.df) {
+mod_tag_resights_server <- function(id, src, season.df, tab) {
   stopifnot(
     is.reactive(src),
-    is.reactive(season.df)
+    is.reactive(season.df),
+    is.reactive(tab)
   )
 
   moduleServer(
@@ -131,6 +134,7 @@ mod_tag_resights_server <- function(id, src, season.df) {
       ##########################################################################
       # Collect all phocid census data - one time run, then all data is collected
       tr_df_collect <- reactive({
+        req(src(), tab() == .ids$tag_resights)
         vals$warning_na_records <- NULL
 
         tr.df.collect.orig <- try(tbl_vTag_Resights(src()), silent = TRUE)
@@ -276,14 +280,13 @@ mod_tag_resights_server <- function(id, src, season.df) {
       tr_df_summ <- reactive({
         if (input$summary_type == "summ") {
           tr_df_filter_ka() %>%
-            # tr_df_filter_pinniped() %>%
+            mutate(species = as.character(species)) %>%
             group_by(season_name, pinniped_id, species,
                      tag_primary, tag_type_primary, sex = pinniped_sex, cohort,
-                     tag_sort, tag_sort_primary) %>%
+                     tag_sort_primary) %>%
             # summarise(tag_primary = unique(tag_primary),
             #           tag_type_primary = unique(tag_type_primary),
             #           cohort = unique(cohort),
-            # resight_sex = paste(unique(sex), collapse = ", "),
             summarise(n_resights = n(),
                       resight_date_first = min(resight_date),
                       resight_date_last = max(resight_date),
@@ -294,10 +297,11 @@ mod_tag_resights_server <- function(id, src, season.df) {
                       # tag_sort = unique(tag_sort),
                       # tag_sort_primary = unique(tag_sort_primary),
                       .groups = "drop") %>%
-            relocate(pinniped_id, tag_sort, tag_sort_primary,
+            mutate(age = pinniped_age(today(), cohort)) %>%
+            relocate(pinniped_id, tag_sort_primary,
                      .after = last_col()) %>%
-            relocate(amlr_tag_primary, .after = cohort) %>%
-            arrange(species, tag_sort)
+            relocate(age, amlr_tag_primary, .after = cohort) %>%
+            arrange(species, tag_sort_primary)
 
         } else {
           validate("Invalid summary_type input - please contact the database manager")

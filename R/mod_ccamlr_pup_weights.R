@@ -43,11 +43,8 @@ mod_ccamlr_pup_weights_ui <- function(id) {
 
 #' @name shiny_modules
 #' @export
-mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
-  stopifnot(
-    is.reactive(pool),
-    is.reactive(season.df)
-  )
+mod_ccamlr_pup_weights_server <- function(id, src, season.df, tab) {
+  .mod_check(src, season.df, tab)
 
   moduleServer(
     id,
@@ -96,13 +93,15 @@ mod_ccamlr_pup_weights_server <- function(id, pool, season.df) {
       ##########################################################################
       # Collect all cpw data - one time run, then all data is collected
       cpw_df_collect <- reactive({
+        req(src(), tab() == .ids$ccamlr_pup_weights)
         # vals$warning_na_records <- NULL
+
         validate(
-          need(try(tbl(req(pool()), "vCCAMLR_Pup_Weights"), silent = TRUE),
+          need(try(tbl(req(src()), "vCCAMLR_Pup_Weights"), silent = TRUE),
                "Unable to find vCCAMLR_Pup_Weights on specified database")
         )
 
-        tbl_vCCAMLR_Pup_Weights(pool()) %>%
+        tbl_vCCAMLR_Pup_Weights(src()) %>%
           arrange(round_date, round_num, pup_num)
       })
 

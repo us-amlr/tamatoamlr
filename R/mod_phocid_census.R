@@ -60,11 +60,8 @@ mod_phocid_census_ui <- function(id) {
 
 #' @name shiny_modules
 #' @export
-mod_phocid_census_server <- function(id, pool, season.df) {
-  stopifnot(
-    is.reactive(pool),
-    is.reactive(season.df)
-  )
+mod_phocid_census_server <- function(id, src, season.df, tab) {
+  .mod_check(src, season.df, tab)
 
   moduleServer(
     id,
@@ -153,14 +150,15 @@ mod_phocid_census_server <- function(id, pool, season.df) {
       ##########################################################################
       # Collect all phocid census data - one time run, then all data is collected
       census_df_collect <- reactive({
+        req(src(), tab() == .ids$csphoc)
         vals$warning_na_records <- NULL
 
         validate(
-          need(try(tbl(req(pool()), "vCensus_Phocid"), silent = TRUE),
+          need(try(tbl(src(), "vCensus_Phocid"), silent = TRUE),
                "Unable to find vCensus_Phocid on specified database")
         )
 
-        census.df.collect <- tbl_vCensus_Phocid(pool()) %>%
+        census.df.collect <- tbl_vCensus_Phocid(src()) %>%
           mutate(week_num = lubridate::week(census_date))
         # census_date = factor(census_date),
         # species = factor(species, levels = sort(unique(species)))),
