@@ -134,7 +134,7 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
       ##########################################################################
       # Collect all phocid census data - one time run, then all data is collected
       tr_df_collect <- reactive({
-        req(src(), tab() == .ids$tag_resights)
+        req(src(), tab() == .id.list$resights)
         vals$warning_na_records <- NULL
 
         tr.df.collect.orig <- try(tbl_vTag_Resights(src()), silent = TRUE)

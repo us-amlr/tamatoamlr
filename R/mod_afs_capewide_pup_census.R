@@ -111,7 +111,7 @@ mod_afs_capewide_pup_census_server <- function(id, src, season.df, tab) {
       ##########################################################################
       # Collect all census data - one time run, then all data is collected
       census_df_collect <- reactive({
-        req(src(), tab() == .ids$afs_capewide_pup_census)
+        req(src(), tab() == .id.list$afs_cwpc)
         vals$warning_na_records <- NULL
 
         census.df.collect <- try(tbl_vCensus_AFS_Capewide_Pup(src()),

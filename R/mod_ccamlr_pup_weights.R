@@ -93,7 +93,7 @@ mod_ccamlr_pup_weights_server <- function(id, src, season.df, tab) {
       ##########################################################################
       # Collect all cpw data - one time run, then all data is collected
       cpw_df_collect <- reactive({
-        req(src(), tab() == .ids$ccamlr_pup_weights)
+        req(src(), tab() == .id.list$cpw)
         # vals$warning_na_records <- NULL
 
         validate(

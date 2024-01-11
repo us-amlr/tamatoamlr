@@ -186,7 +186,7 @@ mod_captures_server <- function(id, src, season.df, tab) {
       ##########################################################################
       # Collect all capture data - one time run, then all data is collected
       captures_df_collect <- reactive({
-        req(src(), tab() == .ids$captures)
+        req(src(), tab() == .id.list$captures)
         vals$warning_na_records <- NULL
 
         # TODO: split these into their own reactive functions

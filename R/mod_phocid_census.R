@@ -150,7 +150,7 @@ mod_phocid_census_server <- function(id, src, season.df, tab) {
       ##########################################################################
       # Collect all phocid census data - one time run, then all data is collected
       census_df_collect <- reactive({
-        req(src(), tab() == .ids$csphoc)
+        req(src(), tab() == .id.list$csphoc)
         vals$warning_na_records <- NULL
 
         validate(
