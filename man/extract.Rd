@@ -11,6 +11,7 @@
 \alias{tbl_vCCAMLR_Pup_Weights}
 \alias{tbl_vTag_Resights}
 \alias{tbl_vTag_Resights_Leopards}
+\alias{tbl_vMicroVHF_Deployed}
 \alias{tbl_vPinniped_Season}
 \title{Extract data from database}
 \usage{
@@ -31,6 +32,8 @@ tbl_vCCAMLR_Pup_Weights(src)
 tbl_vTag_Resights(src)
 
 tbl_vTag_Resights_Leopards(src)
+
+tbl_vMicroVHF_Deployed(src)
 
 tbl_vPinniped_Season(src)
 }

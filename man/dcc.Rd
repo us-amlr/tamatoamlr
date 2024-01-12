@@ -3,21 +3,39 @@
 \name{dcc}
 \alias{dcc}
 \alias{dcc_read_files}
-\alias{dcc_raw_process}
+\alias{dcc_format}
+\alias{dcc_trips}
 \title{DCC Stuff}
 \usage{
 dcc_read_files(files, station)
 
-dcc_raw_process(x)
+dcc_format(x)
+
+dcc_trips(x, trip.hours)
 }
 \arguments{
-\item{x}{todo}
+\item{files}{character; the name of the file(s) which the
+DCC data are to be read from}
+
+\item{station}{character; DCC station name. Will be added
+as a character string in a 'station' column to the raw DCC data}
+
+\item{x}{data frame to process; see details for required columns}
+
+\item{trip.hours}{numeric; minimum number of hours for a time gap
+to be considered a trip}
 }
 \value{
-data
+\code{dcc_read_files}: data frame with raw data row-binded together,
+with a column added for 'station'
+
+\code{dcc_raw_process}:
 }
 \description{
 DCC stuff
+}
+\details{
+General functions for processing DCC data
 }
 \examples{
 # dcc_read_files(file.path, "CABO")

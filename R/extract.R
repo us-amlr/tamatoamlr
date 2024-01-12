@@ -142,6 +142,17 @@ tbl_vTag_Resights_Leopards <- function(src) {
 
 #' @name extract
 #' @export
+tbl_vMicroVHF_Deployed <- function(src) {
+  tbl(src, "vMicroVHF_Deployed") %>%
+    collect() %>%
+    rename(freq = frequency) %>%
+    mutate(code = as.integer(str_sub(device_num, 3)),
+           # TODO: update freq in database???
+           freq = if_else(freq == 164.513, 164.514, freq))
+}
+
+#' @name extract
+#' @export
 tbl_vPinniped_Season <- function(src) {
   tbl(src, "vPinniped_Season") %>%
     select(pinniped_season_id, pinniped_id, season_name, season_info_id,
