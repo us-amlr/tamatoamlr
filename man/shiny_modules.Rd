@@ -25,23 +25,23 @@
 \usage{
 mod_afs_capewide_pup_census_ui(id)
 
-mod_afs_capewide_pup_census_server(id, pool, season.df)
+mod_afs_capewide_pup_census_server(id, src, season.df, tab)
 
 mod_afs_study_beach_census_ui(id)
 
-mod_afs_study_beach_census_server(id, pool, season.df)
+mod_afs_study_beach_census_server(id, src, season.df, tab)
 
 mod_captures_ui(id)
 
-mod_captures_server(id, pool, season.df)
+mod_captures_server(id, src, season.df, tab)
 
 mod_ccamlr_pup_weights_ui(id)
 
-mod_ccamlr_pup_weights_server(id, pool, season.df)
+mod_ccamlr_pup_weights_server(id, src, season.df, tab)
 
 mod_dcc_pinniped_ui(id)
 
-mod_dcc_pinniped_server(id, src, season.df)
+mod_dcc_pinniped_server(id, src, season.df, tab)
 
 mod_dcc_raw_ui(id)
 
@@ -49,25 +49,26 @@ mod_dcc_raw_server(id, pool, season.df)
 
 mod_phocid_census_ui(id)
 
-mod_phocid_census_server(id, pool, season.df)
+mod_phocid_census_server(id, src, season.df, tab)
 
 mod_tag_resights_ui(id)
 
-mod_tag_resights_server(id, src, season.df)
+mod_tag_resights_server(id, src, season.df, tab)
 }
 \arguments{
 \item{id}{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}
 
-\item{pool}{reactive; a DBI database connection pool.
-Intended to be the output of \code{\link{mod_database_server}}}
+\item{src}{reactive; a DBI database connection.
+Intended to be the output of \code{\link{mod_database_server}},
+i.e. a pool object}
 
 \item{season.df}{reactive; the season info data frame.
 Intended to be the first element (\code{season.df}) of
 the (list) output of \code{\link{mod_filter_season_server}}}
 
-\item{src}{reactive; a DBI database connection.
-Intended to be the output of \code{\link{mod_database_server}},
-i.e. a pool object}
+\item{tab}{reactive; the selected tab.
+Used by the modules to only collect data from database if the
+relevant tab is chosen}
 }
 \description{
 Modules for the different tabs of Tamatoa, the tamatoamlr Shiny app

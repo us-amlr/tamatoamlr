@@ -11,7 +11,7 @@
 \alias{tbl_vCCAMLR_Pup_Weights}
 \alias{tbl_vTag_Resights}
 \alias{tbl_vTag_Resights_Leopards}
-\alias{tbl_pinniped_season}
+\alias{tbl_vPinniped_Season}
 \title{Extract data from database}
 \usage{
 tbl_vCensus_Phocid(src)
@@ -32,7 +32,7 @@ tbl_vTag_Resights(src)
 
 tbl_vTag_Resights_Leopards(src)
 
-tbl_pinniped_season(src)
+tbl_vPinniped_Season(src)
 }
 \arguments{
 \item{src}{a data source; likely a \code{\link[pool]{pool}} object

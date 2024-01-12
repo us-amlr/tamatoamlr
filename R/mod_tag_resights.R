@@ -132,7 +132,7 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
       ##########################################################################
       ##########################################################################
       ##########################################################################
-      # Collect all phocid census data - one time run, then all data is collected
+      # Collect all resight data - one time run, then all data is collected
       tr_df_collect <- reactive({
         req(src(), tab() == .id.list$resights)
         vals$warning_na_records <- NULL
@@ -180,6 +180,19 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
         )
 
         tr.df.nona
+      })
+
+      #------------------------------------------------------------------------
+      ps_df_collect <- reactive({
+        req(src(), tab() == .id.list$resights)
+        ps.df.collect <- try(tbl_vPinniped_Season(src()), silent = TRUE)
+
+        validate(
+          need(ps.df.collect,
+               "Unable to collect vPinniped_Season from the specified database")
+        )
+
+        ps.df.collect
       })
 
 
@@ -279,25 +292,26 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
       ### Summarize tag resight data to display
       tr_df_summ <- reactive({
         if (input$summary_type == "summ") {
+          ps <- ps_df_collect() %>%
+            select(season_info_id, pinniped_id, attendance_study,
+                   arrival_date, parturition, parturition_date, twins,
+                   pup_mortality, pup_mortality_date)
+
           tr_df_filter_ka() %>%
             mutate(species = as.character(species)) %>%
-            group_by(season_name, pinniped_id, species,
+            group_by(season_info_id, season_name, pinniped_id, species,
                      tag_primary, tag_type_primary, sex = pinniped_sex, cohort,
                      tag_sort_primary) %>%
-            # summarise(tag_primary = unique(tag_primary),
-            #           tag_type_primary = unique(tag_type_primary),
-            #           cohort = unique(cohort),
             summarise(n_resights = n(),
                       resight_date_first = min(resight_date),
                       resight_date_last = max(resight_date),
                       locations = paste(unique(location_group), collapse = ", "),
                       statuses = paste(unique(status), collapse = ", "),
                       amlr_tag_primary = !unique(non_amlr_tag_primary),
-                      # nonamlr_tag_primary = unique(nonamlr_tag_primary),
-                      # tag_sort = unique(tag_sort),
-                      # tag_sort_primary = unique(tag_sort_primary),
                       .groups = "drop") %>%
-            mutate(age = pinniped_age(today(), cohort)) %>%
+            mutate(age = pinniped_age(today(), cohort))  %>%
+            left_join(ps, by = join_by(season_info_id, pinniped_id)) %>%
+            select(-season_info_id) %>%
             relocate(pinniped_id, tag_sort_primary,
                      .after = last_col()) %>%
             relocate(age, amlr_tag_primary, .after = cohort) %>%

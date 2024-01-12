@@ -142,10 +142,11 @@ tbl_vTag_Resights_Leopards <- function(src) {
 
 #' @name extract
 #' @export
-tbl_pinniped_season <- function(src) {
-  tbl(src, "pinniped_season") %>%
-    select(pinniped_season_id, pinniped_id, season_info_id,
-           attendance_study, parturition, parturition_date,
-           pup_mortality, pup_mortality_date) %>%
+tbl_vPinniped_Season <- function(src) {
+  tbl(src, "vPinniped_Season") %>%
+    select(pinniped_season_id, pinniped_id, season_name, season_info_id,
+           tag, tag_type, cohort, species, sex, attendance_study,
+           arrival_date, parturition, parturition_date, twins,
+           pup_mortality, pup_mortality_date, notes) %>%
     collect()
 }
