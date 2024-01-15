@@ -41,32 +41,46 @@ mod_dcc_pinniped_ui <- function(id) {
             radioButtons(ns("summary_type"), tags$h5("Summary type"),
                          choices = c("Trips" = "trips",
                                      "Trip lengths" = "trip_lengths",
-                                     "Pings, by individual" = "pings"),
+                                     "Pings" = "pings",
+                                     "Raw data" = "all"),
                          selected = "trips"),
-            tags$br(),
-            conditionalPanel(
-              condition = "input.summary_type == 'trips'", ns = ns,
-              checkboxInput(ns("trips_completed"), "Show only maximum completed trips")
-            ),
-            conditionalPanel(
-              condition = "input.summary_type == 'trip_lengths'", ns = ns,
-              radioButtons(ns("trip_lengths_summary_type"),
-                           tags$h5("Trip length summary type"),
-                           choices = c("For each seal, average across trips" = "by_pinniped",
-                                       "For each trip number, average across seals" = "by_trip",
-                                       "Average across all seals and trips" = "all"),
-                           selected = "by_pinniped"),
-              numericInput(ns("trip_num_max"), tags$h5("Maximum trip number to include"),
-                           value = 6, min = 1, step = 1)
-            )
+            checkboxInput(ns("include_resights"), "Include resights as tx pings")
           ),
           column(
             width = 6,
             uiOutput(ns("season")),
             # uiOutput(ns("date_range")),
             numericInput(ns("trip_hours"), tags$h5("Trip time gap (hours)"),
-                         value = 24, min = 1, step = 1),
-            checkboxInput(ns("include_resights"), "Include resights as tx pings")
+                         value = 24, min = 1, step = 1)
+          )
+        ),
+        box(
+          title = NULL, solidHeader = FALSE, width = 12, collapsible = FALSE,
+          conditionalPanel(
+            condition = "input.summary_type == 'trips'", ns = ns,
+            checkboxInput(ns("trips_max"), "Show only maximum completed trips")
+          ),
+          conditionalPanel(
+            condition = "input.summary_type == 'all'", ns = ns,
+            helpText("The below data are all raw DCC data for pings",
+                     "that can be joined with the MicroVHF database key, and",
+                     "filtered by deployment/recovery dates")
+          ),
+          conditionalPanel(
+            condition = "input.summary_type == 'pings'", ns = ns,
+            helpText("The below data are all processed DCC data for the",
+                     "selected Tag|Freq|Code(s)")
+          ),
+          conditionalPanel(
+            condition = "input.summary_type == 'trip_lengths'", ns = ns,
+            radioButtons(ns("trip_lengths_summary_type"),
+                         tags$h5("Trip length summary type"),
+                         choices = c("For each seal, average across trips" = "by_pinniped",
+                                     "For each trip number, average across seals" = "by_trip",
+                                     "Average across all seals and trips" = "all"),
+                         selected = "by_pinniped"),
+            numericInput(ns("trip_num_max"), tags$h5("Maximum trip number to include"),
+                         value = 6, min = 1, step = 1)
           )
         ),
         uiOutput(ns("tag_freq_code_uiOut_select"))
@@ -131,15 +145,8 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
       # })
 
       ### Tag-freq-code selection
-      mutate_tag_freq_code <- function(x) {
-        x %>% mutate(tag_freq_code = paste(tag, freq, code, sep = " | "))
-      }
-
       output$tag_freq_code_uiOut_select <- renderUI({
-        x <- dcc_df() %>%
-          mutate_tag_freq_code()
-
-        tag.freq.code.part <- x %>%
+        tag.freq.code.part <- dcc_processed() %>%
           distinct(tag_freq_code, parturition) %>%
           arrange(tag_freq_code)
 
@@ -152,23 +159,31 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
           select(tag_freq_code) %>%
           unlist() %>% unname()
 
-        multiple <- input$summary_type != "pings"
-        select.name <- if_else(
-          multiple,
-          "Select at least one 'tag | frequency | code'",
-          "Select exactly one 'tag | frequency | code'",
-        )
+        # # Prep widget inputs
+        # multiple <- input$summary_type != "pings"
+        # select.name <- if_else(
+        #   multiple,
+        #   "Select at least one 'tag | frequency | code'",
+        #   "Select exactly one 'tag | frequency | code'",
+        # )
+
         selected <- isolate({
-          if (multiple) {
-            if (is.null(vals$tag_freq_code_multiple)) choices.pupped else vals$tag_freq_code_multiple
+          if (input$summary_type != "pings") {
+            if (is.null(vals$tag_freq_code_multiple)) {
+              choices.pupped}
+            else {
+              vals$tag_freq_code_multiple
+            }
           } else {
             if (is.null(vals$tag_freq_code_single)) NULL else vals$tag_freq_code_single
           }
         })
 
-        selectInput(session$ns("tag_freq_code"), tags$h5(select.name),
+        # Return widget
+        selectInput(session$ns("tag_freq_code"),
+                    tags$h5("Select at least one 'tag | frequency | code'"),
                     choices = choices.all, selected = selected,
-                    multiple = multiple)
+                    multiple = TRUE)
       })
 
       ##########################################################################
@@ -238,40 +253,134 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
         )
 
         microvhf %>%
-          left_join(ps_df_collect(), by = join_by(pinniped_id))
+          left_join(ps_df_collect(), by = join_by(pinniped_id)) %>%
+          mutate(parturition = replace_na(parturition, FALSE)) %>%
+          group_by(freq, code) %>%
+          mutate(end_date = min(recovery_date, today()+days(1), #pup_mortality_date
+                                na.rm = TRUE),
+                 .after = recovery_date) %>%
+          ungroup()
       })
 
 
       ##########################################################################
-      # TODO: Incorporate resights as 'pings', if specified by user
-
+      # # TODO: Incorporate resights as 'pings', if specified by user
+      # dcc_resights <- reactive({
+      #   if (input$include_resights) validate()
+      # })
 
       ##########################################################################
       # Join key and dcc data, and finish DCC data processing
 
-      dcc_df <- reactive({
-        microvhf_key(); dcc_files()
+      ### All processed DCC data
+      dcc_processed <- reactive({
+        if (input$include_resights) validate("resights are not yet incorporated")
 
         inner_join(microvhf_key(), dcc_files(),
                    by = join_by(freq, code), relationship = "many-to-many") %>%
-          mutate(end_date = min(recovery_date, pup_mortality_date, today(),
-                                na.rm = TRUE)) %>%
-          filter(between(datetime, deployment_date, end_date)) %>%
-          # filter(parturition) %>%
-          rename(tag = tag_primary) %>%
-          dcc_trips(trip.hours = input$trip_hours) %>%
-          # arrange(freq, code, tag, datetime) %>%
           # group_by(freq, code) %>%
-          # mutate(datetime_prev = lag(datetime),
-          #        time_diff_hr = round(as.numeric(
-          #          difftime(datetime, datetime_prev, units = "hours")), 2),
-          #        trip_num_completed = c(NA, cumsum(head(lead(time_diff_hr), -1) > input.trip.hours))) %>%
+          filter(between(datetime, deployment_date, end_date)) %>%
           # ungroup() %>%
-          # select(tag, freq, code, sig, datetime,
-          #        datetime_prev, time_diff_hr, trip_num_completed,
-          #        everything()) %>%
+          rename(tag = tag_primary) %>%
           relocate(tag, .before = freq) %>%
-          mutate(tag_freq_code = paste(tag, freq, code, sep = " | "))
+          dcc_calc_trips(trip.hours = input$trip_hours) %>%
+          mutate_tag_freq_code()
+      })
+
+      ### Processed DCC data, filtered for parturition and selected tag/freq/code
+      dcc_df <- reactive({
+        validate(
+          need(input$tag_freq_code, "Please select a 'tag | freq | code'")
+        )
+
+        dcc_processed() %>%
+          filter(tag_freq_code %in% input$tag_freq_code,
+                 parturition) %>%
+          mutate(pup_alive = (
+            parturition & (is.na(pup_mortality_date) | datetime < pup_mortality_date))) %>%
+          select(tag, freq, code, sig, datetime, datetime_prev, time_diff_hr,
+                 trip_num_completed, pup_alive, station, tag_freq_code,
+                 attendance_study, parturition, pup_mortality, pup_mortality_date,
+                 deployment_date, deployment_season, device_type, device_num,
+                 pinniped_id, species, sex, cohort, tag_unique_primary)
+      })
+
+
+      ##########################################################################
+      # Make output data frames
+
+      # TODO next:
+      # 2) Get plot working
+      # 3) re-incorporate resights
+
+      ### Pings
+      pings <- reactive({
+        pings.out <- dcc_df() %>%
+          mutate(date = as.Date(datetime),
+                 time = format(datetime, "%H:%M:%S")) %>%
+          relocate(date, time, .after = datetime) %>%
+          select(-datetime_prev)
+
+        validate(
+          need(nrow(pings.out) > 0,
+               "There are no pings for the selected seal(s)")
+        )
+
+        pings.out
+      })
+
+      ### Customized output for trips
+      trips <- reactive({
+        trips.out <- dcc_df() %>%
+          filter(time_diff_hr > input$trip_hours,
+                 pup_alive) %>%
+          select(tag, freq, code,
+                 trip_num = trip_num_completed, trip_length_hr = time_diff_hr,
+                 departure_dt = datetime_prev, arrival_dt = datetime,
+                 # capture_location = location,
+                 pinniped_id)
+
+        validate(
+          need(nrow(trips.out) > 0,
+               "There are no trips for the selected filters")
+        )
+
+        trips.out
+      })
+
+      ### Number of completed trips for seals
+      trips_max <- reactive({
+        trips() %>%
+          group_by(freq, code) %>%
+          filter(trip_num == max(trip_num)) %>%
+          ungroup() %>%
+          select(tag, freq, code, trip_num_completed_max = trip_num)
+        # capture_location)
+      })
+
+      ### Mean trip lengths
+      trip_lengths <- reactive({
+        dcc.trips <- trips() %>%
+          filter(trip_num <= input$trip_num_max)
+
+        summarise_trip_lengths <- function(.data, ...) {
+          .data %>%
+            group_by(...) %>%
+            summarise(n_trips = n(),
+                      trip_length_hr_mean = round(mean(trip_length_hr), 2),
+                      trip_length_day_mean = round(trip_length_hr_mean/24, 2),
+                      .groups = "drop")
+        }
+
+        if (input$trip_lengths_summary_type == "by_pinniped") {
+          dcc.trips %>% summarise_trip_lengths(tag, freq, code)
+        } else if (input$trip_lengths_summary_type == "by_trip") {
+          dcc.trips %>% summarise_trip_lengths(trip_num)
+        } else if (input$trip_lengths_summary_type == "all") {
+          dcc.trips %>% summarise_trip_lengths()
+        } else {
+          .validate_else("trip_lengths_summary_type")
+        }
       })
 
 
@@ -281,16 +390,20 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
       #-------------------------------------------------------------------------
       ### Table
       tbl_output <- reactive({
-        # if (input$summary_type == "trips") {
-        #   if (input$trips_completed) dcc_df_trips_completed() else dcc_df_trips()
-        # } else if (input$summary_type == "trip_lengths") {
-        #   dcc_df_trip_lengths()
-        # } else if (input$summary_type == "pings") {
-        #   dcc_df_pings()
-        # } else {
-        #   validate("invalid summary_type - please contact the database manager")
-        # }
-        dcc_df()
+        if (input$summary_type == "trips") {
+          if (input$trips_max) trips_max() else trips()
+        } else if (input$summary_type == "trip_lengths") {
+          trip_lengths()
+        } else if (input$summary_type == "pings") {
+          pings()
+        } else if (input$summary_type == "all") {
+          dcc_processed() %>%
+            mutate(date = as.Date(datetime),
+                   time = format(datetime, "%H:%M:%S")) %>%
+            relocate(date, time, .after = datetime)
+        } else {
+          validate("invalid summary_type - please contact the database manager")
+        }
       })
 
 

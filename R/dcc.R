@@ -8,7 +8,8 @@
 #'   DCC data are to be read from
 #' @param station character; DCC station name. Will be added
 #'   as a character string in a 'station' column to the raw DCC data
-#' @param x data frame to process; see details for required columns
+#' @param x data frame to process.
+#'   For \code{dcc_format}, see details for required columns
 #' @param trip.hours numeric; minimum number of hours for a time gap
 #'   to be considered a trip
 #'
@@ -68,7 +69,7 @@ dcc_format <- function(x) {
 
 #' @name dcc
 #' @export
-dcc_trips <- function(x, trip.hours) {
+dcc_calc_trips <- function(x, trip.hours) {
   dcc.columns <- c("freq", "code", "sig", "datetime")
   dcc.names <- names(x)
 
@@ -89,4 +90,11 @@ dcc_trips <- function(x, trip.hours) {
     select(freq, code, sig, datetime,
            datetime_prev, time_diff_hr, trip_num_completed,
            everything())
+}
+
+
+#' @name dcc
+#' @export
+mutate_tag_freq_code <- function(x) {
+  x %>% mutate(tag_freq_code = paste(tag, freq, code, sep = " | "))
 }

@@ -4,14 +4,17 @@
 \alias{dcc}
 \alias{dcc_read_files}
 \alias{dcc_format}
-\alias{dcc_trips}
+\alias{dcc_calc_trips}
+\alias{mutate_tag_freq_code}
 \title{DCC Stuff}
 \usage{
 dcc_read_files(files, station)
 
 dcc_format(x)
 
-dcc_trips(x, trip.hours)
+dcc_calc_trips(x, trip.hours)
+
+mutate_tag_freq_code(x)
 }
 \arguments{
 \item{files}{character; the name of the file(s) which the
@@ -20,7 +23,8 @@ DCC data are to be read from}
 \item{station}{character; DCC station name. Will be added
 as a character string in a 'station' column to the raw DCC data}
 
-\item{x}{data frame to process; see details for required columns}
+\item{x}{data frame to process.
+For \code{dcc_format}, see details for required columns}
 
 \item{trip.hours}{numeric; minimum number of hours for a time gap
 to be considered a trip}
