@@ -7,60 +7,59 @@ mod_dcc_pinniped_ui <- function(id) {
   tagList(
     fluidRow(
       box(
-        title = "Load Files", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
-        fluidRow(
-          column(
-            width = 6,
-            radioButtons(ns("tx_key_type"), tags$h5("Key source"),
-                         choices = c("Database"), #, "File"),
-                         selected = "Database"),
-            conditionalPanel(
-              condition = "input.tx_key_type == 'Database'", ns = ns,
+        title = "Load Files", status = "warning", width = 4,
+        solidHeader = FALSE, collapsible = TRUE,
+        fileInput(ns("dcc_files_cabo"),
+                  tags$h5("Load raw DCC files from CABO station"),
+                  multiple = TRUE, accept = .tamatoa.csv.accept),
+        fileInput(ns("dcc_files_mad"),
+                  tags$h5("Load raw DCC files from MAD station"),
+                  multiple = TRUE, accept = .tamatoa.csv.accept),
+        helpText("Tamatoa will pull the DCC key from the database"),
+        downloadButton(ns("key_download"), "Download database key"),
 
-              helpText("Tamatoa will pull the DCC key from the database"),
-              downloadButton(ns("key_download"), "Download database key")
-            )
-          ),
-          column(
-            width = 6,
-            fileInput(ns("dcc_files_cabo"),
-                      tags$h5("Load raw DCC files from CABO station"),
-                      multiple = TRUE, accept = .tamatoa.csv.accept),
-            fileInput(ns("dcc_files_mad"),
-                      tags$h5("Load raw DCC files from MAD station"),
-                      multiple = TRUE, accept = .tamatoa.csv.accept)
-          )
-        )
+        # fluidRow(
+        #   column(
+        #     width = 6,
+        #     radioButtons(ns("tx_key_type"), tags$h5("Key source"),
+        #                  choices = c("Database"), #, "File"),
+        #                  selected = "Database"),
+        #     conditionalPanel(
+        #       condition = "input.tx_key_type == 'Database'", ns = ns,
+        #
+        #       helpText("Tamatoa will pull the DCC key from the database"),
+        #       downloadButton(ns("key_download"), "Download database key")
+        #     )
+        #   ),
+        #   column(
+        #     width = 6,
+        #     fileInput(ns("dcc_files_cabo"),
+        #               tags$h5("Load raw DCC files from CABO station"),
+        #               multiple = TRUE, accept = .tamatoa.csv.accept),
+        #     fileInput(ns("dcc_files_mad"),
+        #               tags$h5("Load raw DCC files from MAD station"),
+        #               multiple = TRUE, accept = .tamatoa.csv.accept)
+        #   )
+        # )
       ),
       box(
         title = "Summary and Filter Options", status = "warning",
-        solidHeader = FALSE, width = 6, collapsible = TRUE,
+        solidHeader = FALSE, width = 8, collapsible = TRUE,
         fluidRow(
-          column(
-            width = 6,
-            radioButtons(ns("summary_type"), tags$h5("Summary type"),
-                         choices = c("Trips" = "trips",
-                                     "Trip lengths" = "trip_lengths",
-                                     "Pings" = "pings",
-                                     "Raw data" = "all"),
-                         selected = "trips"),
-            # checkboxInput(ns("include_resights"), "Include resights as tx pings")
-            helpText("Resights cannot currently be included as pings")
-          ),
-          column(
-            width = 6,
-            uiOutput(ns("season")),
-            # uiOutput(ns("date_range")),
-            numericInput(ns("trip_hours"), tags$h5("Trip time gap (hours)"),
-                         value = 24, min = 1, step = 1)
-          )
+          column(4, radioButtons(ns("summary_type"), tags$h5("Summary type"),
+                                 choices = c("Trips" = "trips",
+                                             "Pings" = "pings",
+                                             "All processed data" = "all"),
+                                 selected = "trips")),
+          column(4, uiOutput(ns("season"))),
+          # uiOutput(ns("date_range")),
+          column(4, numericInput(ns("trip_hours"), tags$h5("Trip time gap (hours)"),
+                                 value = 24, min = 1, step = 1))
         ),
+        # checkboxInput(ns("include_resights"), "Include resights as tx pings")
+        helpText("Resights cannot currently be included as pings"),
         box(
           title = NULL, solidHeader = FALSE, width = 12, collapsible = FALSE,
-          conditionalPanel(
-            condition = "input.summary_type == 'trips'", ns = ns,
-            checkboxInput(ns("trips_max"), "Show only maximum completed trips")
-          ),
           conditionalPanel(
             condition = "input.summary_type == 'all'", ns = ns,
             helpText("The below data are all raw DCC data for pings",
@@ -73,15 +72,32 @@ mod_dcc_pinniped_ui <- function(id) {
                      "selected Tag|Freq|Code(s)")
           ),
           conditionalPanel(
-            condition = "input.summary_type == 'trip_lengths'", ns = ns,
-            radioButtons(ns("trip_lengths_summary_type"),
-                         tags$h5("Trip length summary type"),
-                         choices = c("For each seal, average across trips" = "by_pinniped",
-                                     "For each trip number, average across seals" = "by_trip",
-                                     "Average across all seals and trips" = "all"),
-                         selected = "by_pinniped"),
-            numericInput(ns("trip_num_max"), tags$h5("Maximum trip number to include"),
-                         value = 6, min = 1, step = 1)
+            condition = "input.summary_type == 'trips'", ns = ns,
+            fluidRow(
+              column(
+                width = 6,
+                selectInput(ns("trips_summary_type"),
+                            tags$h5("Trips summary type"),
+                            choices = c("All trips for each seal" = "each",
+                                        "For each seal, average across trips" = "by_pinniped",
+                                        "For each trip number, average across seals" = "by_trip",
+                                        "Average across all seals and trips" = "all"),
+                            selected = "each")
+              ),
+              column(
+                width = 5, offset = 1,
+                conditionalPanel(
+                  condition = "input.trips_summary_type == 'trips'", ns = ns,
+                  checkboxInput(ns("trips_max"), "Show only maximum completed trips")
+                ),
+                conditionalPanel(
+                  condition = "input.trips_summary_type != 'trips'", ns = ns,
+                  numericInput(ns("trip_num_max"),
+                               tags$h5("Maximum trip number to include"),
+                               value = 6, min = 1, step = 1)
+                )
+              )
+            )
           )
         ),
         uiOutput(ns("tag_freq_code_uiOut_select"))
@@ -132,7 +148,7 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
 
       ### Season
       output$season <- renderUI({
-        req(input$tx_key_type == "Database")
+        # req(input$tx_key_type == "Database")
         selectInput(session$ns("season"), tags$h5("Season"),
                     choices = req(season.df())$season_name)
       })
@@ -275,7 +291,7 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
 
       ### All processed DCC data
       dcc_processed <- reactive({
-        if (input$include_resights) validate("resights are not yet incorporated")
+        # if (input$include_resights) validate("resights are not yet incorporated")
 
         inner_join(microvhf_key(), dcc_files(),
                    by = join_by(freq, code), relationship = "many-to-many") %>%
@@ -311,7 +327,6 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
       # Make output data frames
 
       # TODO next:
-      # 2) Get plot working
       # 3) re-incorporate resights
 
       ### Pings
@@ -333,11 +348,12 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
       ### Customized output for trips
       trips <- reactive({
         trips.out <- dcc_df() %>%
-          filter(time_diff_hr > input$trip_hours,
-                 pup_alive) %>%
-          select(tag, freq, code,
-                 trip_num = trip_num_completed, trip_length_hr = time_diff_hr,
-                 departure_dt = datetime_prev, arrival_dt = datetime,
+          filter(time_diff_hr > input$trip_hours) %>%
+          filter(pup_alive) %>%
+          select(tag, freq, code, trip_num = trip_num_completed, pup_alive,
+                 trip_length_hr = time_diff_hr,
+                 departure_dt = datetime_prev,
+                 arrival_dt = datetime,
                  # capture_location = location,
                  pinniped_id)
 
@@ -360,11 +376,11 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
       })
 
       ### Mean trip lengths
-      trip_lengths <- reactive({
+      trips_means <- reactive({
         dcc.trips <- trips() %>%
           filter(trip_num <= input$trip_num_max)
 
-        summarise_trip_lengths <- function(.data, ...) {
+        summarise_trips_means <- function(.data, ...) {
           .data %>%
             group_by(...) %>%
             summarise(n_trips = n(),
@@ -373,15 +389,121 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
                       .groups = "drop")
         }
 
-        if (input$trip_lengths_summary_type == "by_pinniped") {
-          dcc.trips %>% summarise_trip_lengths(tag, freq, code)
-        } else if (input$trip_lengths_summary_type == "by_trip") {
-          dcc.trips %>% summarise_trip_lengths(trip_num)
-        } else if (input$trip_lengths_summary_type == "all") {
-          dcc.trips %>% summarise_trip_lengths()
+        if (input$trips_summary_type == "by_pinniped") {
+          dcc.trips %>% summarise_trips_means(tag, freq, code)
+        } else if (input$trips_summary_type == "by_trip") {
+          dcc.trips %>% summarise_trips_means(trip_num)
+        } else if (input$trips_summary_type == "all") {
+          dcc.trips %>% summarise_trips_means()
         } else {
           .validate_else("trip_lengths_summary_type")
         }
+      })
+
+
+      ##########################################################################
+      # Make plots
+      ### Plot for trips summary type
+      trips_plot <- reactive({
+        dcc.trip.max <- max(trips()$trip_num)
+        dcc.triplen.max <- max(trips()$trip_length_hr)
+
+        # Make plot depending on trips_completed checkbox
+        if (input$trips_max) {
+          trips_max() %>%
+            # mutate_tag_freq_code() %>%
+            ggplot(aes(tag, trip_num_completed_max)) +
+            geom_col() +
+            scale_y_continuous(breaks = seq(0, dcc.trip.max, by = 1),
+                               minor_breaks = NULL) +
+            theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1)) +
+            ggtitle(paste("Number of completed trips:", input$season)) +
+            # xlab("Tag | Frequency | Code") +
+            xlab("Tag") +
+            ylab(NULL)
+
+
+        } else {
+          ggplot(trips(), aes(trip_num, trip_length_hr)) +
+            geom_point(aes(color = tag), size = 3) +
+            geom_line(aes(group = tag, color = tag)) +
+            guides(color = guide_legend(title = "Tag")) +
+            scale_x_continuous(breaks = seq_len(dcc.trip.max),
+                               minor_breaks = NULL) +
+            scale_y_continuous(breaks = seq(0, dcc.triplen.max, by = 20),
+                               minor_breaks = seq(0, dcc.triplen.max, by = 10)) +
+            expand_limits(y = 0) +
+            ggtitle(paste("Number of completed trips:", input$season)) +
+            # ggtitle(paste("AFS female trips:",
+            #               paste(format(input$dcc_date_range, "%d %b %Y"),
+            #                     collapse = " to "))) +
+            xlab("Trip number") +
+            ylab("Trip length (hours)")
+        }
+      })
+
+
+      ### Plot for trip length summary type
+      trips_mean_plot <- reactive({
+        req(input$trips_summary_type != "each")
+
+        # Helper plot function
+        trips_mean_plot_help <- function(df, x, y, fill, xlab) {
+          ggplot.out <-  df %>%
+            ggplot(aes({{x}}, {{y}}, fill = {{fill}})) +
+            geom_col() +
+            scale_y_continuous(breaks = seq(0,  max(df$trip_length_hr_mean),
+                                            by = 20),
+                               minor_breaks = NULL) +
+            ggtitle(paste("Average trip length through up to",
+                          input$trip_num_max, "trips:", input$season)) +
+            xlab(xlab) +
+            ylab("Trip length (hours)")
+
+          if (xlab == "Tag | Frequency | Code") {
+            ggplot.out +
+              theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1))
+          } else {
+            ggplot.out
+          }
+        }
+
+        # Make plot depending on trip_lengths_summary_type
+        if (input$trips_summary_type == "by_pinniped") {
+          trips_mean_plot_help(
+            trips_means() %>% mutate_tag_freq_code(),
+            tag_freq_code, trip_length_hr_mean, n_trips,
+            "Tag | Frequency | Code"
+          )
+        } else if (input$trips_summary_type == "by_trip") {
+          trips_mean_plot_help(
+            trips_means(), trip_num, trip_length_hr_mean, n_trips,
+            "Trip number"
+          )
+        } else if (input$trips_summary_type == "all") {
+          validate("No plot for all trips trip length summary")
+        } else {
+          .validate_else("trip_lengths_summary_type")
+        }
+      })
+
+
+      ### Plot for pings summary type
+      pings_plot <- reactive({
+        pings() %>%
+          filter(time_diff_hr < input$trip_hours) %>%
+          ggplot(aes(datetime)) +
+          geom_point(aes(y = time_diff_hr, size = sig, color = pup_alive)) +
+          geom_line(aes(y = time_diff_hr, color = pup_alive)) +
+          guides(color = guide_legend(title = "Pup alive?"),
+                 size = guide_legend(title = "Signal")) +
+          scale_x_datetime(date_breaks = "1 day", date_minor_breaks = "6 hours",
+                           date_labels = "%d %b %Y") +
+          theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1)) +
+          ggtitle(paste0(dcc_df_pings()$tag[1],
+                         ": time gap and signal strength")) +
+          xlab("Datetime") +
+          ylab("Time gap (hours)")
       })
 
 
@@ -392,9 +514,11 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
       ### Table
       tbl_output <- reactive({
         if (input$summary_type == "trips") {
-          if (input$trips_max) trips_max() else trips()
-        } else if (input$summary_type == "trip_lengths") {
-          trip_lengths()
+          if (input$trips_summary_type == "each") {
+            if (input$trips_max) trips_max() else trips()
+          } else {
+            trips_means()
+          }
         } else if (input$summary_type == "pings") {
           pings()
         } else if (input$summary_type == "all") {
@@ -411,16 +535,20 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
       #-------------------------------------------------------------------------
       # Output plot
       plot_output <- reactive({
-        # if (input$summary_type == "trips") {
-        #   dcc_plot_trips()
-        # } else if (input$summary_type == "trip_lengths") {
-        #   dcc_plot_trip_lengths()
-        # } else if (input$summary_type == "pings") {
-        #   dcc_plot_pings()
-        # } else {
-        #   validate("invalid summary_type - please contact the database manager")
-        # }
-        validate("plot in the works..")
+        if (input$summary_type == "trips") {
+          if (input$trips_summary_type == "each") {
+            trips_plot()
+          } else {
+            trips_mean_plot()
+          }
+        } else if (input$summary_type == "pings") {
+          pings_plot()
+        } else if (input$summary_type == "all") {
+          validate("No summary plot for all processed data")
+        } else {
+          validate("invalid summary_type - please contact the database manager")
+        }
+        # validate("plot in the works..")
       })
 
 
