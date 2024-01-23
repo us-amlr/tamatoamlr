@@ -27,7 +27,8 @@ as a character string in a 'station' column to the raw DCC data}
 For \code{dcc_format}, see details for required columns}
 
 \item{tz}{character; time zone for DCC datetime.
-See \code{\link[base:timezones]{timezones}}}
+See \code{\link[base:timezones]{timezones}} for more details.
+Default is \code{"America/Punta_Arenas"}}
 
 \item{trip.hours}{numeric; minimum number of hours for a time gap
 to be considered a trip}
