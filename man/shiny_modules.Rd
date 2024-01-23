@@ -2,7 +2,8 @@
 % Please edit documentation in R/mod_afs_capewide_pup_census.R,
 %   R/mod_afs_study_beach_census.R, R/mod_captures.R,
 %   R/mod_ccamlr_pup_weights.R, R/mod_dcc_pinniped.R, R/mod_dcc_raw.R,
-%   R/mod_phocid_census.R, R/mod_tag_resights.R, R/shiny-modules.R
+%   R/mod_phocid_census.R, R/mod_tag_resights.R, R/mod_views.R,
+%   R/shiny-modules.R
 \name{shiny_modules}
 \alias{shiny_modules}
 \alias{mod_afs_capewide_pup_census_ui}
@@ -21,6 +22,8 @@
 \alias{mod_phocid_census_server}
 \alias{mod_tag_resights_ui}
 \alias{mod_tag_resights_server}
+\alias{mod_views_ui}
+\alias{mod_views_server}
 \title{Modules for the different tabs of Tamatoa, the tamatoamlr Shiny app}
 \usage{
 mod_afs_capewide_pup_census_ui(id)
@@ -54,6 +57,10 @@ mod_phocid_census_server(id, src, season.df, tab)
 mod_tag_resights_ui(id)
 
 mod_tag_resights_server(id, src, season.df, tab)
+
+mod_views_ui(id)
+
+mod_views_server(id, src, season.df, tab)
 }
 \arguments{
 \item{id}{character used to specify namespace, see \code{shiny::\link[shiny]{NS}}}

@@ -44,7 +44,8 @@
   "captures" = "captures",
   "cpw"      = "ccamlr_pup_weights",
   "csphoc"   = "csphoc",
-  "resights" = "tag_resights"
+  "resights" = "tag_resights",
+  "views" = "views"
 )
 
 #-------------------------------------------------------------------------------
