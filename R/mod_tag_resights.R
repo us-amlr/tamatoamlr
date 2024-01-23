@@ -37,9 +37,10 @@ mod_tag_resights_ui <- function(id) {
                  "and then specify any filters you would like to apply"),
         fluidRow(
           column(4, .summaryTimingUI(ns, c("fs_single"), "fs_single")), #"fs_total",
-          column(4, radioButtons(ns("summary_type"), tags$h5("Summary type"),
-                                 choices = list("Resight summary" = "summ"),
-                                 selected = "summ"))
+          column(4, radioButtons(ns("summary_type"), tags$h5("Summarize by"),
+                                 choices = list("Species" = "species",
+                                                "Pinniped" = "pinniped"),
+                                 selected = "pinniped"))
           # column(4, )
         )
       )
@@ -291,7 +292,18 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
       #------------------------------------------------------------------------
       ### Summarize tag resight data to display
       tr_df_summ <- reactive({
-        if (input$summary_type == "summ") {
+        if (input$summary_type == "species") {
+          tr_df_filter_ka() %>%
+            arrange(species, resight_date) %>% #for tag list order
+            mutate(species = as.character(species)) %>%
+            group_by(season_name, species) %>%
+            summarise(n_pinnipeds = n_distinct(pinniped_id),
+                      n_pinnipeds_ka = n_distinct(pinniped_id[!is.na(cohort)]),
+                      n_pinniped_amlr = n_distinct(pinniped_id[!non_amlr_tag_primary]),
+                      primary_tags_list = list(unique(tag_primary)),
+                      .groups = "drop")
+
+        } else if (input$summary_type == "pinniped") {
           ps <- ps_df_collect() %>%
             select(season_info_id, pinniped_id, attendance_study,
                    arrival_date, parturition, parturition_date, twins,

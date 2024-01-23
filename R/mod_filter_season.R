@@ -161,7 +161,7 @@ mod_filter_season_server <- function(id, summ.level, season.df) {
       ### Action button to select today
       output$today_uiOut_action <- renderUI({
         req(summ.level() == "fs_date_single", season.df())
-        action(session$ns("today"), "Select today (todo)")
+        actionButton(session$ns("today"), "Select today (todo)")
       })
 
 

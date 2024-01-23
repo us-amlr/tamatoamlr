@@ -44,7 +44,8 @@ mod_dcc_pinniped_ui <- function(id) {
                                      "Pings" = "pings",
                                      "Raw data" = "all"),
                          selected = "trips"),
-            checkboxInput(ns("include_resights"), "Include resights as tx pings")
+            # checkboxInput(ns("include_resights"), "Include resights as tx pings")
+            helpText("Resights cannot currently be included as pings")
           ),
           column(
             width = 6,

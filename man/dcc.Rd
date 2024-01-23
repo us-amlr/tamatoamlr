@@ -10,7 +10,7 @@
 \usage{
 dcc_read_files(files, station)
 
-dcc_format(x)
+dcc_format(x, tz = "America/Punta_Arenas")
 
 dcc_calc_trips(x, trip.hours)
 
@@ -25,6 +25,9 @@ as a character string in a 'station' column to the raw DCC data}
 
 \item{x}{data frame to process.
 For \code{dcc_format}, see details for required columns}
+
+\item{tz}{character; time zone for DCC datetime.
+See \code{\link[base:timezones]{timezones}}}
 
 \item{trip.hours}{numeric; minimum number of hours for a time gap
 to be considered a trip}

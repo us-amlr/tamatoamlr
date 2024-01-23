@@ -12,6 +12,9 @@
 #'   For \code{dcc_format}, see details for required columns
 #' @param trip.hours numeric; minimum number of hours for a time gap
 #'   to be considered a trip
+#' @param tz character; time zone for DCC datetime.
+#'   See \code{\link[base:timezones]{timezones}} for more details.
+#'   Default is \code{"America/Punta_Arenas"}
 #'
 #' @details
 #' General functions for processing DCC data
@@ -36,13 +39,13 @@ dcc_read_files <- function(files, station) {
 
 #' @name dcc
 #' @export
-dcc_format <- function(x) {
+dcc_format <- function(x, tz = "America/Punta_Arenas") {
   dcc.columns <- c("Yr", "Day", "Hr", "Mn", "Fr", "Sig")
   dcc.names <- names(x)
 
   if (!all(dcc.columns %in% dcc.names))
     stop("The provided DCC data frame is missing the following required columns:\n",
-         paste(setdiff(dcc.names, dcc.columns), collapse = ", "))
+         paste(setdiff(dcc.columns, dcc.names), collapse = ", "))
 
   x.proc <- x %>%
     mutate(
@@ -77,7 +80,7 @@ dcc_calc_trips <- function(x, trip.hours) {
     stop("The provided DCC data frame is not properly formatted. ",
          "Have you used 'dcc_format'? ",
          "The data frame is missing the following required columns:\n",
-         paste(setdiff(dcc.names, dcc.columns), collapse = ", "))
+         paste(setdiff(dcc.columns, dcc.names), collapse = ", "))
 
   x %>%
     arrange(freq, code, datetime) %>%
