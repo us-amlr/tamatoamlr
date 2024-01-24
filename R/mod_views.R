@@ -30,8 +30,9 @@ mod_views_ui <- function(id) {
             conditionalPanel(
               condition = "input.view == 'sample_inventory'", ns = ns,
               radioButtons(ns("summary_type"), tags$h5("Summarize by"),
-                           choices = c("Sample type" = "sample_type",
-                                       "All samples" = "all"),
+                           choices = c("All samples" = "all",
+                                       "Sample type" = "sample_type",
+                                       "Sample type group" = "sample_type_group"),
                            selected = "all")
             )
           )
@@ -89,18 +90,46 @@ mod_views_server <- function(id, src, season.df, tab) {
       })
 
       sample_inventory <- reactive({
-        if (input$summary_type == "all") {
-          sample_inventory_collect()
+        x <- sample_inventory_collect() %>%
+          filter(season_name == req(input$season))
 
-        } else if (input$summary_type == "sample_type") {
-          sample_inventory_collect() %>%
-            filter(season_name == req(input$season)) %>%
-            group_by(species, sample_type) %>%
-            summarise(package_count = n())
-          # individul_seals = n_distinct(paste(pinniped_id, unk_group_id)))
+        if (input$summary_type == "all") {
+          x
 
         } else {
-          validate("invalid summary_type - please contact the database manager")
+          x <- x %>%
+            # Make single column with 'most unique' ID
+            # case_when rolls through order of priority
+            mutate(on_the_fly_unique = if_else(!is.na(unk_group_id),
+                                               unk_group_id, on_the_fly_id),
+                   id_unique = case_when(
+                     !is.na(pinniped_id) ~ pinniped_id,
+                     !is.na(pup_afs_id) ~ pup_afs_id,
+                     !is.na(on_the_fly_unique) ~ on_the_fly_unique,
+                     .default = NA_integer_
+                   ))
+
+          x.grouped <- if (input$summary_type == "sample_type") {
+            x %>% group_by(species, sample_type)
+          } else if (input$summary_type == "sample_type_group") {
+            x %>% group_by(species, sample_type_group)
+          } else {
+            validate("invalid summary_type - please contact the database manager")
+          }
+
+          x.grouped %>%
+            summarise(package_count = n(),
+                      individual_seals_count = n_distinct(id_unique),
+                      # n_pinniped_id = n_distinct(pinniped_id, na.rm = TRUE),
+                      # n_on_the_fly = n_distinct(on_the_fly_unique, na.rm = TRUE),
+                      # n_pup_afs_id = n_distinct(pup_afs_id, na.rm = TRUE),
+                      # individual_seals_count =
+                      #   (n_pinniped_id+n_on_the_fly+n_pup_afs_id),
+                      n_adults_juveniles = sum(age_class %in% c("Adult", "Adult/Juvenile", "Juvenile")),
+                      n_pups = sum(age_class %in% c("Pup")),
+                      .groups = "drop") %>%
+            relocate(individual_seals_count, n_adults_juveniles, n_pups,
+                     .after = package_count)
         }
       })
 
