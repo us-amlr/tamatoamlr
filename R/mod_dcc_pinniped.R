@@ -292,7 +292,6 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
       ### All processed DCC data
       dcc_processed <- reactive({
         # if (input$include_resights) validate("resights are not yet incorporated")
-
         inner_join(microvhf_key(), dcc_files(),
                    by = join_by(freq, code), relationship = "many-to-many") %>%
           # group_by(freq, code) %>%
@@ -500,7 +499,7 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
           scale_x_datetime(date_breaks = "1 day", date_minor_breaks = "6 hours",
                            date_labels = "%d %b %Y") +
           theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1)) +
-          ggtitle(paste0(dcc_df_pings()$tag[1],
+          ggtitle(paste0(pings()$tag[1],
                          ": time gap and signal strength")) +
           xlab("Datetime") +
           ylab("Time gap (hours)")
