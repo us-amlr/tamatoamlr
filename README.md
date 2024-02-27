@@ -2,6 +2,7 @@
 
 <!-- badges: start -->
 
+[![R-CMD-check](https://github.com/us-amlr/tamatoamlr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/us-amlr/tamatoamlr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 tamatoamlr and Tamatoa, the package's accompanying Shiny app, are for analyzing and visualizing data collected by the [U.S. AMLR Program's](https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center) [Pinniped Research Group](https://www.fisheries.noaa.gov/international/science-data/pinniped-research-antarctic).

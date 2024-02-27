@@ -2,20 +2,21 @@
 #'
 #' Open Tamatoa, the package Shiny app
 #'
-#' @param ... passed to \code{\link[shiny]{shinyApp}}
-#' @param remote.prod logical; default is TRUE. Should tamatoa create an
+#' @param ... passed to [shiny::shinyApp()]
+#' @param remote.prod logical; default is TRUE. Should Tamatoa create an
 #'   automatic connection to the ***REMOVED*** database on ***REMOVED***?
-#' @param remote.test logical; default is TRUE. Should tamatoa create an
+#' @param remote.test logical; default is TRUE. Should Tamatoa create an
 #'   automatic connection to the ***REMOVED***_Test database on ***REMOVED***?
-#' @param local.prod logical; default is FALSE Should tamatoa create an
+#' @param local.prod logical; default is FALSE Should Tamatoa create an
 #'   automatic connection to the ***REMOVED*** database on the local SQL
-#'   Express (see Details for more info)?
+#'   Express? (see Details for more info)
 #' @param local.server.sql character; SQL server suffix. Default is
-#'   '\\SQLEXPRESS'
+#'   `"\\SQLEXPRESS"`
 #'
-#' @details If \code{local.prod} is TRUE, then Tamatoa will attempt to connect
-#' to the ***REMOVED*** database on the following server:
-#' \code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]], server.sql)}
+#' @details If `local.prod == TRUE`, then Tamatoa will attempt to connect to the
+#'   ***REMOVED*** database on the following server:
+#'   \code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]],
+#'   local.server.sql)}
 #'
 #' @examplesIf interactive()
 #'   tamatoa()
@@ -28,7 +29,6 @@
 #'
 #' @seealso
 #'   \url{https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center}
-#'
 #'
 #' @export
 tamatoa <- function(...,

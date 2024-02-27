@@ -21,11 +21,13 @@ cwp_total(x, x.byloc = FALSE, loc.agg = FALSE)
 equivalent. The exception is if \code{x.byloc == TRUE}; in this case then \code{x}
 must be the output of \code{cwp_total_by_loc()}}
 
-\item{loc.agg}{logical; indicates if \verb{cwp_review()`` should aggregate records across location (by observer) before summarizing (}TRUE\verb{), or if records should be summarized by season/location as-is (}FALSE`; default).}
+\item{loc.agg}{logical; indicates if \code{cwp_review()} should aggregate records
+across location (by observer) before summarizing (\code{TRUE}), or if records
+should be summarized by season/location as-is (\code{FALSE}; default).}
 
 \item{x.byloc}{logical; indicates if \code{x} is the output of
 \code{cwp_total_by_loc()}. This argument is intended to minimize work if a user
-needs botht he output of \code{cwp_total_by_loc()} and \code{cwp_total()}}
+needs both the output of \code{cwp_total_by_loc()} and \code{cwp_total()}}
 }
 \value{
 An ungrouped data frame with the summarized AFS Capewide Pup Census

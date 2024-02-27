@@ -13,28 +13,29 @@ tamatoa(
 )
 }
 \arguments{
-\item{...}{passed to \code{\link[shiny]{shinyApp}}}
+\item{...}{passed to \code{\link[shiny:shinyApp]{shiny::shinyApp()}}}
 
-\item{remote.prod}{logical; default is TRUE. Should tamatoa create an
+\item{remote.prod}{logical; default is TRUE. Should Tamatoa create an
 automatic connection to the ***REMOVED*** database on ***REMOVED***?}
 
-\item{remote.test}{logical; default is TRUE. Should tamatoa create an
+\item{remote.test}{logical; default is TRUE. Should Tamatoa create an
 automatic connection to the ***REMOVED***_Test database on ***REMOVED***?}
 
-\item{local.prod}{logical; default is FALSE Should tamatoa create an
+\item{local.prod}{logical; default is FALSE Should Tamatoa create an
 automatic connection to the ***REMOVED*** database on the local SQL
-Express (see Details for more info)?}
+Express? (see Details for more info)}
 
 \item{local.server.sql}{character; SQL server suffix. Default is
-'\\SQLEXPRESS'}
+\code{"\\\\SQLEXPRESS"}}
 }
 \description{
 Open Tamatoa, the package Shiny app
 }
 \details{
-If \code{local.prod} is TRUE, then Tamatoa will attempt to connect
-to the ***REMOVED*** database on the following server:
-\code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]], server.sql)}
+If \code{local.prod == TRUE}, then Tamatoa will attempt to connect to the
+***REMOVED*** database on the following server:
+\code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]],
+  local.server.sql)}
 }
 \examples{
 \dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
