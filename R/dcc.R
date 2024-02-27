@@ -1,6 +1,6 @@
-#' DCC Stuff
+#' DCC data processing
 #'
-#' DCC stuff
+#' DCC data processing
 #'
 #' @name dcc
 #'
@@ -17,13 +17,18 @@
 #'   Default is \code{"America/Punta_Arenas"}
 #'
 #' @details
-#' General functions for processing DCC data
+#' General functions for processing DCC data. Sometime in the future, these may
+#' be moved to their own package.
 #'
 #' @return
 #' \code{dcc_read_files}: data frame with raw data row-binded together,
-#' with a column added for 'station'
+#' and a column added for 'station'
 #'
-#' \code{dcc_raw_process}:
+#' \code{dcc_format}: data frame with the following columns: freq (transmitter
+#' frequency), code (transmitter code, if relevant), sig (ping signal strength),
+#' datetime, station
+#'
+#' \code{dcc_calc_trips}:
 #'
 #' @examples
 #' # dcc_read_files(file.path, "CABO")

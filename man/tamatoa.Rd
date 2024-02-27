@@ -6,10 +6,10 @@
 \usage{
 tamatoa(
   ...,
-  remote.prod = FALSE,
-  remote.test = FALSE,
-  local.prod = TRUE,
-  server.sql = "\\\\SQLEXPRESS"
+  remote.prod = TRUE,
+  remote.test = TRUE,
+  local.prod = FALSE,
+  local.server.sql = "\\\\SQLEXPRESS"
 )
 }
 \arguments{
@@ -22,28 +22,29 @@ automatic connection to the ***REMOVED*** database on ***REMOVED***?}
 automatic connection to the ***REMOVED***_Test database on ***REMOVED***?}
 
 \item{local.prod}{logical; default is FALSE Should tamatoa create an
-automatic connection to the ***REMOVED*** database on
-the local SQL Express (see Details for more info)?}
+automatic connection to the ***REMOVED*** database on the local SQL
+Express (see Details for more info)?}
 
-\item{server.sql}{character; SQL server suffix. Default is '\\SQLEXPRESS'}
+\item{local.server.sql}{character; SQL server suffix. Default is
+'\\SQLEXPRESS'}
 }
 \description{
 Open Tamatoa, the package Shiny app
 }
 \details{
-If \code{local.prod} is TRUE, then Tamatoa will attempt to connect to the
-***REMOVED*** database on the following server:
+If \code{local.prod} is TRUE, then Tamatoa will attempt to connect
+to the ***REMOVED*** database on the following server:
 \code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]], server.sql)}
 }
 \examples{
 \dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-tamatoa()
+  tamatoa()
 
-# Testing
-tamatoa(remote.prod = FALSE, remote.test = TRUE)
+  # Testing
+  tamatoa(remote.prod = FALSE, remote.test = TRUE)
 
-# In the field
-tamatoa(remote.prod = FALSE, remote.test = FALSE, local.prod = TRUE)
+  # In the field
+  tamatoa(remote.prod = FALSE, remote.test = FALSE, local.prod = TRUE)
 \dontshow{\}) # examplesIf}
 }
 \seealso{

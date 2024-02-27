@@ -8,7 +8,6 @@
 #'
 #' @name tamatoamlr-package
 #' @aliases tamatoamlr
-#' @docType package
 #' @title US AMLR Program Pinniped data processing and analysis
 #' @author Sam Woodman \email{sam.woodman@@noaa.gov}
 #' @author Karen Snyder \email{ksnyder@@g.hmc.edu}
@@ -40,7 +39,7 @@
 #' @importFrom utils globalVariables read.csv write.csv
 #'
 #' @keywords package
-NULL
+"_PACKAGE"
 
 # https://github.com/hadley/r-pkgs/issues/828
 ignore_unused_imports <- function() {

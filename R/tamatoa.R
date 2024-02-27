@@ -8,39 +8,38 @@
 #' @param remote.test logical; default is TRUE. Should tamatoa create an
 #'   automatic connection to the ***REMOVED***_Test database on ***REMOVED***?
 #' @param local.prod logical; default is FALSE Should tamatoa create an
-#'   automatic connection to the ***REMOVED*** database on
-#'   the local SQL Express (see Details for more info)?
-#' @param server.sql character; SQL server suffix. Default is '\\SQLEXPRESS'
+#'   automatic connection to the ***REMOVED*** database on the local SQL
+#'   Express (see Details for more info)?
+#' @param local.server.sql character; SQL server suffix. Default is
+#'   '\\SQLEXPRESS'
 #'
-#' @details
-#' If \code{local.prod} is TRUE, then Tamatoa will attempt to connect to the
-#' ***REMOVED*** database on the following server:
+#' @details If \code{local.prod} is TRUE, then Tamatoa will attempt to connect
+#' to the ***REMOVED*** database on the following server:
 #' \code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]], server.sql)}
 #'
 #' @examplesIf interactive()
-#' tamatoa()
+#'   tamatoa()
 #'
-#' # Testing
-#' tamatoa(remote.prod = FALSE, remote.test = TRUE)
+#'   # Testing
+#'   tamatoa(remote.prod = FALSE, remote.test = TRUE)
 #'
-#' # In the field
-#' tamatoa(remote.prod = FALSE, remote.test = FALSE, local.prod = TRUE)
+#'   # In the field
+#'   tamatoa(remote.prod = FALSE, remote.test = FALSE, local.prod = TRUE)
 #'
-#' @seealso \url{https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center}
+#' @seealso
+#'   \url{https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center}
+#'
 #'
 #' @export
 tamatoa <- function(...,
-                    remote.prod = FALSE, remote.test = FALSE,
-                    local.prod = TRUE, server.sql = "\\SQLEXPRESS") {
-  # tamatoa <- function(...,
-  #                     remote.prod = TRUE, remote.test = TRUE,
-  #                     local.prod = FALSE, server.sql = "\\SQLEXPRESS") {
+                    remote.prod = TRUE, remote.test = TRUE,
+                    local.prod = FALSE, local.server.sql = "\\SQLEXPRESS") {
   ##############################################################################
   ##### Set connections to dbs, as specified by the user
   db.driver <- "ODBC Driver 18 for SQL Server"
 
   db.server.remote <- "swc-***REMOVED***-s"
-  db.server.local <- paste0(Sys.info()[["nodename"]], server.sql)
+  db.server.local <- paste0(Sys.info()[["nodename"]], local.server.sql)
 
   db.name.prod <- "***REMOVED***"
   db.name.test <- "***REMOVED***_Test"
@@ -104,7 +103,7 @@ tamatoa <- function(...,
         menuItem("AFS Capewide Pup Census", tabName = .id.list$afs_cwpc, icon = icon("th", lib = "font-awesome")),
         menuItem("AFS Study Beach Census", tabName = .id.list$afs_sbc, icon = icon("th", lib = "font-awesome")),
         # menuItem("Pinnipeds + Tags", tabName = "tab_pt", icon = icon("th", lib = "font-awesome")),
-        menuItem("Captures", tabName = .id.list$captures, icon = icon("th")),
+        # menuItem("Captures", tabName = .id.list$captures, icon = icon("th")),
         menuItem("CCAMLR Pup Weights", tabName = .id.list$cpw, icon = icon("th")),
         menuItem("CS-PHOC: Phocid Census", tabName = .id.list$csphoc, icon = icon("th")),
         menuItem("Tag Resights", tabName = .id.list$resights, icon = icon("th", lib = "font-awesome")),
@@ -197,8 +196,8 @@ tamatoa <- function(...,
       .id.list$afs_cwpc, db.pool, si.list$season.df, tab)
     mod_afs_study_beach_census_server(
       .id.list$afs_sbc, db.pool, si.list$season.df, tab)
-    mod_captures_server(
-      .id.list$captures, db.pool, si.list$season.df, tab)
+    # mod_captures_server(
+    #   .id.list$captures, db.pool, si.list$season.df, tab)
     mod_ccamlr_pup_weights_server(
       .id.list$cpw, db.pool, si.list$season.df, tab)
     mod_phocid_census_server(

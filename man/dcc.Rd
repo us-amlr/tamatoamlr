@@ -6,7 +6,7 @@
 \alias{dcc_format}
 \alias{dcc_calc_trips}
 \alias{mutate_tag_freq_code}
-\title{DCC Stuff}
+\title{DCC data processing}
 \usage{
 dcc_read_files(files, station)
 
@@ -35,15 +35,20 @@ to be considered a trip}
 }
 \value{
 \code{dcc_read_files}: data frame with raw data row-binded together,
-with a column added for 'station'
+and a column added for 'station'
 
-\code{dcc_raw_process}:
+\code{dcc_format}: data frame with the following columns: freq (transmitter
+frequency), code (transmitter code, if relevant), sig (ping signal strength),
+datetime, station
+
+\code{dcc_calc_trips}:
 }
 \description{
-DCC stuff
+DCC data processing
 }
 \details{
-General functions for processing DCC data
+General functions for processing DCC data. Sometime in the future, these may
+be moved to their own package.
 }
 \examples{
 # dcc_read_files(file.path, "CABO")

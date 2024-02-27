@@ -6,9 +6,9 @@
 
 * Version for 2023/24 Cape Shirreff field season
 
-* Update captures tab (in progress)
+* Updated `afs_capewide_pup` functions: small internal changes; renamed functions including changing to 'cwp_' prefix; added `cwp_loc_agg` to aggregate across locations in a consistent fashion.
 
-* Update Capewide pup census tab (in progress)
+* Updated various tab functionality, especially AFS DCC and cape-wide pup census
 
 
 # amlrPinnipeds 0.5.0

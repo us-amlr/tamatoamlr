@@ -1,58 +1,124 @@
 #' Summarize AFS Capewide Pup Census Data
 #'
-#' Summarize AFS Capewide Pup Census Data
+#' Summarize AFS Capewide Pup (CWP) Census Data
 #'
-#' @param x data frame; output of \code{\link{tbl_vCensus_AFS_Capewide_Pup}}
-#'   or equivalent
-#' @param x.bylocation logical; for function \code{afs_cwp_totals},
-#'   indicates if \code{x} is the output of \code{afs_cwp_totals_bylocation}.
-#'   Default is \code{FALSE}
+#' @param x data frame; output of [tbl_vCensus_AFS_Capewide_Pup()] or
+#'   equivalent. The exception is if `x.byloc == TRUE`; in this case then `x`
+#'   must be the output of `cwp_total_by_loc()`
+#' @param loc.agg logical; indicates if `cwp_review()` should aggregate records
+#'   across location (by observer) before summarizing (`TRUE`), or if records
+#'   should be summarized by season/location as-is (`FALSE`; default).
+#' @param x.byloc logical; indicates if `x` is the output of
+#'   `cwp_total_by_loc()`. This argument is intended to minimize work if a user
+#'   needs both the output of `cwp_total_by_loc()` and `cwp_total()`
 #'
-#' @details
-#' afs_cwp_single: group by census_date and location;
-#' output is various conglomerations that are
-#' intended to help determine if recounts need to happen
+#' @details `cwp_loc_agg()`: Aggregate pup counts and related info across
+#'   locations, and by season/observer. This function is intended for situations
+#'   where a user has filtered CWP data for a specific subset of locations and
+#'   wants to summarize the counts across all of these locations, effectively
+#'   treating all of the locations as one location.
 #'
-#' afs_cwp_totals_bylocation: group by season_name and location;
-#' return count mean, variance, SD, and min date.
-#' Var and SD follow CS/AMLR-specific rules about when it must be NA.
-#' census_date_min is the earliest census date for that season/location group.
+#'   `cwp_review()`: Summarize pup counts and ancillary information for review
+#'   after grouping by season_name and location. `loc.agg == TRUE` then all
+#'   counts will be summed by observer across locations, i.e., `x` will be
+#'   passed to `cwp_loc_agg()`, before being summarized. The output data frame
+#'   is various pasted conglomerations that are intended for review to help
+#'   determine if recounts need to happen.
 #'
-#' afs_cwp_totals: after running afs_cwp_totals_bylocation,
-#' group by season name and return counts and standard deviations
+#'   `cwp_total_by_loc()`: group by season_name and location; return count mean,
+#'   variance, SD, and min date. Calculating the variance and SD follow
+#'   CS/AMLR-specific rules about when it must be NA based on historical
+#'   knowledge about past survey data; see the 'assumptions' section for
+#'   details. census_date_min is the earliest census date for that
+#'   season/location group.
 #'
-#' Note that none of these functions do any rounding. To round values,
-#' for instance to get a whole number for pup counts,
-#' use either \code{\link[base]{round}}
-#' or \code{\link[amlrDatabases]{round_logical}}
+#'   `cwp_total()`: after running cwp_total_by_loc, group by season name and
+#'   return counts and standard deviations
 #'
-#' @return
-#' An ungrouped data frame with the summarized AFS Capewide Pup Census data.
-#' The summary types are described in 'Details'.
+#'   Note that none of these functions do any rounding. To round values, for
+#'   instance to get a whole number for pup counts, use either [base::round()]
+#'   or [amlrDatabases::round_logical()]
+#'
+#'   These functions make several assumptions specific to US AMLR Pinniped Data:
+#'   * Assumes that the research program is unique by season
+#'   * Study beaches (locations: Copihue, Maderas, Cachorros, Chungungo)
+#'   censused between 2008-07-01 and 2011-07-01 are single counts and thus do
+#'   not have variance values.
+#'   * All counts before July 2008 (i.e., before the 2008/09 season) do not have variance values.
+#'
+#' @return An ungrouped data frame with the summarized AFS Capewide Pup Census
+#'   data. The summary types are described in 'Details'.
 #'
 #' @examplesIf FALSE
-#' # Not run; examples only will run if on SWFSC network
-#' x <- tbl_vCensus_AFS_Capewide_Pup(amlr_dbConnect("***REMOVED***_Test"))
+#'   # Not run; examples only will run if on SWFSC network
+#'   x <- tbl_vCensus_AFS_Capewide_Pup(amlr_dbConnect("***REMOVED***_Test"))
 #'
-#' afs_cwp_single(x[x$season_name == "2016/17", ])
-#' afs_cwp_totals(x)
+#'   x.201617 <- x[x$season_name == "2016/17", ]
+#'   cwp_review(x.201617)
 #'
-#' x.byloc <- afs_cwp_totals_bylocation(x)
-#' afs_cwp_totals(x.byloc, x.bylocation = TRUE)
+#'   x.201617.ballena <- x.201617[grepl("Ballena", x.201617$location), ]
+#'   cwp_loc_agg(x.201617.ballena)
+#'   cwp_review(x.201617.ballena, loc.agg = TRUE)
+#'
+#'   cwp_total(x)
+#'   cwp_total(x.201617.ballena, loc.agg = TRUE)
+#'
+#'   x.byloc <- cwp_total_by_loc(x)
+#'   cwp_total(x.byloc, x.byloc = TRUE)
 #'
 #' @name afs_capewide_pup
 #' @export
-afs_cwp_single <- function(x) { #}, by.observer) {
+cwp_loc_agg <- function(x) {
   columns.names <- c(
     "season_name", "census_afs_capewide_pup_sort", "location", "census_date",
     "observer", "census_notes", "exclude_count",
     "pup_count", "pup_live_count", "pup_dead_count"
   )
-
   stopifnot(
-    all(c(columns.names %in% names(x))),
-    n_distinct(x$season_name) == 1
+    all(c(columns.names %in% names(x)))
   )
+
+  if (any(x$exclude_count)) {
+    warning("x contains some records with exclude_count == TRUE; ",
+            "note these records will be removed to aggreagate across location",
+            immediate. = TRUE)
+  }
+
+  x %>%
+    arrange(census_afs_capewide_pup_sort) %>%
+    filter(!exclude_count) %>%
+    group_by(season_name, observer) %>%
+    summarise(across(c(pup_count, pup_live_count, pup_dead_count),
+                     sum, na.rm = TRUE, .names = "{.col}"),
+              location = paste(unique(location), collapse = ", "),
+              census_date_min = min(census_date),
+              exclude_count = unique(exclude_count),
+              census_notes = if_else(
+                all(is.na(census_notes)),
+                NA_character_,
+                paste(as.character(na.omit(census_notes)), collapse = "; ")),
+              research_program = unique(research_program),
+              .groups = "drop") %>%
+    mutate(census_afs_capewide_pup_sort = 1,
+           .after = season_name)
+}
+
+
+
+#' @name afs_capewide_pup
+#' @export
+cwp_review <- function(x, loc.agg = FALSE) {
+  columns.names <- c(
+    "season_name", "census_afs_capewide_pup_sort", "location", "census_date",
+    "observer", "census_notes", "exclude_count",
+    "pup_count", "pup_live_count", "pup_dead_count"
+  )
+  stopifnot(
+    all(c(columns.names %in% names(x)))
+  )
+
+  # Aggregate across locations, if specified
+  if (loc.agg) x <- cwp_loc_agg(x) %>% rename(census_date = census_date_min)
 
   x %>%
     group_by(season_name, census_afs_capewide_pup_sort, location) %>%
@@ -69,22 +135,25 @@ afs_cwp_single <- function(x) { #}, by.observer) {
               counts_live = paste(pup_live_count, collapse = "; "),
               counts_dead = paste(pup_dead_count, collapse = "; "),
               .groups = "drop") %>%
-    arrange(census_afs_capewide_pup_sort) %>%
-    select(-c(census_afs_capewide_pup_sort))
+    relocate(census_afs_capewide_pup_sort, .after = last_col())
 }
 
 #' @name afs_capewide_pup
 #' @export
-afs_cwp_totals_bylocation <- function(x) {
+cwp_total_by_loc <- function(x, loc.agg = FALSE) {
   columns.names <- c(
     "season_name", "census_afs_capewide_pup_sort", "location",
     "census_date", "pup_count", "research_program"
   )
-
   stopifnot(all(c(columns.names %in% names(x))))
-  if (any(x$exclude_count))
-    warning("Some rows in x have a TRUE value for the 'exclude_count' flag",
+  if (any(x$exclude_count)) {
+    warning("x contains some records with exclude_count == TRUE; ",
+            "note these records will be removed to summarize totals by location",
             immediate. = TRUE)
+  }
+
+  # Aggregate across locations, if specified
+  if (loc.agg) x <- cwp_loc_agg(x) %>% rename(census_date = census_date_min)
 
   x %>%
     group_by(season_name, census_afs_capewide_pup_sort, location) %>%
@@ -109,8 +178,8 @@ afs_cwp_totals_bylocation <- function(x) {
 
 #' @name afs_capewide_pup
 #' @export
-afs_cwp_totals <- function(x, x.bylocation = FALSE) {
-  y <- if (x.bylocation) {
+cwp_total <- function(x, x.byloc = FALSE, loc.agg = FALSE) {
+  x.df.byloc <- if (x.byloc) {
     stopifnot(identical(
       c("season_name", "location",
         "num_records", "count_loc_mean", "count_loc_sd", "count_loc_var",
@@ -119,10 +188,10 @@ afs_cwp_totals <- function(x, x.bylocation = FALSE) {
     ))
     x
   } else {
-    afs_cwp_totals_bylocation(x)
+    cwp_total_by_loc(x, loc.agg = loc.agg)
   }
 
-  y %>%
+  x.df.byloc %>%
     group_by(season_name) %>%
     summarise(count_mean = sum(count_loc_mean),
               count_var = if_else(min(census_date_min) < as.Date("2011-07-01"),

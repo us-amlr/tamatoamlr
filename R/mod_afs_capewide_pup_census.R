@@ -15,18 +15,20 @@ mod_afs_capewide_pup_census_ui <- function(id) {
       ),
       box(
         title = "Summary options", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
-        helpText("This tab allows you to summarize and visualize AFS Capewide Pup Census data. ",
+        helpText("This tab allows you to summarize and visualize",
+                 "AFS Capewide Pup Census data. ",
                  "Select how you wish to summarize this data, ",
                  "and then specify any filters you would like to apply"),
         # TODO: add notes about CWP data from other years and eg SSI surveys
         fluidRow(
           column(4, .summaryTimingUI(ns, c("fs_total", "fs_single", "fs_raw"))),
-          column(4, .summaryLocationUI(ns, c("by_capewide", "by_beach"), "by_capewide", FALSE)),
+          column(3, .summaryLocationUI(ns, c("by_capewide", "by_beach"), "by_capewide", FALSE)),
           column(
             width = 4,
             conditionalPanel(
-              condition = "input.summary_location == 'by_beach'", ns = ns,
-              checkboxInput(ns("by_beach_group"), "Group all selected beaches together",
+              condition = "input.summary_location == 'by_beach' & input.summary_timing != 'fs_raw'",
+              ns = ns,
+              checkboxInput(ns("loc_agg"), "Aggregate across selected locations",
                             value = FALSE)
             )
           )
@@ -75,8 +77,8 @@ mod_afs_capewide_pup_census_server <- function(id, src, season.df, tab) {
 
       ### Locations dropdown
       output$location_uiOut_selectize <- renderUI({
-        req(input$summary_location == "by_beach", pool())
-        # beaches.list <- tbl_beaches_capewide(pool())$location
+        req(input$summary_location == "by_beach", src())
+        # beaches.list <- tbl_beaches_capewide(src())$location
         beaches.list <-  sort(unique(census_df_collect()$location))
 
         selectInput(
@@ -91,9 +93,9 @@ mod_afs_capewide_pup_census_server <- function(id, src, season.df, tab) {
 
         if (input$summary_timing == "fs_single") {
           helpText("The 'Single Season'",
-                   "summary is for checking data for count consistency.",
+                   "summary is for reviewing data for count consistency.",
                    "In the table below, the order of the data in the columns",
-                   "with multiple datais is consistent across all columns")
+                   "with multiple data is is consistent across all columns")
         } else if (input$summary_timing == "fs_total") {
           helpText("Note: Data with the 'exclude_count' flag will always",
                    "be removed when plotting over multiple seasons")
@@ -233,12 +235,6 @@ mod_afs_capewide_pup_census_server <- function(id, src, season.df, tab) {
           census.df <- census.df %>%
             filter(location %in% input$location) %>%
             mutate(location = factor(location, levels = input$location))
-
-          if (input$by_beach_group) {
-            census.df <- census.df %>%
-              mutate(census_afs_capewide_pup_sort = 1,
-                     location = "Selected beaches")
-          }
         }
 
         validate(
@@ -253,9 +249,37 @@ mod_afs_capewide_pup_census_server <- function(id, src, season.df, tab) {
       # ##########################################################################
       # Process data for plot / table
 
-      ### Plot for fs_single summaries
+      loc_agg <- reactive({
+        input$loc_agg && (input$summary_location == "by_beach")
+      })
+
+      ### Table and plot for fs_single summaries
+      ## Table
+      census_df_fs_single <- reactive({
+        cwp_review(census_df_filter_location(), loc.agg = loc_agg()) %>%
+          select(-census_afs_capewide_pup_sort) %>%
+          mutate(count_mean = round_logical(count_mean, 0),
+                 count_range_perc_diff = round_logical(count_range_perc_diff, 2))
+      })
+
+      ## Plot
       plot_fs_single <- reactive({
-        x <- census_df_filter_location() %>%
+        x <- census_df_filter_location()
+
+        g.title <- paste("Cape Shirreff AFS Capewide Pup Census",
+                         "Individual Counts", unique(x$season_name),
+                         sep = " - ")
+
+        # If aggregating across locations, run agg function and update title
+        # Also update location name in df in case many locations were aggregated
+        if (loc_agg()) {
+          x.agg <- cwp_loc_agg(x)
+          g.title <- paste(g.title, unique(x.agg$location), sep = " - ")
+          x <- x.agg %>%
+            mutate(location = "Selected locations")
+        }
+
+        x <- x %>%
           mutate(exclude_count = factor(exclude_count, levels = c("FALSE", "TRUE")))
 
         g.out <-  if (input$exclude_count) {
@@ -274,20 +298,19 @@ mod_afs_capewide_pup_census_server <- function(id, src, season.df, tab) {
         g.out +
           guides(fill = guide_legend(title = "Observer", order = 1)) +
           theme(axis.text.x = element_text(angle = 90)) +
-          ggtitle(paste("Cape Shirreff AFS Capewide Pup Census",
-                        "Individual Counts", unique(x$season_name),
-                        sep = " - ")) +
+          ggtitle(g.title) +
           xlab("Location") +
           ylab("Pup count")
       })
 
 
       ### Table and plot for fs_total summaries
+      ## Table
       census_df_fs_total <- reactive({
         census.df <- census_df_filter_location()
 
         if (input$summary_location == "by_beach") {
-          afs_cwp_totals_bylocation(census.df) %>%
+          cwp_total_by_loc(census.df, loc.agg = loc_agg()) %>%
             rename(count_mean = count_loc_mean,
                    count_var = count_loc_var,
                    count_sd = count_loc_sd) %>%
@@ -296,14 +319,24 @@ mod_afs_capewide_pup_census_server <- function(id, src, season.df, tab) {
                    count_sd = round_logical(count_sd, 2))
 
         } else {
-          afs_cwp_totals(census.df) %>%
+          cwp_total(census.df, loc.agg = loc_agg()) %>%
             mutate(count_mean = round_logical(count_mean, 0),
                    count_sd = round_logical(count_sd, 2))
         }
       })
 
+      ## Plot
       plot_fs_total <- reactive({
         x <- census_df_fs_total() %>% mutate(group = 1)
+        g.title <- "Cape Shirreff AFS Capewide Pup Census"
+
+        # If aggregating across locations, update title
+        # Also update location name in df in case many locations were aggregated
+        if (loc_agg()) {
+          g.title <- paste(g.title, unique(x$location), sep = " - ")
+          x <- x %>%
+            mutate(location = "Selected locations")
+        }
 
         g.out <- if (input$summary_location == "by_beach") {
           ggplot(x, aes(season_name, count_mean,
@@ -323,7 +356,7 @@ mod_afs_capewide_pup_census_server <- function(id, src, season.df, tab) {
                         width = 0.5) +
           scale_x_discrete(drop = FALSE) +
           theme(axis.text.x = element_text(angle = 90)) +
-          ggtitle("Cape Shirreff AFS Capewide Pup Census") +
+          ggtitle(g.title) +
           xlab("Season") +
           ylab("Pup count (mean)") +
           expand_limits(y = 0)
@@ -350,9 +383,7 @@ mod_afs_capewide_pup_census_server <- function(id, src, season.df, tab) {
         if (req(input$summary_timing) == "fs_raw") {
           census.df %>% select(-c(census_afs_capewide_pup_sort, pup_count))
         } else if (input$summary_timing == "fs_single") {
-          afs_cwp_single(census.df) %>%
-            mutate(count_mean = round_logical(count_mean, 0),
-                   count_range_perc_diff = round_logical(count_range_perc_diff, 2))
+          census_df_fs_single()
         } else if (input$summary_timing == "fs_total") {
           census_df_fs_total()
         } else {
