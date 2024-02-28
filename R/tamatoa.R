@@ -73,6 +73,8 @@ tamatoa <- function(...,
       if (dbIsValid(pool.remote.prod)) poolClose(pool.remote.prod)
     if (isTruthy(pool.remote.test))
       if (dbIsValid(pool.remote.test)) poolClose(pool.remote.test)
+    if (isTruthy(pool.local.prod))
+      if (dbIsValid(pool.local.prod)) poolClose(pool.local.prod)
   })
 
 
@@ -161,6 +163,7 @@ tamatoa <- function(...,
     ### Quit GUI
     session$onSessionEnded(function() {
       # Close current pool object. Needed here in case working off 'other' db
+      # on.exit(dbDisconnect(conn))
       isolate({
         if (inherits(db.pool(), "Pool")) {
           if (dbIsValid(db.pool())) {

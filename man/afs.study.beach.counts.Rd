@@ -11,7 +11,7 @@ A character vector
 afs.study.beach.counts
 }
 \description{
-Names of the AFS study beach census columns, in order,
-to select for and display
+Names of the AFS study beach census columns, in order, to select for and
+display
 }
 \keyword{datasets}

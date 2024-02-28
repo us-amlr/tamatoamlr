@@ -4,7 +4,7 @@
 #'
 #' @name mod_season_info
 #'
-#' @param id character used to specify namespace, see \code{\link[shiny]{NS}}
+#' @param id character used to specify namespace, see [shiny::NS()]
 #' @param col.width integer; column width of column of UI widgets
 #'
 #' @export
@@ -25,18 +25,17 @@ mod_season_info_ui <- function(id, col.width = 7) {
 
 #' @name mod_season_info
 #'
-#' @param pool reactive; a DBI database connection pool,
-#'   intended to be the output of \code{\link{mod_database_server}}
-#' @param si.name character; name of season information table.
-#'   Default is 'season_info'
+#' @param src reactive; a DBI database connection src, intended to be the output
+#'   of `mod_database_server()`
+#' @param si.name character; name of season information table. Default is
+#'   'season_info'
 #'
-#' @returns
-#' \code{mod_season_server} returns a list with one component:
-#' a reactive of the season information data frame
+#' @returns `mod_season_server()` returns a list with one component: a reactive
+#' of the season information data frame
 #'
 #' @export
-mod_season_info_server <- function(id, pool, si.name = "season_info") {
-  stopifnot(is.reactive(pool))
+mod_season_info_server <- function(id, src, si.name = "season_info") {
+  stopifnot(is.reactive(src))
 
   moduleServer(
     id,
@@ -50,7 +49,7 @@ mod_season_info_server <- function(id, pool, si.name = "season_info") {
 
       # Get data from table
       season_info <- reactive({
-        df.out <- tbl(req(pool()), si.name) %>%
+        df.out <- tbl(req(src()), si.name) %>%
           select(-ts) %>%
           arrange(desc(season_open_date)) %>%
           collect()

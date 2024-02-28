@@ -8,22 +8,22 @@
 \usage{
 mod_season_info_ui(id, col.width = 7)
 
-mod_season_info_server(id, pool, si.name = "season_info")
+mod_season_info_server(id, src, si.name = "season_info")
 }
 \arguments{
-\item{id}{character used to specify namespace, see \code{\link[shiny]{NS}}}
+\item{id}{character used to specify namespace, see \code{\link[shiny:NS]{shiny::NS()}}}
 
 \item{col.width}{integer; column width of column of UI widgets}
 
-\item{pool}{reactive; a DBI database connection pool,
-intended to be the output of \code{\link{mod_database_server}}}
+\item{src}{reactive; a DBI database connection src, intended to be the output
+of \code{mod_database_server()}}
 
-\item{si.name}{character; name of season information table.
-Default is 'season_info'}
+\item{si.name}{character; name of season information table. Default is
+'season_info'}
 }
 \value{
-\code{mod_season_server} returns a list with one component:
-a reactive of the season information data frame
+\code{mod_season_server()} returns a list with one component: a reactive
+of the season information data frame
 }
 \description{
 Shiny module for season information

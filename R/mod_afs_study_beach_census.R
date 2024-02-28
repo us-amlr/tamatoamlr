@@ -110,8 +110,8 @@ mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
           grepl("_count", census.names) | grepl("_sum", census.names)]
 
         validate(
-          need(all(afs.study.beach.counts %in% census.names) &
-                 all(choices.names.cs %in% afs.study.beach.counts),
+          need(all(tamatoamlr::afs.study.beach.counts %in% census.names) &
+                 all(choices.names.cs %in% tamatoamlr::afs.study.beach.counts),
                paste("The column names from afs.study.beach.counts",
                      "and names(census_df_collect()) are not identical -",
                      "please adjust the afs.study.beach.counts variable"))
@@ -119,7 +119,8 @@ mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
 
         selectInput(
           session$ns("age_sex"), tags$h5("Columns to plot"),
-          choices = afs.study.beach.counts, selected = c("pup_live_count"),
+          choices = tamatoamlr::afs.study.beach.counts,
+          selected = c("pup_live_count"),
           multiple = TRUE, selectize = TRUE
         )
       })
