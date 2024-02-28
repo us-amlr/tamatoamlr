@@ -17,30 +17,6 @@ mod_dcc_pinniped_ui <- function(id) {
                   multiple = TRUE, accept = .tamatoa.csv.accept),
         helpText("Tamatoa will pull the DCC key from the database"),
         downloadButton(ns("key_download"), "Download database key"),
-
-        # fluidRow(
-        #   column(
-        #     width = 6,
-        #     radioButtons(ns("tx_key_type"), tags$h5("Key source"),
-        #                  choices = c("Database"), #, "File"),
-        #                  selected = "Database"),
-        #     conditionalPanel(
-        #       condition = "input.tx_key_type == 'Database'", ns = ns,
-        #
-        #       helpText("Tamatoa will pull the DCC key from the database"),
-        #       downloadButton(ns("key_download"), "Download database key")
-        #     )
-        #   ),
-        #   column(
-        #     width = 6,
-        #     fileInput(ns("dcc_files_cabo"),
-        #               tags$h5("Load raw DCC files from CABO station"),
-        #               multiple = TRUE, accept = .tamatoa.csv.accept),
-        #     fileInput(ns("dcc_files_mad"),
-        #               tags$h5("Load raw DCC files from MAD station"),
-        #               multiple = TRUE, accept = .tamatoa.csv.accept)
-        #   )
-        # )
       ),
       box(
         title = "Summary and Filter Options", status = "warning",
@@ -231,8 +207,8 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
           dcc_validate()
       })
 
-      ### Join files
-      dcc_files <- reactive({
+      ### Join files, and format data
+      dcc_formatted <- reactive({
         bind_rows(dcc_files_cabo(), dcc_files_mad()) %>%
           dcc_format() %>%
           arrange(freq, code, datetime)
@@ -292,7 +268,7 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
       ### All processed DCC data
       dcc_processed <- reactive({
         # if (input$include_resights) validate("resights are not yet incorporated")
-        inner_join(microvhf_key(), dcc_files(),
+        inner_join(microvhf_key(), dcc_formatted(),
                    by = join_by(freq, code), relationship = "many-to-many") %>%
           # group_by(freq, code) %>%
           filter(between(datetime, deployment_date, end_date)) %>%
@@ -324,9 +300,6 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
 
       ##########################################################################
       # Make output data frames
-
-      # TODO next:
-      # 3) re-incorporate resights
 
       ### Pings
       pings <- reactive({

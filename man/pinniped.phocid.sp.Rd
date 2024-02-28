@@ -11,6 +11,7 @@ A (named) character vector
 pinniped.phocid.sp
 }
 \description{
-The same as \code{\link{pinniped.sp}}, except only phocids (i.e., not Fur seals)
+The same as \code{\link{pinniped.sp}}, except only phocids (i.e., not Fur
+seals)
 }
 \keyword{datasets}

@@ -11,7 +11,8 @@ A (named) character vector
 pinniped.sp.colors
 }
 \description{
-The vector contents are colors, specifically, \code{\link[scales]{hue_pal}()(5)},
-while the vector names are the same as \code{\link{pinniped.sp}}
+The vector contents are colors, specifically,
+\code{\link[scales]{hue_pal}()(5)}, while the vector names are the same as
+\code{\link{pinniped.sp}}
 }
 \keyword{datasets}

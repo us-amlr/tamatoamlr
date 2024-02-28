@@ -5,52 +5,93 @@
 \alias{dcc_read_files}
 \alias{dcc_format}
 \alias{dcc_calc_trips}
-\alias{mutate_tag_freq_code}
 \title{DCC data processing}
 \usage{
-dcc_read_files(files, station)
+dcc_read_files(files, station, skip = 6)
 
-dcc_format(x, tz = "America/Punta_Arenas")
+dcc_format(x, tz = "America/Punta_Arenas", yr.pre = "20")
 
-dcc_calc_trips(x, trip.hours)
-
-mutate_tag_freq_code(x)
+dcc_calc_trips(x, trip.hours, trips.only = FALSE)
 }
 \arguments{
-\item{files}{character; the name of the file(s) which the
-DCC data are to be read from}
+\item{files}{character; the name of the file(s) which the DCC data are to be
+read from}
 
-\item{station}{character; DCC station name. Will be added
-as a character string in a 'station' column to the raw DCC data}
+\item{station}{character; DCC station name. Will be added as a character
+string in a 'station' column to the raw DCC data}
 
-\item{x}{data frame to process.
-For \code{dcc_format}, see details for required columns}
+\item{skip}{see \code{\link[=read.csv]{read.csv()}}; number of lines to skip when reading each DCC
+data file}
 
-\item{tz}{character; time zone for DCC datetime.
-See \code{\link[base:timezones]{timezones}} for more details.
-Default is \code{"America/Punta_Arenas"}}
+\item{x}{data frame}
 
-\item{trip.hours}{numeric; minimum number of hours for a time gap
-to be considered a trip}
+\item{tz}{see \code{\link[=timezones]{timezones()}}; timezone for the DCC data datetimes. Default is
+\code{"America/Punta_Arenas"}, which is the timezone at Cape Shirreff.}
+
+\item{yr.pre}{character; the two digits to append onto the front of the
+two-digit value in the 'Yr' (year) column in the DCC data to make a
+four-digit year value. Should be either "20" (default) or "19" for e.g.
+2005 or 1999, respectively}
+
+\item{trip.hours}{numeric; minimum number of hours for a time gap to be
+considered a trip}
+
+\item{trips.only}{logical; indicates if \code{dcc_calc_trips()} should return a
+data frame with all pings with their associated \code{time_diff_hr} values
+(\code{FALSE}, default), or a data frame filtered for records where
+\code{time_diff_hr > trip.hours}}
 }
 \value{
-\code{dcc_read_files}: data frame with raw data row-binded together,
-and a column added for 'station'
-
-\code{dcc_format}: data frame with the following columns: freq (transmitter
-frequency), code (transmitter code, if relevant), sig (ping signal strength),
-datetime, station
-
-\code{dcc_calc_trips}:
+For all functions: an ungrouped data frame, as described in Details.
 }
 \description{
-DCC data processing
+Generalized functions for processing and summarizing DCC data. Functions are
+designed to perform common DCC processing tasks, while leaving space for
+users to do custom filtering, etc.
 }
 \details{
-General functions for processing DCC data. Sometime in the future, these may
-be moved to their own package.
+Note: these generalized functions for processing DCC data likely
+will be moved to their own package sometime in the future.
+
+\code{dcc_read_files()}: Reads data from the provided CSV file paths, and row-bind
+them into a single data frame with a character column added for 'station'
+
+\code{dcc_format()}: Takes raw DCC data, ideally the output(s) of
+\code{dcc_read_files()}, and process these data to a standardized format.
+Specifically: renames columns, and uses the Yr/Day/Hr/Mn columns to create a
+single 'datetime' column with the user-provided timezone (\code{tz}). Returns a
+data frame with the following columns: freq (transmitter frequency), code
+(transmitter code, if present in the raw data), sig (signal strength of
+ping), datetime, station. Assumptions made by this function:
+\itemize{
+\item The Yr/Day/Hr/Mn columns, when pasted together with
+\code{paste(paste0(yr.pre, Yr), Day, Hr, Mn, sep = "-")}, follow the \code{\link[=strptime]{strptime()}}
+format \code{"\%Y-\%j-\%H-\%M"} .
+\item All values in the 'Fr' column are either 4- or 6-digit integers
+representing the frequency value (e.g., 4105 or 164105). The code '16' is
+pasted onto the front of 4-digit codes. Then all codes are divided by 1000 to
+generate the true numeric frequency (e.g., 164.105)
+}
+
+\code{dcc_calc_trips()}: Takes processed/formatted DCC data, ideally the output(s)
+of \code{dcc_format()}, and calculates time_diff_hr: for each ping, the time
+difference from the previous ping. This function also calculates
+trip_num_completed: for each ping, the number of trips that have been
+completed up to that point in time. Both calculations are done after grouping
+by freq and (if applicable) code.
 }
 \examples{
-# dcc_read_files(file.path, "CABO")
+dcc_read_files(system.file("extdata", "dcc-coded.csv", package = "tamatoamlr"),
+               station = "TEST")
+dcc_read_files(system.file("extdata", "dcc-standard.csv", package = "tamatoamlr"),
+               station = "TEST")
+
+y.coded <- dcc_format(dcc.coded)
+dcc_calc_trips(y.coded, trip.hours = 24)
+
+y.standard <- dcc_format(dcc.standard)
+dcc_calc_trips(y.standard, trip.hours = 8)
+dcc_calc_trips(y.standard, trip.hours = 8, trips.only = TRUE)
+dcc_calc_trips(y.standard, trip.hours = 24, trips.only = TRUE)
 
 }
