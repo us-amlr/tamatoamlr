@@ -15,6 +15,13 @@ and allows users to analyze and visualize data from said database.
 There are also several stand-alone functions,
 such as for calculating krill lengths from carapace measurements.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item Report bugs at \url{https://github.com/us-amlr/tamatoamlr/issues}
+}
+
+}
 \author{
 Sam Woodman \email{sam.woodman@noaa.gov}
 

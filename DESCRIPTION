@@ -10,6 +10,8 @@ Description: This package contains Tamatoa, a Shiny app that connects to the
     There are some exported functions that are helpful for processing 
     US AMLR Pinniped data for more familiar users, but the intent
     is for the Shiny app to provide the main functionality for this package.
+License: CC0
+BugReports: https://github.com/us-amlr/tamatoamlr/issues
 Depends: R (>= 4.0.0)
 Imports: 
     amlrDatabases (>= 0.7), 
@@ -33,11 +35,10 @@ Imports:
     tidyr
 Remotes:
     us-amlr/amlrDatabases
-License: CC0
+Suggests: 
+    testthat (>= 3.0.0)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
-Suggests: 
-    testthat (>= 3.0.0)
 Config/testthat/edition: 3

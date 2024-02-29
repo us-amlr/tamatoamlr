@@ -22,7 +22,7 @@ Because the Cape Shirreff Phocid Census (CS-PHOC) data collected by
 the US AMLR program is not explicit, meaning it does not always include
 zero records for when a beach was surveyed and no animals were seen, these
 data usually must be completed before being shared or used in analyses.
-This function uses \code{\link[=tidyr:complete]{tidyr:complete()}} with US AMLR CS-PHOC data that has
+This function uses \code{\link[tidyr:complete]{tidyr::complete()}} with US AMLR CS-PHOC data that has
 already been aggregated by header ID and species, i.e. there is only one
 record for every header record and species combo.
 

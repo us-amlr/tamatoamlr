@@ -4,11 +4,17 @@
 
 * Added `dbplyr` to Imports to explicitly require it for database work
 
-* Version for 2023/24 Cape Shirreff field season
+* Used for and developed during 2023/24 Cape Shirreff field season. Finalized after season
+
+* Updated various tab functionality, especially AFS DCC and cape-wide pup census
 
 * Updated `afs_capewide_pup` functions: small internal changes; renamed functions including changing to 'cwp_' prefix; added `cwp_loc_agg` to aggregate across locations in a consistent fashion.
 
-* Updated various tab functionality, especially AFS DCC and cape-wide pup census
+* Extracted `dcc` functions from Shiny app and made them generalized functions for processing DCC download data. 
+
+* Added DCC sample data [#5]
+
+* Added tests for `dcc`, `csphoc`, and ... functions [e.g., #6]
 
 
 # amlrPinnipeds 0.5.0
