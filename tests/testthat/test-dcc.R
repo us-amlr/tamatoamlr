@@ -10,7 +10,8 @@ test_that("dcc_format adheres to strptime format, and expected output columns", 
   )
 
   datetimes <- as.POSIXct(
-    c("2020-12-30 12:00:00", "2020-12-31 12:00:00", "2021-01-01 12:00:00")
+    c("2020-12-30 12:00:00", "2020-12-31 12:00:00", "2021-01-01 12:00:00"),
+    tz = "America/Punta_Arenas"
   )
   x.out <- data.frame(
     freq = 164.123,
@@ -22,7 +23,7 @@ test_that("dcc_format adheres to strptime format, and expected output columns", 
   expect_equal(dcc_format(x), x.out)
 })
 
-test_that("dcc_format handles data frames with or without 'code' column", {
+test_that("dcc_format handles data frames with or without 'code' column. Also checks alternate tiomezone assigment", {
   x <- data.frame(
     Yr = 20,
     Day = c(365, 366),
@@ -38,12 +39,12 @@ test_that("dcc_format handles data frames with or without 'code' column", {
     freq = 164.123,
     code = 1,
     sig = 99,
-    datetime = as.POSIXct(c("2020-12-30 12:00:00", "2020-12-31 12:00:00")),
+    datetime = as.POSIXct(c("2020-12-30 12:00:00", "2020-12-31 12:00:00"), tz = "UTC"),
     station = "test"
   )
 
-  expect_equal(dcc_format(x), x.out)
-  expect_equal(dcc_format(subset(x, select = -c(Code))),
+  expect_equal(dcc_format(x, tz = "UTC"), x.out)
+  expect_equal(dcc_format(subset(x, select = -c(Code)), tz = "UTC"),
                subset(x.out, select = -c(code)))
 })
 
@@ -61,7 +62,7 @@ test_that("dcc_format handles data frames with 4- or 6- digit frequencies, only"
   x.out <- data.frame(
     freq = rep(164.123, 2),
     sig = 99,
-    datetime = as.POSIXct(c("2020-12-30 12:00:00")),
+    datetime = as.POSIXct(c("2020-12-30 12:00:00"), tz = "America/Punta_Arenas"),
     station = "test"
   )
 
@@ -80,14 +81,14 @@ test_that("dcc_calc_trips handles data frames with or without 'code' column", {
     Yr = 20, Day = c(365, 366), Hr = 12, Mn = 0,
     Fr = 164123, Sig = 99, Code = 1, station = "test"
   ) %>%
-    dcc_format()
+    dcc_format(tz = "UTC")
 
   x.out <- tibble(
     freq = 164.123,
     code = 1,
     sig = 99,
-    datetime = as.POSIXct(c("2020-12-30 12:00:00", "2020-12-31 12:00:00")),
-    datetime_prev = as.POSIXct(c(NA, "2020-12-30 12:00:00")),
+    datetime = as.POSIXct(c("2020-12-30 12:00:00", "2020-12-31 12:00:00"), tz = "UTC"),
+    datetime_prev = as.POSIXct(c(NA, "2020-12-30 12:00:00"), tz = "UTC"),
     time_diff_hr = c(NA_integer_, 24),
     trip_num_completed = c(0, 1),
     station = "test"
@@ -109,16 +110,17 @@ test_that("Brief check of dcc_calc_trips math and trip.hours input", {
     Sig = 99,
     station = "test"
   ) %>%
-    dcc_format()
+    dcc_format(tz = "UTC")
 
   datetimes <- as.POSIXct(
-    c("2020-12-30 12:00:00", "2020-12-31 12:00:00", "2021-01-01 0:00:00")
+    c("2020-12-30 12:00:00", "2020-12-31 12:00:00", "2021-01-01 0:00:00"),
+    tz = "UTC"
   )
   x.out <- tibble(
     freq = 164.123,
     sig = 99,
     datetime = datetimes,
-    datetime_prev = as.POSIXct(c(NA, head(datetimes, -1))),
+    datetime_prev = as.POSIXct(c(NA, head(datetimes, -1)), tz = "UTC"),
     time_diff_hr = c(NA_integer_, 24, 12),
     trip_num_completed = c(0, 1, 1),
     station = "test"
@@ -143,7 +145,8 @@ test_that("dcc_calc_trips only returns trip rows when trips.only is true", {
     dcc_format()
 
   datetimes <- as.POSIXct(
-    c("2020-12-30 12:00:00", "2020-12-31 12:00:00", "2021-01-01 0:00:00")
+    c("2020-12-30 12:00:00", "2020-12-31 12:00:00", "2021-01-01 0:00:00"),
+    tz = "America/Punta_Arenas"
   )
   x.out <- tibble(
     freq = 164.123,

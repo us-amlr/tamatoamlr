@@ -97,7 +97,8 @@ dcc_format <- function(x, tz = "America/Punta_Arenas", yr.pre = "20") {
     mutate(
       datetime = as.POSIXct(
         strptime(paste(paste0(yr.pre, Yr), Day, Hr, Mn, sep = "-"),
-                 format = "%Y-%j-%H-%M")),
+                 format = "%Y-%j-%H-%M"),
+        tz = tz),
       freq_chr = case_when(
         str_length(Fr) == 4 ~ paste0(16, Fr),
         str_length(Fr) == 6 ~ as.character(Fr),
