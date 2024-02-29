@@ -120,7 +120,7 @@ test_that("Brief check of dcc_calc_trips math and trip.hours input", {
     freq = 164.123,
     sig = 99,
     datetime = datetimes,
-    datetime_prev = as.POSIXct(c(NA, head(datetimes, -1)), tz = "UTC"),
+    datetime_prev = c(lubridate::NA_POSIXct_, head(datetimes, -1)),
     time_diff_hr = c(NA_integer_, 24, 12),
     trip_num_completed = c(0, 1, 1),
     station = "test"
