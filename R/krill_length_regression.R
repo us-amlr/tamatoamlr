@@ -1,13 +1,16 @@
 #' Krill length regressions
 #'
-#' Calculate krill length from carapace measurements using sex-specific regression models from Goebel et al. 2007.
+#' Calculate krill length from carapace measurements using sex-specific
+#' regression models from Goebel et al. 2007.
 #'
 #' @param x data frame
-#' @param col.length tidy-select (one unquoted expression) column with carapace length values
-#' @param col.width tidy-select (one unquoted expression) column with carapace width values
+#' @param col.length tidy-select (one unquoted expression) column with carapace
+#'   length values
+#' @param col.width tidy-select (one unquoted expression) column with carapace
+#'   width values
 #'
-#' @return The data frame \code{x}, with the following additional columns.
-#'   Note that RCL = carapace length from scat, and RCW = carapace width from scat
+#' @return The data frame \code{x}, with the following additional columns. Note
+#'   that RCL = carapace length from scat, and RCW = carapace width from scat
 #' \itemize{
 #'   \item D: an indicator of sex, calculated using D = -6.368 + 0.128RCL + 0.387RCW
 #'   \item sex: Sex of krill; 'F' (female) if D >= 0 and 'M' (male) if D < 0
@@ -15,7 +18,9 @@
 #'     female length = 11.6 + 2.13RCL, and male length = 0.62 + 3.13RCL
 #' }
 #'
-#' @references Goebel, M.E., Lipsky, J.D., Reiss, C.S. et al. Using carapace measurements to determine the sex of Antarctic krill, Euphausia superba . Polar Biol 30, 307–315 (2007). doi:10.1007/s00300-006-0184-8
+#' @references Goebel, M.E., Lipsky, J.D., Reiss, C.S. et al. Using carapace
+#'   measurements to determine the sex of Antarctic krill, Euphausia superba .
+#'   Polar Biol 30, 307–315 (2007). doi:10.1007/s00300-006-0184-8
 #'
 #' @seealso \url{https://doi.org/10.1007/s00300-006-0184-8}
 #'

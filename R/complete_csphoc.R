@@ -4,18 +4,16 @@
 #'
 #' @param x data frame, phocid census data. See Details for more info
 #'
-#' @details
-#' Because the Cape Shirreff Phocid Census (CS-PHOC) data
-#' collected by the US AMLR program is not explicit,
-#' meaning it does not always include zero records for when a beach
-#' was surveyed and no animals were seen, these data
-#' usually must be completed before being shared or used in analyses.
-#' This function uses \code{\link[tidyr:complete]{complete}} with US AMLR
-#' CS-PHOC data that has already been aggregated by header ID and species,
-#' i.e. there is only one record for every header record and species combo.
+#' @details Because the Cape Shirreff Phocid Census (CS-PHOC) data collected by
+#'   the US AMLR program is not explicit, meaning it does not always include
+#'   zero records for when a beach was surveyed and no animals were seen, these
+#'   data usually must be completed before being shared or used in analyses.
+#'   This function uses [tidyr:complete()] with US AMLR CS-PHOC data that has
+#'   already been aggregated by header ID and species, i.e. there is only one
+#'   record for every header record and species combo.
 #'
-#' When completing, count columns are filled with zeroes to match
-#' PI instruction on when certain counts were recorded. Specifically:
+#'   When completing, count columns are filled with zeroes to match PI
+#'   instruction on when certain counts were recorded. Specifically:
 #'
 #' - The following counts are filled with zeroes for all US AMLR CS-PHOC data:
 #'   ad_female_count, ad_male_count, ad_unk_count, juv_female_count,
@@ -25,15 +23,14 @@
 #' - unk_female_count and unk_male_count are filled with zeroes
 #'   beginning in the 2017-18 seasons
 #'
-#' This logic is why census_date_start is a required.
+#'   This logic is why census_date_start is a required.
 #'
-#' In addition, \code{x} must meet the following requirements:
+#'   In addition, \code{x} must meet the following requirements:
 #'
 #' - Contains the following columns:
-#'   header_id, census_date_start, location, species,
-#'   ad_female_count, ad_male_count, ad_unk_count,
-#'   juv_female_count, juv_male_count, juv_unk_count,
-#'   pup_live_count, research_program
+#'   header_id, census_date_start, location, species, ad_female_count,
+#'   ad_male_count, ad_unk_count, juv_female_count, juv_male_count,
+#'   juv_unk_count, pup_live_count, research_program
 #' - None of the following columns contain \code{NA} values:
 #'   header_id, census_date_start, location, species, research_program
 #' - The location column only has one unique value
@@ -45,16 +42,14 @@
 #'   and no 2 distinct header IDs have the same start date
 #' - All species column values are one of \code{\link{pinniped.phocid.sp}}
 #'
-#' Note that the columns by which the data frame is completed are left as is,
-#' meaning that users can make these columns factors if desired.
+#'   Note that the columns by which the data frame is completed are left as is,
+#'   meaning that users can make these columns factors if desired.
 #'
-#' The CS-PHOC repo (link below) contains an example use case
+#'   The CS-PHOC repo (link below) contains an example use case
 #'
-#' @return
-#' A data frame, completed by
-#' \code{(\link[tidyr:expand]{nesting}}
-#' \code{(header_id, census_date_start), species)}.
-#' The data frame will have the same column names and types as \code{x}
+#' @return A data frame, completed by \code{(\link[tidyr:expand]{nesting}}
+#'   \code{(header_id, census_date_start), species)}. The data frame will have
+#'   the same column names and types as \code{x}
 #'
 #' @examples
 #' header.id <- c(1, 1, 2, 2, 3, 2)
