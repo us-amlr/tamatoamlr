@@ -1,4 +1,4 @@
-#' Open Tamatoa, the package Shiny app
+#' Tamatoa
 #'
 #' Open Tamatoa, the package Shiny app
 #'
@@ -7,7 +7,7 @@
 #'   automatic connection to the ***REMOVED*** database on ***REMOVED***?
 #' @param remote.test logical; default is TRUE. Should Tamatoa create an
 #'   automatic connection to the ***REMOVED***_Test database on ***REMOVED***?
-#' @param local.prod logical; default is FALSE Should Tamatoa create an
+#' @param local.prod logical; default is FALSE. Should Tamatoa create an
 #'   automatic connection to the ***REMOVED*** database on the local SQL
 #'   Express? (see Details for more info)
 #' @param local.server.sql character; SQL server suffix. Default is

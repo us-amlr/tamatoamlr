@@ -53,7 +53,7 @@
 #' difference from the previous ping. This function also calculates
 #' trip_num_completed: for each ping, the number of trips that have been
 #' completed up to that point in time. Both calculations are done after grouping
-#' by freq and (if applicable) code.
+#' by freq and (if applicable) code. Trips are identified by `time_diff_hr>=trip.hours`
 #'
 #' @return For all functions: an ungrouped data frame, as described in Details.
 #'
@@ -137,7 +137,7 @@ dcc_calc_trips <- function(x, trip.hours, trips.only = FALSE) {
     mutate(datetime_prev = lag(datetime),
            time_diff_hr = round(as.numeric(
              difftime(datetime, datetime_prev, units = "hours")), 2),
-           trip_num_completed = cumsum(replace_na(time_diff_hr, 0) > trip.hours)) %>%
+           trip_num_completed = cumsum(replace_na(time_diff_hr, 0) >= trip.hours)) %>%
     ungroup() %>%
     select(freq, !!!code.syms, sig, datetime,
            datetime_prev, time_diff_hr, trip_num_completed,
@@ -145,7 +145,7 @@ dcc_calc_trips <- function(x, trip.hours, trips.only = FALSE) {
 
   # If requested by the user, filter only for the rows capturing the trips
   if (trips.only) {
-    x.out %>% filter(time_diff_hr > trip.hours)
+    x.out %>% filter(time_diff_hr >= trip.hours)
   } else {
     x.out
   }

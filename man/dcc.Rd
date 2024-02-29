@@ -78,7 +78,7 @@ of \code{dcc_format()}, and calculates time_diff_hr: for each ping, the time
 difference from the previous ping. This function also calculates
 trip_num_completed: for each ping, the number of trips that have been
 completed up to that point in time. Both calculations are done after grouping
-by freq and (if applicable) code.
+by freq and (if applicable) code. Trips are identified by \code{time_diff_hr>=trip.hours}
 }
 \examples{
 dcc_read_files(system.file("extdata", "dcc-coded.csv", package = "tamatoamlr"),
