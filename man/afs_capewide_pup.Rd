@@ -30,53 +30,61 @@ should be summarized by season/location as-is (\code{FALSE}; default).}
 needs both the output of \code{cwp_total_by_loc()} and \code{cwp_total()}}
 }
 \value{
-An ungrouped data frame with the summarized AFS Capewide Pup Census
-data. The summary types are described in 'Details'.
+An ungrouped object of the same tpye as \code{x}, with the summarized AFS
+Capewide Pup Census data. The summary options are described in 'Details'.
+
+For all functions except \code{cwp_total()}: if 'census_afs_capewide_pup_sort'
+exists as a column in \code{x}, then the output data frame will also be sorted
+by 'census_afs_capewide_pup_sort' (after being sorted first by the column
+'season_name').
 }
 \description{
 Summarize AFS Capewide Pup (CWP) Census Data
 }
 \details{
-\code{cwp_loc_agg()}: Aggregate pup counts and related info across
+Function-specific details:
+\itemize{
+\item \code{cwp_loc_agg()}: Aggregate pup counts and related info across
 locations, and by season/observer. This function is intended for situations
 where a user has filtered CWP data for a specific subset of locations and
 wants to summarize the counts across all of these locations, effectively
 treating all of the locations as one location.
-
-\code{cwp_review()}: Summarize pup counts and ancillary information for review
+\item \code{cwp_review()}: Summarize pup counts and ancillary information for review
 after grouping by season_name and location. \code{loc.agg == TRUE} then all
 counts will be summed by observer across locations, i.e., \code{x} will be
 passed to \code{cwp_loc_agg()}, before being summarized. The output data frame
 is various pasted conglomerations that are intended for review to help
 determine if recounts need to happen.
-
-\code{cwp_total_by_loc()}: group by season_name and location; return count mean,
-variance, SD, and min date. Calculating the variance and SD follow
-CS/AMLR-specific rules about when it must be NA based on historical
-knowledge about past survey data; see the 'assumptions' section for
+\item \code{cwp_total_by_loc()}: group by season_name and location; return count mean,
+variance, SD, and min date. Calculating the variance and SD follow Cape
+Shirref/AMLR-specific rules about when it must be NA based on historical
+knowledge about past survey data. See the 'assumptions' section for
 details. census_date_min is the earliest census date for that
-season/location group.
-
-\code{cwp_total()}: after running cwp_total_by_loc, group by season name and
+season/location group. Records with
+\item \code{cwp_total()}: after running cwp_total_by_loc, group by season name and
 return counts and standard deviations
+}
 
 Note that none of these functions do any rounding. To round values, for
-instance to get a whole number for pup counts, use either \code{\link[base:Round]{base::round()}}
-or \code{\link[amlrDatabases:round_logical]{amlrDatabases::round_logical()}}
+instance to get a whole number for pup counts, users may use functions such
+as \code{\link[base:Round]{base::round()}} or \code{\link[amlrDatabases:round_logical]{amlrDatabases::round_logical()}}
 
-These functions make several assumptions specific to US AMLR Pinniped Data:
+The cwp functions make several assumptions specific to U.S. AMLR Pinniped
+Data:
 \itemize{
-\item Assumes that the research program is unique by season
+\item The research program values are unique when considered by season
 \item Study beaches (locations: Copihue, Maderas, Cachorros, Chungungo)
 censused between 2008-07-01 and 2011-07-01 are single counts and thus do
 not have variance values.
-\item All counts before July 2008 (i.e., before the 2008/09 season) do not have variance values.
+\item All counts before July 2008 (i.e., before the 2008/09 season)
+do not have variance values.
 }
 }
 \examples{
 \dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-  # Not run; examples only will run if on SWFSC network
-  x <- tbl_vCensus_AFS_Capewide_Pup(amlr_dbConnect("***REMOVED***_Test"))
+  # Not run; examples only will run if `con` is a valid database connection
+  con <- amlr_dbConnect("***REMOVED***")
+  x <- tbl_vCensus_AFS_Capewide_Pup(con)
 
   x.201617 <- x[x$season_name == "2016/17", ]
   cwp_review(x.201617)

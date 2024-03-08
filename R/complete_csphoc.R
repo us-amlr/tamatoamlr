@@ -21,17 +21,16 @@
 #' - unk_unk_count is filled with zeroes for all elephant seal counts,
 #'   and beginning in the 2014-15 season for all other species
 #' - unk_female_count and unk_male_count are filled with zeroes
-#'   beginning in the 2017-18 seasons
+#'   beginning in the 2017-18 seasons. This logic is why census_date_start is a
+#'   required.
 #'
-#'   This logic is why census_date_start is a required.
-#'
-#'   In addition, \code{x} must meet the following requirements:
+#'   In addition, `x` must meet the following requirements:
 #'
 #' - Contains the following columns:
 #'   header_id, census_date_start, location, species, ad_female_count,
 #'   ad_male_count, ad_unk_count, juv_female_count, juv_male_count,
 #'   juv_unk_count, pup_live_count, research_program
-#' - None of the following columns contain \code{NA} values:
+#' - None of the following columns contain `NA` values:
 #'   header_id, census_date_start, location, species, research_program
 #' - The location column only has one unique value
 #'   (i.e., the location column values are all the same)
@@ -47,9 +46,9 @@
 #'
 #'   The CS-PHOC repo (link below) contains an example use case
 #'
-#' @return A data frame, completed by \code{(\link[tidyr:expand]{nesting}}
-#'   \code{(header_id, census_date_start), species)}. The data frame will have
-#'   the same column names and types as \code{x}
+#' @return A data frame, completed by [tidyr::nesting((header_id,
+#'   census_date_start), species))]. The data frame will have the same column
+#'   names and types as \code{x}
 #'
 #' @examples
 #' header.id <- c(1, 1, 2, 2, 3, 2)
@@ -87,6 +86,7 @@ complete_csphoc <- function(x) {
     pup_live_count = 0, research_program = "USAMLR"
   )
 
+  #--------------------------------------------------------
   ### Checks
   if (!all(x.names %in% names(x)))
     stop("x must have at least the following columns:\n",

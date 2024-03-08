@@ -10,9 +10,12 @@ complete_csphoc(x)
 \item{x}{data frame, phocid census data. See Details for more info}
 }
 \value{
-A data frame, completed by \code{(\link[tidyr:expand]{nesting}}
-\code{(header_id, census_date_start), species)}. The data frame will have
-the same column names and types as \code{x}
+A data frame, completed by [tidyr::nesting((header_id,
+census_date_start), species))]. The data frame will have the same column
+names and types as \code{x}
+
+[tidyr::nesting((header_id,
+census_date_start), species))]: R:tidyr::nesting((header_id,\%0A\%20\%20census_date_start),\%20species))
 }
 \description{
 Complete aggregated CS-PHOC data collected by the US AMLR program
@@ -35,9 +38,8 @@ juv_male_count, juv_unk_count, pup_live_count
 \item unk_unk_count is filled with zeroes for all elephant seal counts,
 and beginning in the 2014-15 season for all other species
 \item unk_female_count and unk_male_count are filled with zeroes
-beginning in the 2017-18 seasons
-
-This logic is why census_date_start is a required.
+beginning in the 2017-18 seasons. This logic is why census_date_start is a
+required.
 
 In addition, \code{x} must meet the following requirements:
 \item Contains the following columns:
