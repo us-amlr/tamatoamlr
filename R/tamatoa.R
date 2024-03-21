@@ -109,6 +109,7 @@ tamatoa <- function(...,
         menuItem("CCAMLR Pup Weights", tabName = .id.list$cpw, icon = icon("th")),
         menuItem("CS-PHOC: Phocid Census", tabName = .id.list$csphoc, icon = icon("th")),
         menuItem("Tag Resights", tabName = .id.list$resights, icon = icon("th", lib = "font-awesome")),
+        menuItem("Takes - MMPA", tabName = .id.list$takes, icon = icon("th", lib = "font-awesome")),
         menuItem("Views", tabName = .id.list$views, icon = icon("th", lib = "font-awesome")),
         tags$br(), tags$br(),
         column(12, uiOutput("tabs_warning")),
@@ -149,6 +150,7 @@ tamatoa <- function(...,
         tabItem(.id.list$cpw, mod_ccamlr_pup_weights_ui(.id.list$cpw)),
         tabItem(.id.list$csphoc, mod_phocid_census_ui(.id.list$csphoc)),
         tabItem(.id.list$resights, mod_tag_resights_ui(.id.list$resights)),
+        tabItem(.id.list$takes, mod_takes_ui(.id.list$takes)),
         tabItem(.id.list$views, mod_views_ui(.id.list$views))
         # tabItem("tab_pt", mod_pinnipeds_tags_ui("pinnipeds_tags"))
       )
@@ -207,6 +209,8 @@ tamatoa <- function(...,
       .id.list$csphoc, db.pool, si.list$season.df, tab)
     mod_tag_resights_server(
       .id.list$resights, db.pool, si.list$season.df, tab)
+    mod_takes_server(
+      .id.list$takes, db.pool, si.list$season.df, tab)
     mod_views_server(
       .id.list$views, db.pool, si.list$season.df, tab)
     # mod_pinnipeds_tags_server("pinnipeds_tags", db.pool)

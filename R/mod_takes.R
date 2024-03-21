@@ -9,31 +9,34 @@ mod_takes_ui <- function(id) {
       box(
         title = "Filters", status = "warning", solidHeader = FALSE,
         width = 6, collapsible = TRUE,
-        # mod_filter_season_ui(ns("filter_season"))
-        fluidRow(
-          column(6, uiOutput(ns("season")))
+        mod_filter_season_ui(ns("filter_season")),
+        checkboxInput(ns("pinniped_species"), "Filter takes by pinniped species",
+                      value = FALSE),
+        conditionalPanel(
+          condition = "input.pinniped_species == true", ns = ns,
+          helpText("Note this filter will remove any 'other species' dead animals"),
+          selectInput(ns("species"), tags$h5("Species"),
+                      choices = tamatoamlr::pinniped.sp,
+                      selected = tamatoamlr::pinniped.sp,
+                      multiple = TRUE, selectize = TRUE)
         )
       ),
       box(
-        title = "Summary options", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
-        helpText("This tab allows you to view and summarize pinniped takes"),
+        title = "Summary options", status = "warning", solidHeader = FALSE,
+        width = 6, collapsible = TRUE,
+        helpText("This tab allows you to generate and view different summaries",
+                 "of pinniped takes, for reporting for the",
+                 "Marine Mammal Protection Act (MMPA) permit. "),
         fluidRow(
+          column(4, .summaryTimingUI(ns, c("fs_single"))),
           column(
-            width = 6,
-            selectInput(ns("view"), tags$h5("View to display"),
-                        choices = c("MMPA takes" = "mmpa"),
-                        selected = "mmpa")
-          ),
-          column(
-            width = 6,
-            conditionalPanel(
-              condition = "input.view == 'mmpa'", ns = ns,
-              helpText("reporting for Marine Mammal Protection Act (MMPA) permit")
-            )
+            width = 4,
+            radioButtons(ns("summary_type"), tags$h5("Summary type"),
+                         choices = c("By species" = "species",
+                                     "By individual" = "individual",
+                                     "By database table" = "table",
+                                     "All takes" = "all"))
           )
-          # column(4, .summaryTimingUI(ns, c("fs_single"))),
-          # column(4, .summaryLocationUI(ns, c("by_capewide", "by_beach"), "by_capewide")),
-          # column(4, .summarySpAgeSexUI(ns, c("by_sp", "by_sp_age_sex"), "by_sp"))
         )
       )
     ),
@@ -61,103 +64,85 @@ mod_takes_server <- function(id, src, season.df, tab) {
       })
 
 
-      # ### Get filter_season values
-      # filter_season <- reactive({
-      #   mod_filter_season_server(
-      #     "filter_season",  reactive(input$summary_timing), season.df
-      #   )
-      # })
-
-
-      # #-------------------------------------------------------------------------
-      # # Sample inventory view
-      #
-      # sample_inventory_collect <- reactive({
-      #   sample.inventory <- try(
-      #     tbl(src(), "vSample_Inventory") %>% collect(),
-      #     silent = TRUE
-      #   )
-      #   validate(
-      #     need(sample.inventory,
-      #          "Unable to find and load vSample_Inventory from specified database")
-      #   )
-      #   sample.inventory
-      # })
-      #
-      # sample_inventory <- reactive({
-      #   x <- sample_inventory_collect() %>%
-      #     filter(season_name == req(input$season))
-      #
-      #   if (input$summary_type == "all") {
-      #     x
-      #
-      #   } else {
-      #     x <- x %>%
-      #       # Make single column with 'most unique' ID
-      #       # case_when rolls through order of priority
-      #       mutate(on_the_fly_unique = if_else(!is.na(unk_group_id),
-      #                                          unk_group_id, on_the_fly_id),
-      #              id_unique = case_when(
-      #                !is.na(pinniped_id) ~ pinniped_id,
-      #                !is.na(pup_afs_id) ~ pup_afs_id,
-      #                !is.na(on_the_fly_unique) ~ on_the_fly_unique,
-      #                .default = NA_integer_
-      #              ))
-      #
-      #     x.grouped <- if (input$summary_type == "sample_type") {
-      #       x %>% group_by(species, sample_type)
-      #     } else if (input$summary_type == "sample_type_group") {
-      #       x %>% group_by(species, sample_type_group)
-      #     } else {
-      #       validate("invalid summary_type - please contact the database manager")
-      #     }
-      #
-      #     x.grouped %>%
-      #       summarise(package_count = n(),
-      #                 individual_seals_count = n_distinct(id_unique),
-      #                 # n_pinniped_id = n_distinct(pinniped_id, na.rm = TRUE),
-      #                 # n_on_the_fly = n_distinct(on_the_fly_unique, na.rm = TRUE),
-      #                 # n_pup_afs_id = n_distinct(pup_afs_id, na.rm = TRUE),
-      #                 # individual_seals_count =
-      #                 #   (n_pinniped_id+n_on_the_fly+n_pup_afs_id),
-      #                 n_adults_juveniles = sum(age_class %in% c("Adult", "Adult/Juvenile", "Juvenile")),
-      #                 n_pups = sum(age_class %in% c("Pup")),
-      #                 .groups = "drop") %>%
-      #       relocate(individual_seals_count, n_adults_juveniles, n_pups,
-      #                .after = package_count)
-      #   }
-      # })
+      ### Get filter_season values
+      filter_season <- reactive({
+        mod_filter_season_server(
+          "filter_season",  reactive(input$summary_timing), season.df
+        )
+      })
 
 
       #-------------------------------------------------------------------------
-      # Attendance pup weights
+      ### Finish constructing query, and collect data
+      takes_filter <- reactive({
+        req(src())
+        fs <- filter_season()
 
-      takes_collect <- reactive({
-        apw <- try(
-          tbl(src(), "vAttendance_Pup_Weights") %>% collect(),
-          silent = TRUE
-        )
         validate(
-          need(apw,
-               "Unable to find and load vAttendance_Pup_Weights from specified database")
+          need(input$summary_timing == "fs_single",
+               "Only single season summaries are currently available")
         )
-        apw
+
+        # Generate SQL query, and collect
+        takes.sql <- tbl_vTakes(src()) %>%
+          filter(season_name == !!req(fs$season()),
+                 between(take_date,
+                         !!req(fs$date_range())[1],
+                         !!req(fs$date_range())[2]))
+
+        if (input$pinniped_species) {
+          takes.sql <- takes.sql %>%
+            filter(species %in% !!input$species)
+        }
+
+        takes.collect <- takes.sql %>% collect()
+
+        # Generate validate messages
+        validate(
+          need(nrow(takes.collect) > 0,
+               "No take data to view based on given filters")
+        )
+
+        takes.collect
       })
 
 
-      apw <- reactive({
-        apw_collect() %>% filter(season_name == req(input$season))
+      ### Summarize take data, as specified by user
+      takes <- reactive({
+        takes <- takes_filter()
+
+        takes_summary <- function(x, ...) {
+          x %>%
+            group_by(...) %>%
+            summarise(n_takes = n(), .groups = "drop")
+        }
+
+        if (input$summary_type == "all") {
+          takes
+        } else if (input$summary_type == "species") {
+          takes %>% takes_summary(season_name, species, age_class)
+        } else if (input$summary_type == "individual") {
+          takes %>%
+            filter(!is.na(individual_id)) %>%
+            takes_summary(season_name, species, age_class,
+                          individual_identifier, individual_id,
+                          individual_id_source)
+        } else if (input$summary_type == "table") {
+          takes %>% takes_summary(season_name, table_name, species, age_class)
+        } else {
+          validate("Invalid summary_type - please contact the database manager")
+        }
       })
+
 
       #-------------------------------------------------------------------------
       tbl_output <- reactive({
-        NULL
-        validate("invalid tbl - please contact the database manager")
+        takes()
       })
 
       plot_output <- reactive({
         NULL
-        validate("There are no plots for the views")
+        validate("There are currently no plots for MMPA takes")
       })
 
 

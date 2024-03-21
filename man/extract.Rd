@@ -13,6 +13,7 @@
 \alias{tbl_vTag_Resights_Leopards}
 \alias{tbl_vMicroVHF_Deployed}
 \alias{tbl_vPinniped_Season}
+\alias{tbl_vTakes}
 \title{Extract data from database}
 \usage{
 tbl_vCensus_Phocid(src)
@@ -36,6 +37,8 @@ tbl_vTag_Resights_Leopards(src)
 tbl_vMicroVHF_Deployed(src)
 
 tbl_vPinniped_Season(src)
+
+tbl_vTakes(src)
 }
 \arguments{
 \item{src}{a data source; likely a \code{\link[pool]{pool}} object

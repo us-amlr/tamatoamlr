@@ -45,6 +45,7 @@
   "cpw"      = "ccamlr_pup_weights",
   "csphoc"   = "csphoc",
   "resights" = "tag_resights",
+  "takes"    = "takes", #MMPA takes tab
   "views"    = "views"
 )
 

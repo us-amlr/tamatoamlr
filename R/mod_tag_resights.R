@@ -58,11 +58,7 @@ mod_tag_resights_ui <- function(id) {
 #' @name shiny_modules
 #' @export
 mod_tag_resights_server <- function(id, src, season.df, tab) {
-  stopifnot(
-    is.reactive(src),
-    is.reactive(season.df),
-    is.reactive(tab)
-  )
+  .mod_check(src, season.df, tab)
 
   moduleServer(
     id,

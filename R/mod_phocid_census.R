@@ -17,9 +17,14 @@ mod_phocid_census_ui <- function(id) {
         #                        selected = tamatoamlr::pinniped.phocid.sp)
         #   )
         mod_filter_season_ui(ns("filter_season")),
-        checkboxGroupInput(ns("species"), tags$h5("Species"), inline = TRUE,
-                           choices = tamatoamlr::pinniped.phocid.sp,
-                           selected = tamatoamlr::pinniped.phocid.sp),
+        # checkboxGroupInput(ns("species"), tags$h5("Species"), inline = TRUE,
+        #                    choices = tamatoamlr::pinniped.phocid.sp,
+        #                    selected = tamatoamlr::pinniped.phocid.sp),
+        selectInput(ns("species"), tags$h5("Species"), #inline = TRUE,
+                    choices = tamatoamlr::pinniped.phocid.sp,
+                    selected = tamatoamlr::pinniped.phocid.sp,
+                    multiple = TRUE, selectize = TRUE),
+
         uiOutput(ns("age_sex_uiOut_selectize")),
         uiOutput(ns("location_uiOut_selectize"))
       ),
