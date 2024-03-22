@@ -126,7 +126,8 @@ mod_takes_server <- function(id, src, season.df, tab) {
             filter(!is.na(individual_id)) %>%
             takes_summary(season_name, species, age_class,
                           individual_identifier, individual_id,
-                          individual_id_source)
+                          individual_id_source) %>%
+            relocate(n_takes, .after = individual_identifier)
         } else if (input$summary_type == "table") {
           takes %>% takes_summary(season_name, table_name, species, age_class)
         } else {

@@ -170,5 +170,5 @@ tbl_vTakes <- function(src) {
     select(season_name, table_name, take_date, species, age_class, sex,
            individual_identifier, location_group, take_notes, sample_types,
            individual_id, individual_id_source,
-           record_id, season_info_id, Beach_ID, created_dt)
+           record_id, season_info_id, beach_id, created_dt)
 }
