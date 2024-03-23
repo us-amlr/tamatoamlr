@@ -121,23 +121,23 @@ tbl_vCCAMLR_Pup_Weights <- function(src) {
 #' @export
 tbl_vTag_Resights <- function(src) {
   tbl(src, "vTag_Resights") %>%
-    arrange(species) %>%
-    collect() %>%
-    tag_sort(tag.sort = TRUE, tag.sort.primary = TRUE) %>%
-    mutate(species = str_to_sentence(species),
-           species = factor(species, levels = sort(unique(species))))
+    arrange(species)
+  # collect() %>%
+  # tag_sort(tag.sort = TRUE, tag.sort.primary = TRUE) %>%
+  # mutate(species = str_to_sentence(species),
+  #        species = factor(species, levels = sort(unique(species))))
 }
 
 #' @name extract
 #' @export
 tbl_vTag_Resights_Leopards <- function(src) {
   tbl(src, "vTag_Resights_Leopards") %>%
-    arrange(species) %>%
-    collect() %>%
-    tag_sort(tag.sort = TRUE, tag.sort.primary = TRUE) %>%
-    mutate(species = str_to_sentence(species),
-           species = factor(species, levels = sort(unique(species)))) %>%
-    rename(tag_resight_id = tag_resights_leopards_id)
+    rename(tag_resight_id = tag_resights_leopards_id) %>%
+    arrange(species)
+  # collect() %>%
+  # tag_sort(tag.sort = TRUE, tag.sort.primary = TRUE) %>%
+  # mutate(species = str_to_sentence(species),
+  #        species = factor(species, levels = sort(unique(species))))
 }
 
 #' @name extract

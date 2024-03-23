@@ -6,7 +6,9 @@
 
 * Used for and developed during 2023/24 Cape Shirreff field season. Finalized after season
 
-* Updated various tab functionality, especially AFS DCC, cape-wide pup census, and MMPA takes
+* Update all (TODO: in progress) `extract.R` and all modules to build queries first, and then collect from the database. [#8]
+
+* Updated various tab functionality, especially AFS DCC, cape-wide pup census, tag resights, and MMPA takes
 
 * Updated `afs_capewide_pup` functions: renamed functions including changing to 'cwp_' prefix; added `cwp_loc_agg` to aggregate across locations in a consistent fashion; bug fixes (#10)
 

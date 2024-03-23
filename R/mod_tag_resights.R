@@ -36,12 +36,14 @@ mod_tag_resights_ui <- function(id) {
                  "Select how you wish to summarize this data, ",
                  "and then specify any filters you would like to apply"),
         fluidRow(
-          column(4, .summaryTimingUI(ns, c("fs_single"), "fs_single")), #"fs_total",
-          column(4, radioButtons(ns("summary_type"), tags$h5("Summarize by"),
-                                 choices = list("Species" = "species",
-                                                "Pinniped" = "pinniped"),
-                                 selected = "pinniped"))
-          # column(4, )
+          column(4, .summaryTimingUI(ns, c("fs_total", "fs_single"),
+                                     "fs_single")),
+          column(4,  radioButtons(ns("summary_type"), tags$h5("Summarize by"),
+                                  choices = c("Pinniped" = "pinniped",
+                                              "Resights by season" = "table",
+                                              "Species" = "species"),
+                                  selected = "species")),
+          column(4, uiOutput(ns("table_season_uiOut_selectize")))
         )
       )
     ),
@@ -106,11 +108,25 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
       # })
 
 
+      # ### Summarize by selection
+      # output$summary_type_uiOut_radio <- renderUI({
+      #   req(input$summary_timing)
+      #
+      #   choices <- c("Pinniped" = "pinniped", "Species" = "species")
+      #
+      #   if (input$summary_timing %in% .summary.timing.multiple) {
+      #     choices <- c(choices, "Resights by season" = "table")
+      #   }
+      #
+      #   radioButtons(session$ns("summary_type"), tags$h5("Summarize by"),
+      #                choices = choices, selected = "species")
+      # })
+
       ### Pinniped selection dropdown
       output$pinniped_uiOut_selectize <- renderUI({
         req(input$summary_timing == "fs_single")
 
-        x <- tr_df_filter_ka() %>%
+        x <- tr_df() %>%
           distinct(pinniped_id, species, tag_primary, tag_type_primary) %>%
           mutate(name = paste(species, paste(tag_primary, tag_type_primary),
                               sep = " | "))
@@ -125,32 +141,56 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
         )
       })
 
+      ### Multi-season table summary filter
+      output$table_season_uiOut_selectize <- renderUI({
+        req(input$summary_type == "table")
+        # seasons <- tr_df() %>%
+        #   distinct(season_name) %>%
+        #   arrange(season_name) %>%
+        #   pull(season_name)
+        seasons <- filter_season()$season()
+
+        selectInput(
+          session$ns("table_season"),
+          tags$h5("Only include pinnipeds with at least ",
+                  "one resight in the selected season(s)"),
+          choices = seasons, selected = seasons,
+          multiple = TRUE, selectize = TRUE
+        )
+      })
+
 
       ##########################################################################
       ##########################################################################
       ##########################################################################
       # Collect all resight data - one time run, then all data is collected
       tr_df_collect <- reactive({
-        req(src(), tab() == .id.list$resights)
+        req(src()) #, tab() == .id.list$resights)
         vals$warning_na_records <- NULL
 
-        tr.df.collect.orig <- try(tbl_vTag_Resights(src()), silent = TRUE)
+        tr.sql.orig <- try(tbl_vTag_Resights(src()), silent = TRUE)
 
         validate(
-          need(tr.df.collect.orig,
-               "Unable to collect vTag_Resights from the specified database")
+          need(tr.sql.orig,
+               "Unable to find vTag_Resights on the specified database")
         )
 
         #--------------------------------------------------
         ### TMP: bring in leops separately, for now
-        leop.collect.orig <- try(tbl_vTag_Resights_Leopards(src()), silent = TRUE)
+        leop.sql.orig <- try(tbl_vTag_Resights_Leopards(src()), silent = TRUE)
         validate(
-          need(leop.collect.orig,
-               "Unable to collect vTag_Resights_Leopards from the specified database")
+          need(leop.sql.orig,
+               "Unable to find vTag_Resights_Leopards from the specified database")
         )
         #--------------------------------------------------
 
-        tr.df.collect <- bind_rows(tr.df.collect.orig, leop.collect.orig)
+        # NOTE: to use bind_rows, it must be using actual data frames.
+        #   Cannot use union_all here because of arrange() calls, and
+        #   because of different columns in different tables
+        # So, resights have to stay with early collect until leops are
+        #   integrated into the tag_resights table. Ugh.
+        tr.df.collect <- bind_rows(tr.sql.orig %>% collect(),
+                                   leop.sql.orig %>% collect())
 
         #----------------------------------------------
         # Filter records for non-NA values, verbosely as appropriate
@@ -204,12 +244,6 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
         #----------------------------------------------
         # Filter by season/date/week num
         fs <- filter_season()
-
-        # TODO: remove eventually
-        validate(
-          need(input$summary_timing == "fs_single",
-               "Only single season summaries are currently available")
-        )
 
         tr.df <- if (input$summary_timing %in% .summary.timing.multiple) {
           tr.df.orig %>%
@@ -282,52 +316,93 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
       #   tr.df
       # })
 
+      tr_df <- reactive({
+        req(input$summary_type)
+        tr_df_filter_ka() %>%
+          # collect() %>% #See NOTE above
+          tag_sort(tag.sort = TRUE, tag.sort.primary = TRUE) %>%
+          mutate(species = str_to_sentence(species),
+                 species = factor(species, levels = sort(unique(species))))
+      })
+
 
       ##########################################################################
 
       #------------------------------------------------------------------------
-      ### Summarize tag resight data to display
-      tr_df_summ <- reactive({
-        if (input$summary_type == "species") {
-          tr_df_filter_ka() %>%
-            arrange(species, resight_date) %>% #for tag list order
-            mutate(species = as.character(species)) %>%
-            group_by(season_name, species) %>%
-            summarise(n_pinnipeds = n_distinct(pinniped_id),
-                      n_pinnipeds_ka = n_distinct(pinniped_id[!is.na(cohort)]),
-                      n_pinniped_amlr = n_distinct(pinniped_id[!non_amlr_tag_primary]),
-                      primary_tags_list = list(unique(tag_primary)),
-                      .groups = "drop")
+      ### Summarize multiseason tag resight data, for display
+      tr_summary_table <- reactive({
+        req(input$summary_type == "table")
 
-        } else if (input$summary_type == "pinniped") {
-          ps <- ps_df_collect() %>%
-            select(season_info_id, pinniped_id, attendance_study,
-                   arrival_date, parturition, parturition_date, twins,
-                   pup_mortality, pup_mortality_date)
+        # Generate pinniped_ids with 1+ resights in the selected season(s)
+        p.keep <- tr_df() %>%
+          filter(season_name %in% req(input$table_season)) %>%
+          distinct(pinniped_id) %>%
+          pull(pinniped_id)
 
-          tr_df_filter_ka() %>%
-            mutate(species = as.character(species)) %>%
-            group_by(season_info_id, season_name, pinniped_id, species,
-                     tag_primary, tag_type_primary, sex = pinniped_sex, cohort,
-                     tag_sort_primary) %>%
-            summarise(n_resights = n(),
-                      resight_date_first = min(resight_date),
-                      resight_date_last = max(resight_date),
-                      locations = paste(unique(location_group), collapse = ", "),
-                      statuses = paste(unique(status), collapse = ", "),
-                      amlr_tag_primary = !unique(non_amlr_tag_primary),
-                      .groups = "drop") %>%
-            mutate(age = pinniped_age(today(), cohort))  %>%
-            left_join(ps, by = join_by(season_info_id, pinniped_id)) %>%
-            select(-season_info_id) %>%
-            relocate(pinniped_id, tag_sort_primary,
-                     .after = last_col()) %>%
-            relocate(age, amlr_tag_primary, .after = cohort) %>%
-            arrange(species, tag_sort_primary)
+        # Get the number of resights by season, and pivot wider
+        tr_df() %>%
+          filter(pinniped_id %in% p.keep) %>%
+          arrange(species, tag_sort_primary) %>%
+          group_by(season_name, pinniped_id) %>%
+          summarise(n_resights = n(),
+                    species = unique(species),
+                    tag_primary = unique(tag_primary),
+                    tag_type_primary = unique(tag_type_primary),
+                    tag_sort_primary = unique(tag_sort_primary),
+                    tags = paste(unique(tag), collapse = "; "),
+                    .groups = "drop") %>%
+          mutate(id = paste(species, tag_primary, tag_type_primary,
+                            sep = " | ")) %>%
+          arrange(desc(season_name)) %>%
+          pivot_wider(id_cols = c(id, species, tag_primary, tag_type_primary,
+                                  tag_sort_primary),
+                      names_from = season_name, values_from = n_resights) %>%
+          arrange(species, tag_sort_primary) %>%
+          select(-tag_sort_primary) %>%
+          relocate(species, tag_primary, tag_type_primary, .after = last_col())
+      })
 
-        } else {
-          validate("Invalid summary_type input - please contact the database manager")
-        }
+
+      ### Summarize single season tag resight data, for display
+      tr_summary_species <- reactive({
+        req(input$summary_type == "species")
+        tr_df() %>%
+          arrange(species, resight_date) %>% #for tag list order
+          mutate(species = as.character(species)) %>%
+          group_by(season_name, species) %>%
+          summarise(n_pinnipeds = n_distinct(pinniped_id),
+                    n_pinnipeds_ka = n_distinct(pinniped_id[!is.na(cohort)]),
+                    n_pinniped_amlr = n_distinct(pinniped_id[!non_amlr_tag_primary]),
+                    primary_tags_list = list(unique(tag_primary)),
+                    .groups = "drop")
+      })
+
+      tr_summary_pinniped <- reactive({
+        req(input$summary_type == "pinniped")
+        ps <- ps_df_collect() %>%
+          select(season_info_id, pinniped_id, attendance_study,
+                 arrival_date, parturition, parturition_date, twins,
+                 pup_mortality, pup_mortality_date)
+
+        tr_df() %>%
+          mutate(species = as.character(species)) %>%
+          group_by(season_info_id, season_name, pinniped_id, species,
+                   tag_primary, tag_type_primary, sex = pinniped_sex, cohort,
+                   tag_sort_primary) %>%
+          summarise(n_resights = n(),
+                    resight_date_first = min(resight_date),
+                    resight_date_last = max(resight_date),
+                    locations = paste(unique(location_group), collapse = ", "),
+                    statuses = paste(unique(status), collapse = ", "),
+                    amlr_tag_primary = !unique(non_amlr_tag_primary),
+                    .groups = "drop") %>%
+          mutate(age = pinniped_age(today(), cohort))  %>%
+          left_join(ps, by = join_by(season_info_id, pinniped_id)) %>%
+          select(-season_info_id) %>%
+          relocate(pinniped_id, tag_sort_primary,
+                   .after = last_col()) %>%
+          relocate(age, amlr_tag_primary, .after = cohort) %>%
+          arrange(species, tag_sort_primary)
       })
 
 
@@ -337,7 +412,14 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
       #-------------------------------------------------------------------------
       ### Output table
       tbl_output <- reactive({
-        tr_df_summ()
+        switch(
+          req(input$summary_type),
+          species = tr_summary_species(),
+          pinniped = tr_summary_pinniped(),
+          table = tr_summary_table(),
+          validate(paste("Invalid summary_type input -",
+                         "please contact the database manager"))
+        )
       })
 
 
