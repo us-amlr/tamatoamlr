@@ -222,14 +222,14 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
       #------------------------------------------------------------------------
       ps_df_collect <- reactive({
         req(src(), tab() == .id.list$resights)
-        ps.df.collect <- try(tbl_vPinniped_Season(src()), silent = TRUE)
+        ps.sql <- try(tbl_vPinniped_Season(src()), silent = TRUE)
 
         validate(
-          need(ps.df.collect,
-               "Unable to collect vPinniped_Season from the specified database")
+          need(ps.sql,
+               "Unable to find vPinniped_Season on the specified database")
         )
 
-        ps.df.collect
+        ps.sql %>% collect()
       })
 
 

@@ -117,6 +117,16 @@ utils::globalVariables(c(
   "deployment_season", "pinniped_sex", "arrival_date", 'twins', "status", "age",
   "on_the_fly_id", "sample_type", "sample_type_group", "age_class",
   "individual_seals_count", "n_adults_juveniles", "n_pups", "ad_male_sum",
-  "tag_resights_leopards_id", "id_unique", "package_count"
+  "tag_resights_leopards_id", "id_unique", "package_count",
+
+  # vTakes
+  "take_date", "individual_id", "individual_identifier", "individual_id_source",
+  "n_takes", "table_name", "take_notes", "sample_types", "record_id",
+  "created_dt",
+
+  # Pinniped season
+  "ISNULL", "location_name", "n_pups_total", "percent_pups",
+  "study_beach_season_start_id", "study_beach_season_start_open_date",
+  "tr_first_per_season", "first_resight_date"
 ))
 

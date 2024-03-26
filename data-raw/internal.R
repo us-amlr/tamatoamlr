@@ -44,6 +44,7 @@
   "captures" = "captures",
   "cpw"      = "ccamlr_pup_weights",
   "csphoc"   = "csphoc",
+  "ps"       = "pinniped_season",
   "resights" = "tag_resights",
   "takes"    = "takes", #MMPA takes tab
   "views"    = "views"

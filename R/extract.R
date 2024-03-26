@@ -130,6 +130,16 @@ tbl_vTag_Resights <- function(src) {
 
 #' @name extract
 #' @export
+tbl_vTag_Resights_First_Per_Season <- function(src) {
+  tbl(src, "vTag_Resights_First_Per_Season") %>%
+    distinct(season_name, season_info_id, pinniped_id,
+             resight_date, location_group)
+  # NOTE: This will silently remove some records.
+  # 20240323: None of the removed records affect pup mortality calculations
+}
+
+#' @name extract
+#' @export
 tbl_vTag_Resights_Leopards <- function(src) {
   tbl(src, "vTag_Resights_Leopards") %>%
     rename(tag_resight_id = tag_resights_leopards_id) %>%
@@ -156,10 +166,9 @@ tbl_vMicroVHF_Deployed <- function(src) {
 tbl_vPinniped_Season <- function(src) {
   tbl(src, "vPinniped_Season") %>%
     select(pinniped_season_id, pinniped_id, season_name, season_info_id,
-           tag, tag_type, cohort, species, sex, attendance_study,
+           tag_primary, tag_type_primary, cohort, species, sex, attendance_study,
            arrival_date, parturition, parturition_date, twins,
-           pup_mortality, pup_mortality_date, notes) %>%
-    collect()
+           pup_mortality, pup_mortality_date, notes)
 }
 
 

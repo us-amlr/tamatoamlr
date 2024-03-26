@@ -10,6 +10,7 @@
 \alias{tbl_vCaptures_Samples}
 \alias{tbl_vCCAMLR_Pup_Weights}
 \alias{tbl_vTag_Resights}
+\alias{tbl_vTag_Resights_First_Per_Season}
 \alias{tbl_vTag_Resights_Leopards}
 \alias{tbl_vMicroVHF_Deployed}
 \alias{tbl_vPinniped_Season}
@@ -31,6 +32,8 @@ tbl_vCaptures_Samples(src)
 tbl_vCCAMLR_Pup_Weights(src)
 
 tbl_vTag_Resights(src)
+
+tbl_vTag_Resights_First_Per_Season(src)
 
 tbl_vTag_Resights_Leopards(src)
 

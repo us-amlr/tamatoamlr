@@ -108,6 +108,7 @@ tamatoa <- function(...,
         # menuItem("Captures", tabName = .id.list$captures, icon = icon("th")),
         menuItem("CCAMLR Pup Weights", tabName = .id.list$cpw, icon = icon("th")),
         menuItem("CS-PHOC: Phocid Census", tabName = .id.list$csphoc, icon = icon("th")),
+        menuItem("Pinniped Season", tabName = .id.list$ps, icon = icon("th")),
         menuItem("Tag Resights", tabName = .id.list$resights, icon = icon("th", lib = "font-awesome")),
         menuItem("Takes - MMPA", tabName = .id.list$takes, icon = icon("th", lib = "font-awesome")),
         menuItem("Views", tabName = .id.list$views, icon = icon("th", lib = "font-awesome")),
@@ -149,6 +150,7 @@ tamatoa <- function(...,
         tabItem(.id.list$captures, mod_captures_ui(.id.list$captures)),
         tabItem(.id.list$cpw, mod_ccamlr_pup_weights_ui(.id.list$cpw)),
         tabItem(.id.list$csphoc, mod_phocid_census_ui(.id.list$csphoc)),
+        tabItem(.id.list$ps, mod_pinniped_season_ui(.id.list$ps)),
         tabItem(.id.list$resights, mod_tag_resights_ui(.id.list$resights)),
         tabItem(.id.list$takes, mod_takes_ui(.id.list$takes)),
         tabItem(.id.list$views, mod_views_ui(.id.list$views))
@@ -194,7 +196,6 @@ tamatoa <- function(...,
     tab <- reactive(input$tabs)
 
     # mod_afs_diet_server("afs_diet", pool, si.list$season.df)
-    # mod_afs_pinniped_season_server("afs_pinniped_season", pool, si.list$season.df)
     mod_dcc_pinniped_server(
       .id.list$dcc, db.pool, si.list$season.df, tab)
     mod_afs_capewide_pup_census_server(
@@ -207,6 +208,8 @@ tamatoa <- function(...,
       .id.list$cpw, db.pool, si.list$season.df, tab)
     mod_phocid_census_server(
       .id.list$csphoc, db.pool, si.list$season.df, tab)
+    mod_pinniped_season_server(
+      .id.list$ps, db.pool, si.list$season.df, tab)
     mod_tag_resights_server(
       .id.list$resights, db.pool, si.list$season.df, tab)
     mod_takes_server(

@@ -221,14 +221,14 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
       ### Pinniped season
       ps_df_collect <- reactive({
         req(src(), tab() == .id.list$dcc, input$season)
-        ps.df.collect <- try(tbl_vPinniped_Season(src()), silent = TRUE)
+        ps.sql <- try(tbl_vPinniped_Season(src()), silent = TRUE)
 
         validate(
-          need(ps.df.collect,
+          need(ps.sql,
                "Unable to collect vPinniped_Season from the specified database")
         )
 
-        ps.df.collect %>%
+        ps.sql %>%
           filter(season_name == req(input$season)) %>%
           select(pinniped_id, parturition, pup_mortality, pup_mortality_date,
                  attendance_study) %>%
