@@ -21,16 +21,19 @@ mod_ccamlr_pup_weights_ui <- function(id) {
                  "Select how you wish to summarize this data, ",
                  "and then specify any filters you would like to apply"),
         fluidRow(
-          column(4, .summaryTimingUI(ns, c("fs_total", "fs_single"))), #"fs_facet",
-          column(4, radioButtons(ns("summary_type"), tags$h5("Summarize by:"),
-                                 choices = c("Mean weight" = "weight",
-                                             "Growth rate" = "metric"),
-                                 selected = "weight")),
-          column(
-            width = 4,
-            tags$br(), tags$br(),
-            checkboxInput(ns("sex_grp"), "Separate weights by sex",
-                          value = TRUE)
+          column(4, .summaryTimingUI(ns, c("fs_total", "fs_single", "fs_raw"))), #"fs_facet",
+          conditionalPanel(
+            condition = "input.summary_timing != 'fs_raw'", ns = ns,
+            column(4, radioButtons(ns("summary_type"), tags$h5("Summarize by:"),
+                                   choices = c("Mean weight" = "weight",
+                                               "Growth rate" = "metric"),
+                                   selected = "weight")),
+            column(
+              width = 4,
+              tags$br(), tags$br(),
+              checkboxInput(ns("sex_grp"), "Separate weights by sex",
+                            value = TRUE)
+            )
           )
         )
       )
@@ -148,11 +151,17 @@ mod_ccamlr_pup_weights_server <- function(id, src, season.df, tab) {
                  sex %in% input$sex)
       })
 
+      #-------------------------------------------------------------------------
+      ### Filtered df
+      cpw_df_filtered <- reactive({
+        cpw_df_round_sex()
+      })
+
 
       ##########################################################################
       # Summarize
       cpw_df <- reactive({
-        cpw.grp <- cpw_df_round_sex() %>%
+        cpw.grp <- cpw_df_filtered() %>%
           group_by(season_name, round_num, round_date, time_start, time_end)
 
         if (input$sex_grp) cpw.grp <- cpw.grp %>% group_by(sex, .add = TRUE)
@@ -186,23 +195,28 @@ mod_ccamlr_pup_weights_server <- function(id, src, season.df, tab) {
       tbl_output <- reactive({
         si.dmp <- season.df() %>% select(season_name, date_median_pupping)
 
-        cpw.df <- cpw_df() %>%
-          left_join(si.dmp, by = "season_name") %>%
-          mutate(days_since_date_median_pupping = as.numeric(
-            difftime(round_date, date_median_pupping, units = "days"))) %>%
-          select(-date_median_pupping)
+        df.out <- if (input$summary_timing == "fs_raw") {
+          cpw_df_filtered()
 
-        if (input$sex_grp) {
-          cpw.df %>%
-            mutate(sex = case_when(
-              sex == "M" ~ "male",
-              sex == "F" ~ "female"
-            )) %>%
-            pivot_wider(id_cols = season_name:time_end, names_from = sex,
-                        values_from = mean_mass_kg:mass_std_error,
-                        names_glue = "{.value}_{sex}")
         } else {
-          cpw.df
+          cpw.df <- cpw_df() %>%
+            left_join(si.dmp, by = "season_name") %>%
+            mutate(days_since_date_median_pupping = as.numeric(
+              difftime(round_date, date_median_pupping, units = "days"))) %>%
+            select(-date_median_pupping)
+
+          if (input$sex_grp) {
+            cpw.df %>%
+              mutate(sex = case_when(
+                sex == "M" ~ "male",
+                sex == "F" ~ "female"
+              )) %>%
+              pivot_wider(id_cols = season_name:time_end, names_from = sex,
+                          values_from = mean_mass_kg:mass_std_error,
+                          names_glue = "{.value}_{sex}")
+          } else {
+            cpw.df
+          }
         }
       })
 
@@ -210,6 +224,10 @@ mod_ccamlr_pup_weights_server <- function(id, src, season.df, tab) {
       #-------------------------------------------------------------------------
       ### Output plot
       plot_output <- reactive({
+        validate(
+          need(input$summary_type != "fs_raw",
+               "There is no plot for raw data summary")
+        )
         cpw.df <- cpw_df() %>%
           mutate(round_num = factor(round_num, levels = input$round_num))
 

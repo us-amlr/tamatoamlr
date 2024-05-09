@@ -229,7 +229,7 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
         )
 
         ps.sql %>%
-          filter(season_name == req(input$season)) %>%
+          filter(season_name == !!req(input$season)) %>%
           select(pinniped_id, parturition, pup_mortality, pup_mortality_date,
                  attendance_study) %>%
           collect()
