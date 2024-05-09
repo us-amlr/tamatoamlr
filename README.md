@@ -9,11 +9,15 @@
 
 ## Installation
 
-You can install the development version of `tamatoamlr` from [GitHub](https://github.com/) with:
+You can install the development version of `tamatoamlr` from [GitHub](https://github.com/) with the following. Using the `pak` package may work around some GitHub/certificate issues on NOAA machines.
 
 ``` r
 # install.packages("devtools")
 devtools::install_github("us-amlr/tamatoamlr")
+
+### OR ###
+# install.packages("pak")
+pak::pkg_install("us-amlr/tamatoamlr")
 ```
 
 ## Tamatoa: Shiny app
