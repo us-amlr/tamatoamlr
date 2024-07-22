@@ -69,7 +69,7 @@ mutate_location <- function(x) {
                loc_lower %in% tolower(c("Chung Flats", "Chung Flat", "Chun Flats", "Chung Fl", "Chung flat C", "Plan Chungungo", "Chung F", "Chung F C", "Chung C flat", "Chungunga Flat", "Chung Fts C", "chungungo flats", "chung-flat", "Flats Chungungo", "Flats Chungungo", "Planicie Chungungo", "Chung flats C", "Ch Flats")) ~ "Chungungo Flats",
                loc_lower %in% tolower(c("Chung Flats E", "Chu F E", "Chung F E", "Chung E Flats", "Chung flat E", "Chung E flat")) ~ "Chungungo East Flats",
                loc_lower %in% tolower(c("Chung Flats W", "Chung flat W", "Chung f W", "Chung W flat")) ~ "Chungungo West Flats",
-               loc_lower %in% tolower(c("Chung R", "Chung W ridge", "Chung ridge", )) ~ "Chungungo Ridge",
+               loc_lower %in% tolower(c("Chung R", "Chung W ridge", "Chung ridge")) ~ "Chungungo Ridge",
                loc_lower %in% tolower(c("Chung-hill", "Chung W hill", "Chung F C hill", "Chung F hill", "Chung cliff", "Cerro Chungungo", "Chung hill", "Chungungo hill", "Cerro Chung", "Co Chungungo", "Chung H")) ~ "Chungungo Hill",
 
                loc_lower %in% tolower(c("CopiHue High", "Copi Hue")) ~ "Copihue",
@@ -116,7 +116,7 @@ mutate_location <- function(x) {
                loc_lower %in% tolower(c("Mad (C)", "Mad(C)", "Mad-C", "Mad C", "Mad C/W")) ~ "Maderas Central",
                loc_lower %in% tolower(c("Mad (W)", "Mad-w", "Mad w", "Mad(W)")) ~ "Maderas West",
                loc_lower %in% tolower(c("Mad Flats", "Mad F", "Mad flat", "Mad-F", "mad-flats", "above Maderas", "Maderas flat", "Maderas High")) ~ "Maderas Flats",
-               loc_lower %in% tolower(c("Mad-r", "Mad R", "Mad Ridge", "Maderas Rdg", "HD. R.?", "Mad B")) ~ "Maderas Ridge",
+               loc_lower %in% tolower(c("Mad-r", "Mad R", "Mad Ridge", "Maderas Rdg", "HD R?", "Mad B")) ~ "Maderas Ridge",
                loc_lower %in% tolower(c("Mad Saddle")) ~ "Maderas Saddle",
 
                # loc_lower %in% tolower(c("Módulo", "PMod", "Modelo", "landing beach", "Mod", "modulo", "Pl El Modulo", "El Módulo", "Playa Modulo", "Above int'l highway", "International highway", "PMod", "Highway",
