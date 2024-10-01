@@ -2,6 +2,8 @@
 
 * Renamed package to `tamatoamlr`
 
+* Updated licence to Apache 2.0 to match current NMFS recommendations
+
 * Added `dbplyr` to Imports to explicitly require it for database work
 
 * Used for and developed during 2023/24 Cape Shirreff field season. Finalized after season

@@ -5,12 +5,12 @@ Authors@R:
         c(person("Sam", "Woodman", email = "sam.woodman@noaa.gov", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6071-8186")),
         person("Karen", "Snyder", email = "ksnyder@g.hmc.edu", role = c("aut")))
 Description: This package contains Tamatoa, a Shiny app that connects to the 
-    US AMLR ***REMOVED*** database, 
+    US AMLR Pinniped database, 
     and allows users to analyze and visualize data from this database.
     There are some exported functions that are helpful for processing 
     US AMLR Pinniped data for more familiar users, but the intent
     is for the Shiny app to provide the main functionality for this package.
-License: CC0
+License: Apache License (== 2)
 BugReports: https://github.com/us-amlr/tamatoamlr/issues
 Depends: R (>= 4.0.0)
 Imports: 
