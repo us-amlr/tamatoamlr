@@ -45,7 +45,10 @@ mod_dcc_pinniped_ui <- function(id) {
           conditionalPanel(
             condition = "input.summary_type == 'pings'", ns = ns,
             helpText("The below data are all processed DCC data for the",
-                     "selected Tag|Freq|Code(s)")
+                     "selected Tag|Freq|Code(s)"),
+            checkboxInput(ns("ping_plot_trip"),
+                          "Include the time gap(s) of the trip(s) in the plot",
+                          value = FALSE)
           ),
           conditionalPanel(
             condition = "input.summary_type == 'trips'", ns = ns,
@@ -76,7 +79,10 @@ mod_dcc_pinniped_ui <- function(id) {
             )
           )
         ),
-        uiOutput(ns("tag_freq_code_uiOut_select"))
+        uiOutput(ns("tag_freq_code_uiOut_select")),
+        actionButton(ns("tag_freq_code_all"), "Select all seals"),
+        actionButton(ns("tag_freq_code_pupped"), "Select all seals with pups"),
+        actionButton(ns("tag_freq_code_clear"), "Clear all selections")
       ),
       mod_output_ui(ns("out"), tags$br(), uiOutput(ns("warning_na_records")))
     )
@@ -124,7 +130,6 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
 
       ### Season
       output$season <- renderUI({
-        # req(input$tx_key_type == "Database")
         selectInput(session$ns("season"), tags$h5("Season"),
                     choices = req(season.df())$season_name)
       })
@@ -137,33 +142,41 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
       #                  start = max(req(season.df())$season_open_date))
       # })
 
-      ### Tag-freq-code selection
-      output$tag_freq_code_uiOut_select <- renderUI({
-        tag.freq.code.part <- dcc_processed() %>%
+
+      #-------------------------------------------------------------------------
+      # Tag-freq-code selection
+
+      ### Prep functions, used by multiple below
+      tag_freq_code_pre <- reactive({
+        dcc_processed() %>%
           distinct(tag_freq_code, parturition) %>%
           arrange(tag_freq_code)
+      })
 
-        choices.pupped <- tag.freq.code.part %>%
+      tag_freq_code_choices_all <- reactive({
+        tag_freq_code_pre() %>%
+          select(tag_freq_code) %>%
+          unlist() %>% unname()
+      })
+
+      tag_freq_code_choices_pupped <- reactive({
+        tag_freq_code_pre() %>%
           filter(parturition) %>%
           select(tag_freq_code) %>%
           unlist() %>% unname()
+      })
 
-        choices.all <- tag.freq.code.part %>%
-          select(tag_freq_code) %>%
-          unlist() %>% unname()
-
-        # # Prep widget inputs
-        # multiple <- input$summary_type != "pings"
-        # select.name <- if_else(
-        #   multiple,
-        #   "Select at least one 'tag | frequency | code'",
-        #   "Select exactly one 'tag | frequency | code'",
-        # )
+      ### Generate seletInput
+      output$tag_freq_code_uiOut_select <- renderUI({
+        validate(
+          need(isTruthy(input$dcc_files_cabo$datapath) | isTruthy(input$dcc_files_mad$datapath),
+               "Load CABO and MAD DCC files to be able to select a 'tag | frequency | code'")
+        )
 
         selected <- isolate({
           if (input$summary_type != "pings") {
             if (is.null(vals$tag_freq_code_multiple)) {
-              choices.pupped}
+              tag_freq_code_choices_pupped()}
             else {
               vals$tag_freq_code_multiple
             }
@@ -175,9 +188,27 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
         # Return widget
         selectInput(session$ns("tag_freq_code"),
                     tags$h5("Select at least one 'tag | frequency | code'"),
-                    choices = choices.all, selected = selected,
+                    choices = tag_freq_code_choices_all(),
+                    selected = selected,
                     multiple = TRUE)
       })
+
+      ### Action buttons to set pre-specified tag/freq/codes
+      observeEvent(input$tag_freq_code_all, {
+        updateSelectInput(session, "tag_freq_code",
+                          selected = tag_freq_code_choices_all())
+      })
+
+      observeEvent(input$tag_freq_code_pupped, {
+        updateSelectInput(session, "tag_freq_code",
+                          selected = tag_freq_code_choices_pupped())
+      })
+
+      observeEvent(input$tag_freq_code_clear, {
+        updateSelectInput(session, "tag_freq_code",
+                          selected = character(0))
+      })
+
 
       ##########################################################################
       # Load and do initial formatting of DCC data
@@ -462,18 +493,26 @@ mod_dcc_pinniped_server <- function(id, src, season.df, tab) {
 
       ### Plot for pings summary type
       pings_plot <- reactive({
-        pings() %>%
-          filter(time_diff_hr < input$trip_hours) %>%
+        pings.toplot <- if (input$ping_plot_trip) {
+          pings()
+        } else {
+          pings() %>% filter(time_diff_hr < input$trip_hours)
+        }
+
+        pings.toplot %>%
           ggplot(aes(datetime)) +
           geom_point(aes(y = time_diff_hr, size = sig, color = pup_alive)) +
-          geom_line(aes(y = time_diff_hr, color = pup_alive)) +
+          geom_line(aes(y = time_diff_hr, color = pup_alive,
+                        group = trip_num_completed )) +
           guides(color = guide_legend(title = "Pup alive?"),
                  size = guide_legend(title = "Signal")) +
           scale_x_datetime(date_breaks = "1 day", date_minor_breaks = "6 hours",
                            date_labels = "%d %b %Y") +
           theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1)) +
           ggtitle(paste0(pings()$tag[1],
-                         ": time gap and signal strength")) +
+                         if_else(input$ping_plot_trip,
+                                 ": time gap and signal strength (of all)",
+                                 ": time gap and signal strength (of non-trips)"))) +
           xlab("Datetime") +
           ylab("Time gap (hours)")
       })

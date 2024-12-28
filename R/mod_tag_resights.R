@@ -189,8 +189,7 @@ mod_tag_resights_server <- function(id, src, season.df, tab) {
         #   because of different columns in different tables
         # So, resights have to stay with early collect until leops are
         #   integrated into the tag_resights table. Ugh.
-        tr.df.collect <- bind_rows(tr.sql.orig %>% collect(),
-                                   leop.sql.orig %>% collect())
+        tr.df.collect <- bind_rows(collect(tr.sql.orig), collect(leop.sql.orig))
 
         #----------------------------------------------
         # Filter records for non-NA values, verbosely as appropriate
