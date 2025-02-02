@@ -1,6 +1,6 @@
 #' @name shiny_modules
 #' @export
-mod_afs_study_beach_census_ui <- function(id) {
+mod_afs_sam_census_ui <- function(id) {
   ns <- NS(id)
 
   # assemble UI elements
@@ -17,7 +17,7 @@ mod_afs_study_beach_census_ui <- function(id) {
       ),
       box(
         title = "Summary options", status = "warning", solidHeader = FALSE, width = 6, collapsible = TRUE,
-        helpText("This tab allows you to summarize and visualize AFS Study Beach census data. ",
+        helpText("This tab allows you to summarize and visualize AFS SAM census data. ",
                  "Select how you wish to summarize this data, ",
                  "and then specify any filters you would like to apply"),
         fluidRow(
@@ -26,12 +26,11 @@ mod_afs_study_beach_census_ui <- function(id) {
             # .summaryTimingUI(ns, c("fs_date_single", "fs_single")),
             .summaryTimingUI(ns, c("fs_single")),
           ),
-          column(4, .summaryLocationUI(ns, c("by_amlr", "by_capewide", "by_beach"), "by_amlr", FALSE)),
+          column(4, .summaryLocationUI(ns, c("by_capewide", "by_beach"), "by_capewide", FALSE)),
           column(4, .summarySpAgeSexUI(ns, c("by_sp_age_sex"), "by_sp_age_sex"))
         ),
         helpText("Note that locations (i.e., the 'location' column in the",
                  "table output) are always grouped", tags$br(),
-                 "Cumulative sum for dead pups? In some years?", tags$br(),
                  "helptext todo")
       )
     ),
@@ -47,7 +46,7 @@ mod_afs_study_beach_census_ui <- function(id) {
 
 #' @name shiny_modules
 #' @export
-mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
+mod_afs_sam_census_server <- function(id, src, season.df, tab) {
   .mod_check(src, season.df, tab)
 
   moduleServer(
@@ -63,7 +62,7 @@ mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
         )
       })
 
-      # AFS Study Beach Census data is always filtered by location_group
+      # AFS SAM Census data is always filtered by location_group
       # ### Get location column
       # loc_column <- reactive({
       #   if_else(input$location_aggregate, "location_group", "location")
@@ -105,22 +104,21 @@ mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
       ### Columns dropdown
       output$age_sex_uiOut_selectize <- renderUI({
         req(input$summary_sas == "by_sp_age_sex", src())
-        census.names <- names(census_df_collect())
+        census.names <- c("ad_male_count", "juv_male_count", "juv_unk_count")
         choices.names.cs <- census.names[
           grepl("_count", census.names) | grepl("_sum", census.names)]
 
-        validate(
-          need(all(tamatoamlr::afs.study.beach.counts %in% census.names) &
-                 all(choices.names.cs %in% tamatoamlr::afs.study.beach.counts),
-               paste("The column names from afs.study.beach.counts",
-                     "and names(census_df_collect()) are not identical -",
-                     "please adjust the afs.study.beach.counts variable"))
-        )
+        # validate(
+        #   need(all(tamatoamlr::afs.study.beach.counts %in% census.names) &
+        #          all(choices.names.cs %in% tamatoamlr::afs.study.beach.counts),
+        #        paste("The column names from afs.study.beach.counts",
+        #              "and names(census_df_collect()) are not identical -",
+        #              "please adjust the afs.study.beach.counts variable"))
+        # )
 
         selectInput(
           session$ns("age_sex"), tags$h5("Columns to plot"),
-          choices = tamatoamlr::afs.study.beach.counts,
-          selected = c("pup_live_count"),
+          choices = census.names, selected = census.names,
           multiple = TRUE, selectize = TRUE
         )
       })
@@ -131,14 +129,14 @@ mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
       ##########################################################################
       # Collect all census data - one time run, then all data is collected
       census_df_collect <- reactive({
-        req(src(), tab() == .id.list$afs_sbc)
+        req(src(), tab() == .id.list$afs_sam)
         vals$warning_na_records <- NULL
 
-        census.df.collect <- try(tbl_vCensus_AFS_Study_Beach(req(src())),
+        census.df.collect <- try(tbl_vCensus_AFS_SAM(req(src())),
                                  silent = TRUE)
         validate(
           need(census.df.collect,
-               "Unable to find vCensus_AFS_Study_Beach on specified database")
+               "Unable to find tbl_vCensus_AFS_SAM on specified database")
         )
         census.df.collect
 
@@ -222,7 +220,7 @@ mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
             ungroup()
 
           if (length(unique(census.df.ds$season_name)) != length(unique(census.df.ds$census_date)))
-            validate(paste("Error in AFS study beach census data single summaries -",
+            validate(paste("Error in AFS SAM census data single summaries -",
                            "please contact the database manager"))
 
           nrow.diff <- nrow(census.df.ds.orig) - nrow(census.df.ds)
@@ -245,7 +243,7 @@ mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
               unlist()
 
             vals$warning_date_single_filter <- paste(
-              "The following seasons do not have study beach census records within",
+              "The following seasons do not have SAM census records within",
               days.max, "days of the provided date",
               paste0("(", fs$month(), " ", fs$day(), "):"),
               paste(seasons.rmd, collapse = ", ")
@@ -279,17 +277,6 @@ mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
         if (input$summary_location == "by_beach") {
           validate(need(input$location, "Please select at least one beach name"))
           census.df <- census.df %>% filter(location_group %in% input$location)
-        } else if (input$summary_location == "by_amlr") {
-          # TODO: AMLR study beach start dates, etc
-          amlr.beaches <- c("Chungungo", "Cachorros", "Maderas", "Copi", "Hue",
-                            "Copihue", "Modulo",  "Daniel", "Marko")
-          # tbl(pool(), "beaches") %>%
-          #   collect() %>%
-          #   filter(!is.na(study_beach_season_start_id)) %>%
-          #   select(name) %>%
-          #   arrange(name) %>%
-          #   unlist() %>% unname()
-          census.df <- census.df %>% filter(location_group %in% amlr.beaches)
         }
 
         validate(
@@ -314,8 +301,7 @@ mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
 
       census_df <- reactive({
         census_df_filter_location() %>%
-          mutate(location = location_group,
-                 pup_total_count = pup_live_count + pup_dead_count) %>%
+          mutate(location = location_group) %>%
           select(!!grp_names_chr(), !!!as.list(input$age_sex)) %>%
           group_by(!!!syms(grp_names_chr())) %>%
           summarise(n_records = n(),
@@ -358,12 +344,11 @@ mod_afs_study_beach_census_server <- function(id, src, season.df, tab) {
         fs <- filter_season()
         gg.title <- case_when(
           input$summary_timing == "fs_total" ~
-            "AFS Study Beach Census - Totals by Season",
+            "AFS SAM Census - Totals by Season",
           input$summary_timing == "fs_date_single" ~
-            paste("AFS Study Beach Census - Closest to", fs$month(), fs$day()),
-          # input$summary_timing == "fs_date_single" ~ "Phocid Census - Closest to Date",
+            paste("AFS SAM Census - Closest to", fs$month(), fs$day()),
           input$summary_timing == "fs_single" ~
-            paste("AFS Study Beach Census -", fs$season()),
+            paste("AFS SAM Census -", fs$season()),
           TRUE ~ "Title todo"
         )
 

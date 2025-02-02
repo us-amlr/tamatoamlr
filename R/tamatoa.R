@@ -103,6 +103,7 @@ tamatoa <- function(...,
         # menuItem("AFS Natality and Pup Mortality", tabName = "tab_afs_pinniped_season", icon = icon("th")),
         menuItem("AFS DCC", tabName = .id.list$dcc, icon = icon("th")),
         menuItem("AFS Capewide Pup Census", tabName = .id.list$afs_cwpc, icon = icon("th", lib = "font-awesome")),
+        menuItem("AFS SAM Census", tabName = .id.list$afs_sam, icon = icon("th", lib = "font-awesome")),
         menuItem("AFS Study Beach Census", tabName = .id.list$afs_sbc, icon = icon("th", lib = "font-awesome")),
         # menuItem("Pinnipeds + Tags", tabName = "tab_pt", icon = icon("th", lib = "font-awesome")),
         # menuItem("Captures", tabName = .id.list$captures, icon = icon("th")),
@@ -146,6 +147,7 @@ tamatoa <- function(...,
         # tabItem("tab_afs_diet", mod_afs_diet_ui("afs_diet")),
         # tabItem("tab_afs_pinniped_season", mod_afs_pinniped_season_ui("afs_pinniped_season")),
         tabItem(.id.list$afs_cwpc, mod_afs_capewide_pup_census_ui(.id.list$afs_cwpc)),
+        tabItem(.id.list$afs_sam, mod_afs_sam_census_ui(.id.list$afs_sam)),
         tabItem(.id.list$afs_sbc, mod_afs_study_beach_census_ui(.id.list$afs_sbc)),
         tabItem(.id.list$captures, mod_captures_ui(.id.list$captures)),
         tabItem(.id.list$cpw, mod_ccamlr_pup_weights_ui(.id.list$cpw)),
@@ -200,6 +202,8 @@ tamatoa <- function(...,
       .id.list$dcc, db.pool, si.list$season.df, tab)
     mod_afs_capewide_pup_census_server(
       .id.list$afs_cwpc, db.pool, si.list$season.df, tab)
+    mod_afs_sam_census_server(
+      .id.list$afs_sam, db.pool, si.list$season.df, tab)
     mod_afs_study_beach_census_server(
       .id.list$afs_sbc, db.pool, si.list$season.df, tab)
     # mod_captures_server(

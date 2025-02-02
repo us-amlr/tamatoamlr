@@ -55,6 +55,19 @@ tbl_vCensus_AFS_Study_Beach <- function(src) {
 
 #' @name extract
 #' @export
+tbl_vCensus_AFS_SAM <- function(src) {
+  tbl(src, "vCensus_AFS_SAM") %>%
+    select(season_name, census_id, census_type,
+           observer, census_date, time_start, time_end,
+           location, location_group, beach_id, species,
+           ad_male_count, juv_male_count, juv_unk_count,
+           census_notes, census_created_dt) %>%
+    collect() %>%
+    mutate(species = str_to_sentence(species))
+}
+
+#' @name extract
+#' @export
 tbl_vCensus_AFS_Capewide_Pup <- function(src) {
   tbl(src, "vCensus_AFS_Capewide_Pup") %>%
     select(season_name, census_id, census_type,

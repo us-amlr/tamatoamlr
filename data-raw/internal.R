@@ -41,6 +41,7 @@
   "dcc"      = "dcc_pinniped",
   "afs_cwpc" = "afs_capewide_pup_census",
   "afs_sbc"  = "afs_study_beach_census",
+  "afs_sam"  = "afs_sam_census",
   "captures" = "captures",
   "cpw"      = "ccamlr_pup_weights",
   "csphoc"   = "csphoc",

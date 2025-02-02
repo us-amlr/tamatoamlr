@@ -4,6 +4,7 @@
 \alias{extract}
 \alias{tbl_vCensus_Phocid}
 \alias{tbl_vCensus_AFS_Study_Beach}
+\alias{tbl_vCensus_AFS_SAM}
 \alias{tbl_vCensus_AFS_Capewide_Pup}
 \alias{tbl_vCaptures}
 \alias{tbl_vCaptures_Drugs}
@@ -20,6 +21,8 @@
 tbl_vCensus_Phocid(src)
 
 tbl_vCensus_AFS_Study_Beach(src)
+
+tbl_vCensus_AFS_SAM(src)
 
 tbl_vCensus_AFS_Capewide_Pup(src)
 
