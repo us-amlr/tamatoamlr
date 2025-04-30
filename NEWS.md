@@ -6,9 +6,7 @@
 
 * Added `dbplyr` to Imports to explicitly require it for database work
 
-* Used for and developed during 2023/24 Cape Shirreff field season. Finalized after season
-
-* Update all (TODO: in progress) `extract.R` and all modules to build queries first, and then collect from the database. [#8]
+* Update `extract.R` and various modules to build queries first, and then collect from the database. [#8]
 
 * Updated various tab functionality, especially AFS DCC, cape-wide pup census, tag resights, and MMPA takes
 
@@ -19,6 +17,8 @@
 * Added DCC sample data [#5]
 
 * Added tests for `dcc`, `csphoc`, and `cwp` functions [e.g., #6]
+
+* Added "Punta Las Torres" and "Penguin Colonies" to variable csphoc.core.location.groups
 
 
 # amlrPinnipeds 0.5.0

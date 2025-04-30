@@ -56,12 +56,14 @@ csphoc.core.location.groups <- c(
   "Alcazar", "Pinochet de la Barra", "Papua", "Antartico",
   "Loberia", "Yamana", "Golondrina", "del Lobero", "Paulina",
   "Schiappacasse", "El Plastico", "Leopard Beach", "del Canal",
-  "Aranda", "El Remanso", "Golondrina-del Lobero", "Paulina-Aranda",
-  "Cape Shirreff", "Copihue", "Peninsula Cerro Gajardo"
+  "Aranda", "Remanso", "Golondrina-del Lobero", "Paulina-Aranda",
+  "Cape Shirreff", "Copihue", "Peninsula Cerro Gajardo",
+  "Punta Las Torres", "Penguin Colonies"
 )
 stopifnot(all(csphoc.core.location.groups %in% beaches$name))
-waldo::compare(csphoc.core.location.groups,
-               tamatoamlr::csphoc.core.location.groups)
+# csphoc.core.location.groups[!(csphoc.core.location.groups %in% beaches$name)]
+waldo::compare(tamatoamlr::csphoc.core.location.groups,
+               csphoc.core.location.groups)
 
 # Sanity check
 z <- tbl(con, "vCensus_Phocid") %>%
