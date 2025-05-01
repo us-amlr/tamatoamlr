@@ -20,6 +20,8 @@
 
 * Added "Punta Las Torres" and "Penguin Colonies" to variable csphoc.core.location.groups
 
+* Updated `tamatoa` to only allow pre-defined connections via a filedsn argument, and to work with amlrDatabases (>= v0.7) modules, especially database connection
+
 
 # amlrPinnipeds 0.5.0
 
@@ -36,7 +38,7 @@
 
 * amlrPinnipeds now depends on the following additional packages: [hms](https://github.com/tidyverse/hms), [forcats](https://github.com/tidyverse/forcats), and [stringi](https://github.com/gagolews/stringi)
 
-* Updated `mutate_location` to keep in step with name column in ***REMOVED***.beaches
+* Updated `mutate_location` to keep in step with name column in beaches table
 
 * `mutate_location` now uses `stringi::stri_escape_unicode` to escape all non-ASCII characters
 
@@ -57,7 +59,7 @@
 
 * Added `arrange_tag` for nicely sorting pinniped tag numbers
 
-* Added extract (`tbl_...`) functions for consistent extraction of data from the ***REMOVED*** database
+* Added extract (`tbl_...`) functions for consistent extraction of data from the database
 
 * Added lots of additional functionality to Tamatoa during the 2022-23 field season, including: 
 

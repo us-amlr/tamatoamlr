@@ -59,7 +59,7 @@
 #'
 #' @examplesIf FALSE
 #'   # Not run; examples only will run if `con` is a valid database connection
-#'   con <- amlr_dbConnect("***REMOVED***")
+#'   con <- odbc::dbConnect(odbc(), filedsn = "amlr-pinniped-db-prod.dsn")
 #'   x <- tbl_vCensus_AFS_Capewide_Pup(con)
 #'
 #'   x.201617 <- x[x$season_name == "2016/17", ]

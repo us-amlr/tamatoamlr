@@ -5,12 +5,12 @@
 #' @param x data.frame, must contain character column 'location'
 #'
 #' @details
-#' AMLR (pinniped) data is frequently messy, including having non-standard
-#' location information (location names). This function is a 'repository'
-#' of approved conversions to standardize location names
-#' in an ***REMOVED*** dataset.
+#' AMLR Pinniped data can be messy, and may have non-standard location
+#' information (location names). This function is a 'repository' of approved
+#' conversions to standardize location names in an AMLR Pinnipeds dataset.
+#'
 #' This function was built for the tag resight reimport effort,
-#' but is applicable to other location renaming as well
+#' but is applicable to other location renaming as well.
 #'
 #' Input data are processed as followed before being matched:
 #'   - '.' characters are removed (i.e., replaced with '')

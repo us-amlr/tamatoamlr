@@ -47,7 +47,8 @@ usethis::use_data(afs.study.beach.counts, overwrite = TRUE)
 #-------------------------------------------------------------------------------
 ## prepare 'csphoc.core.locations'
 library(dplyr)
-con <- amlrDatabases::amlr_dbConnect("***REMOVED***")
+library(odbc)
+con <- odbc::dbConnect(odbc(), filedsn = "../dsn/amlr-pinniped-db-prod.dsn")
 beaches <- tbl(con, "beaches") %>% collect()
 csphoc.core.location.groups <- c(
   "Media Luna", "Punta Yuseff", "Larga", "Marko", "Daniel", "Modulo",

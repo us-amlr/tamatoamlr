@@ -1,10 +1,10 @@
 # Generate CWP datasets for testing
 
-library(amlrDatabases)
+library(odbc)
 library(dplyr)
 library(testthat)
 
-con <- amlr_dbConnect("***REMOVED***")
+con <- odbc::dbConnect(odbc(), filedsn = "../dsn/amlr-pinniped-db-prod.dsn")
 
 cwp <- tbl(con, "vCensus_AFS_Capewide_Pup") %>%
   select(season_name, census_id, census_type,

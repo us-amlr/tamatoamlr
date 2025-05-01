@@ -35,8 +35,6 @@ By default, Tamatoa attempts to connect to the database on the SWFSC server. For
 
 -   `mod_database_server`, from [amlrDatabases](https://github.com/us-amlr/amlrDatabases), returns the connection to the user-specified database via a [pool](https://github.com/rstudio/pool) object that is used by the rest of the tamatoamlr Shiny App modules. Users may use the `filedsn` argument to 'pre-define' a database connection. If the `filedsn` argument is provided, then Tamatoa will open with this as the selected database connection
 
--   Pool connections to the four possible databases (remote/local and ***REMOVED***/***REMOVED***_Test) may be generated and passed to `mod_database_server`, depending on the arguments passed to `tamatoa()`.
-
 -   `mod_season_info_server` returns the season information data used by the rest of the modules
 
 -   The 'Database and season info' tab relies on `mod_database` and `mod_season_info`. The rest of the tabs all have a dedicated module that takes at least the pool object from `mod_database`, and generally the `season.df` data frame output from `mod_season_info_server`, as inputs. These modules pass both a table and a plot to `mod_output_server` from [amlrDatabases](https://github.com/us-amlr/amlrDatabases), which displays the table and plot along with associated visualization and download options. These modules generally depend on views created in the database.

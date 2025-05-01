@@ -13,8 +13,8 @@ csphoc.core.location.groups
 \description{
 Names of Cape Shirreff Phocid Census (CS-PHOC) core census locations. Note
 that while the majority of these correspond directly to a row in the
-***REMOVED***.beaches table, officially these are all location group values.
+beaches table, officially these are all location group values.
 This means they have been designed to correspond to the location_group column
-in the ***REMOVED***.vCensus_Phocid view.
+in the vCensus_Phocid view.
 }
 \keyword{datasets}
