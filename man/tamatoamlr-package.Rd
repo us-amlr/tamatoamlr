@@ -9,11 +9,10 @@
 tamatoamlr: Analyze and Visualize US AMLR Pinniped Data
 }
 \details{
-This package contains \code{\link{tamatoa}},
-a Shiny app that connects to the ***REMOVED*** database,
-and allows users to analyze and visualize data from said database.
-There are also several stand-alone functions,
-such as for calculating krill lengths from carapace measurements.
+This package contains \code{\link{tamatoa}}, a Shiny app that connects to the
+US AMLR Pinnipeds database, and allows users to analyze and visualize data
+from said database. There are also several stand-alone functions, such as for
+calculating krill lengths from carapace measurements.
 }
 \seealso{
 Useful links:

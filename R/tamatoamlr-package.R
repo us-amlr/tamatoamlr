@@ -1,10 +1,9 @@
 #' tamatoamlr: Analyze and Visualize US AMLR Pinniped Data
 #'
-#' This package contains \code{\link{tamatoa}},
-#' a Shiny app that connects to the ***REMOVED*** database,
-#' and allows users to analyze and visualize data from said database.
-#' There are also several stand-alone functions,
-#' such as for calculating krill lengths from carapace measurements.
+#' This package contains \code{\link{tamatoa}}, a Shiny app that connects to the
+#' US AMLR Pinnipeds database, and allows users to analyze and visualize data
+#' from said database. There are also several stand-alone functions, such as for
+#' calculating krill lengths from carapace measurements.
 #'
 #' @name tamatoamlr-package
 #' @aliases tamatoamlr
@@ -20,22 +19,24 @@
 #' @importFrom DT DTOutput renderDT
 #' @importFrom forcats fct
 #' @importFrom glue glue
-#' @importFrom lubridate days days_in_month is.Date month today week year
-#'   mdy mdy_hms ymd ymd_hms
+#' @importFrom lubridate days days_in_month is.Date month today week year mdy
+#'   mdy_hms ymd ymd_hms
+#' @importFrom odbc odbc dbConnect
 #' @importFrom pool dbIsValid dbGetQuery poolClose
 #' @importFrom purrr pmap_dbl pmap_lgl set_names
 #' @importFrom rlang .data enquo is_bool
 #' @importFrom scales hue_pal
 #' @importFrom shinybusy add_busy_spinner
-#' @importFrom shinydashboard box dashboardBody tabItems tabItem
-#'   dashboardHeader dashboardPage dashboardSidebar sidebarMenu menuItem
+#' @importFrom shinydashboard box dashboardBody tabItems tabItem dashboardHeader
+#'   dashboardPage dashboardSidebar sidebarMenu menuItem
 #' @importFrom shinyjs useShinyjs extendShinyjs js
 #' @importFrom stats na.omit var
 #' @importFrom stringi stri_escape_unicode
 #' @importFrom stringr str_count str_detect str_length str_match str_pad
-#'   str_remove_all str_replace_all str_replace_na
-#'   str_split_i str_sub str_to_lower str_to_sentence
-#' @importFrom tidyr complete nest nesting unnest pivot_longer pivot_wider replace_na
+#'   str_remove_all str_replace_all str_replace_na str_split_i str_sub
+#'   str_to_lower str_to_sentence
+#' @importFrom tidyr complete nest nesting unnest pivot_longer pivot_wider
+#'   replace_na
 #' @importFrom utils globalVariables read.csv write.csv
 #'
 #' @keywords package
