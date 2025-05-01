@@ -1,16 +1,13 @@
 #' Tamatoa
 #'
-#' Open Tamatoa, the package Shiny app
+#' Open Tamatoa, the AMLR Pinniped program Shiny app
 #'
 #' @param ... passed to [shiny::shinyApp()]
-#' @param filedsn character; default is `NULL.` The file path to a DSN file with a
-#'   database connection. If not `NULL`, Tamatoa will try to try to establish a
-#'   database connection using [pool::dbPool]. See 'Details' for an example
+#' @param filedsn character; passed to [amlrDatabases::mod_database_server()]
 #'
 #' @details
-#' If `filedsn` is not `NULL`, then Tamatoa will try to make a connection via:
-#'
-#' `pool::dbPool(odbc::odbc(), filedsn = filedsn)`
+#' The Tamatoa Shiny app is the recommended way for end-users to access
+#' data from the AMLR Pinniped database
 #'
 #' @examplesIf interactive()
 #' tamatoa()
@@ -24,13 +21,6 @@
 #' @export
 tamatoa <- function(..., filedsn = NULL) {
   ##### Prep work
-  pool.filedsn <- pool::dbPool(odbc::odbc(), filedsn = filedsn)
-
-  onStop(function() {
-    if (isTruthy(pool.filedsn))
-      if (dbIsValid(pool.filedsn)) poolClose(pool.filedsn)
-  })
-
   # old <- options()
   # on.exit(options(old), add = TRUE)
   # options(shiny.maxRequestSize = 50 * 1024^2) # Max file size is 50MB
@@ -131,12 +121,7 @@ tamatoa <- function(..., filedsn = NULL) {
 
     #---------------------------------------------------------------------------
     ### Modules
-    pool.list <- purrr::compact(list(
-      `filedsn argument` = if (isTruthy(pool.filedsn)) pool.filedsn else NULL
-    ))
-
-    # TODO
-    db.pool <- mod_database_server(.id.list$db, pool.list, "db.driver")
+    db.pool <- mod_database_server(.id.list$db, filedsn=filedsn)
     si.list <- mod_season_info_server(.id.list$si, db.pool)
     tab <- reactive(input$tabs)
 

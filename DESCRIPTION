@@ -15,7 +15,6 @@ BugReports: https://github.com/us-amlr/tamatoamlr/issues
 Depends: R (>= 4.0.0)
 Imports: 
     amlrDatabases (>= 0.7), 
-    odbc, 
     dplyr (>= 1.0),
     dbplyr, 
     DT, 
@@ -23,6 +22,7 @@ Imports:
     glue,
     ggplot2,
     lubridate, 
+    odbc, 
     pool,
     purrr,
     rlang,

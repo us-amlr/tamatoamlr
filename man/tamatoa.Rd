@@ -9,17 +9,14 @@ tamatoa(..., filedsn = NULL)
 \arguments{
 \item{...}{passed to \code{\link[shiny:shinyApp]{shiny::shinyApp()}}}
 
-\item{filedsn}{character; default is \code{NULL.} The file path to a DSN file with a
-database connection. If not \code{NULL}, Tamatoa will try to try to establish a
-database connection using \link[pool:dbPool]{pool::dbPool}. See 'Details' for an example}
+\item{filedsn}{character; passed to \code{\link[amlrDatabases:mod_database]{amlrDatabases::mod_database_server()}}}
 }
 \description{
-Open Tamatoa, the package Shiny app
+Open Tamatoa, the AMLR Pinniped program Shiny app
 }
 \details{
-If \code{filedsn} is not \code{NULL}, then Tamatoa will try to make a connection via:
-
-\code{pool::dbPool(odbc::odbc(), filedsn = filedsn)}
+The Tamatoa Shiny app is the recommended way for end-users to access
+data from the AMLR Pinniped database
 }
 \examples{
 \dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
