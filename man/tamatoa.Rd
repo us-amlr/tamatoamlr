@@ -4,48 +4,29 @@
 \alias{tamatoa}
 \title{Tamatoa}
 \usage{
-tamatoa(
-  ...,
-  remote.prod = TRUE,
-  remote.test = TRUE,
-  local.prod = FALSE,
-  local.server.sql = "\\\\SQLEXPRESS"
-)
+tamatoa(..., filedsn = NULL)
 }
 \arguments{
 \item{...}{passed to \code{\link[shiny:shinyApp]{shiny::shinyApp()}}}
 
-\item{remote.prod}{logical; default is TRUE. Should Tamatoa create an
-automatic connection to the ***REMOVED*** database on ***REMOVED***?}
-
-\item{remote.test}{logical; default is TRUE. Should Tamatoa create an
-automatic connection to the ***REMOVED***_Test database on ***REMOVED***?}
-
-\item{local.prod}{logical; default is FALSE. Should Tamatoa create an
-automatic connection to the ***REMOVED*** database on the local SQL
-Express? (see Details for more info)}
-
-\item{local.server.sql}{character; SQL server suffix. Default is
-\code{"\\\\SQLEXPRESS"}}
+\item{filedsn}{character; default is \code{NULL.} The file path to a DSN file with a
+database connection. If not \code{NULL}, Tamatoa will try to try to establish a
+database connection using \link[pool:dbPool]{pool::dbPool}. See 'Details' for an example}
 }
 \description{
 Open Tamatoa, the package Shiny app
 }
 \details{
-If \code{local.prod == TRUE}, then Tamatoa will attempt to connect to the
-***REMOVED*** database on the following server:
-\code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]],
-  local.server.sql)}
+If \code{filedsn} is not \code{NULL}, then Tamatoa will try to make a connection via:
+
+\code{pool::dbPool(odbc::odbc(), filedsn = filedsn)}
 }
 \examples{
 \dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-  tamatoa()
+tamatoa()
 
-  # Testing
-  tamatoa(remote.prod = FALSE, remote.test = TRUE)
-
-  # In the field
-  tamatoa(remote.prod = FALSE, remote.test = FALSE, local.prod = TRUE)
+# Testing
+tamatoa(filedsn = here("path_to_dsn.dsn"))
 \dontshow{\}) # examplesIf}
 }
 \seealso{

@@ -3,87 +3,36 @@
 #' Open Tamatoa, the package Shiny app
 #'
 #' @param ... passed to [shiny::shinyApp()]
-#' @param remote.prod logical; default is TRUE. Should Tamatoa create an
-#'   automatic connection to the ***REMOVED*** database on ***REMOVED***?
-#' @param remote.test logical; default is TRUE. Should Tamatoa create an
-#'   automatic connection to the ***REMOVED***_Test database on ***REMOVED***?
-#' @param local.prod logical; default is FALSE. Should Tamatoa create an
-#'   automatic connection to the ***REMOVED*** database on the local SQL
-#'   Express? (see Details for more info)
-#' @param local.server.sql character; SQL server suffix. Default is
-#'   `"\\SQLEXPRESS"`
+#' @param filedsn character; default is `NULL.` The file path to a DSN file with a
+#'   database connection. If not `NULL`, Tamatoa will try to try to establish a
+#'   database connection using [pool::dbPool]. See 'Details' for an example
 #'
-#' @details If `local.prod == TRUE`, then Tamatoa will attempt to connect to the
-#'   ***REMOVED*** database on the following server:
-#'   \code{\link[base]{paste0}(\link[base]{Sys.info}()[["nodename"]],
-#'   local.server.sql)}
+#' @details
+#' If `filedsn` is not `NULL`, then Tamatoa will try to make a connection via:
+#'
+#' `pool::dbPool(odbc::odbc(), filedsn = filedsn)`
 #'
 #' @examplesIf interactive()
-#'   tamatoa()
+#' tamatoa()
 #'
-#'   # Testing
-#'   tamatoa(remote.prod = FALSE, remote.test = TRUE)
-#'
-#'   # In the field
-#'   tamatoa(remote.prod = FALSE, remote.test = FALSE, local.prod = TRUE)
+#' # Testing
+#' tamatoa(filedsn = here("path_to_dsn.dsn"))
 #'
 #' @seealso
-#'   \url{https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center}
+#' \url{https://www.fisheries.noaa.gov/about/antarctic-ecosystem-research-division-southwest-fisheries-science-center}
 #'
 #' @export
-tamatoa <- function(...,
-                    remote.prod = TRUE, remote.test = TRUE,
-                    local.prod = FALSE, local.server.sql = "\\SQLEXPRESS") {
-  ##############################################################################
-  ##### Set connections to dbs, as specified by the user
-  db.driver <- "ODBC Driver 18 for SQL Server"
-
-  db.server.remote <- "swc-***REMOVED***-s"
-  db.server.local <- paste0(Sys.info()[["nodename"]], local.server.sql)
-
-  db.name.prod <- "***REMOVED***"
-  db.name.test <- "***REMOVED***_Test"
-
-  pool.remote.prod <- if (remote.prod) {
-    message("Attempting to connect to ", db.name.prod, " on ", db.server.remote)
-    amlr_dbPool(db.name.prod, db.driver, db.server.remote)
-  } else {
-    NULL
-  }
-
-  if (remote.prod && remote.test && !isTruthy(pool.remote.prod))
-    warning("Could not connect to ", db.name.prod, " on ", db.server.remote,
-            ", and thus not attempting to connect to ", db.name.test)
-  pool.remote.test <- if (remote.test && (!remote.prod || isTruthy(pool.remote.prod))) {
-    message("Attempting to connect to ", db.name.test, " on ", db.server.remote)
-    amlr_dbPool(db.name.test, db.driver, db.server.remote)
-  } else {
-    NULL
-  }
-
-  pool.local.prod <- if (local.prod) {
-    message("Attempting to connect to ", db.name.prod, " on ", db.server.local)
-    amlr_dbPool(db.name.prod, db.driver, db.server.local)
-  } else {
-    NULL
-  }
+tamatoa <- function(..., filedsn = NULL) {
+  ##### Prep work
+  pool.filedsn <- pool::dbPool(odbc::odbc(), filedsn = filedsn)
 
   onStop(function() {
-    if (isTruthy(pool.remote.prod))
-      if (dbIsValid(pool.remote.prod)) poolClose(pool.remote.prod)
-    if (isTruthy(pool.remote.test))
-      if (dbIsValid(pool.remote.test)) poolClose(pool.remote.test)
-    if (isTruthy(pool.local.prod))
-      if (dbIsValid(pool.local.prod)) poolClose(pool.local.prod)
+    if (isTruthy(pool.filedsn))
+      if (dbIsValid(pool.filedsn)) poolClose(pool.filedsn)
   })
-
-
-  ##############################################################################
-  ##### Assorted other stuff...
 
   # old <- options()
   # on.exit(options(old), add = TRUE)
-
   # options(shiny.maxRequestSize = 50 * 1024^2) # Max file size is 50MB
   # options("digits" = 1)   # for proper display of decimals
 
@@ -92,9 +41,10 @@ tamatoa <- function(...,
   ##### UI
   ui <- dashboardPage(
     title = "Tamatoa",
-    dashboardHeader(title = "Tamatoa: Analyze and Visualize U.S. AMLR Pinniped Data",
-                    titleWidth = "540"),
-
+    dashboardHeader(
+      title = "Tamatoa: Analyze and Visualize U.S. AMLR Pinniped Data",
+      titleWidth = "540"
+    ),
     dashboardSidebar(
       sidebarMenu(
         id = "tabs",
@@ -118,7 +68,6 @@ tamatoa <- function(...,
         actionButton("stop", "Close")
       ), width = "230"
     ),
-
     dashboardBody(
       useShinyjs(),
       # https://stackoverflow.com/questions/35306295
@@ -126,20 +75,16 @@ tamatoa <- function(...,
         text = "shinyjs.closeWindow = function() { window.close(); }",
         functions = c("closeWindow")
       ),
-
       add_busy_spinner(
         spin = "double-bounce", position = "top-right", margins = c(20, 20),
         height = "100px", width = "100px"
       ),
-
-
       # https://stackoverflow.com/questions/59760316
       tags$head(tags$style(HTML("
         .shiny-output-error-validation {
         color: red; font-weight: bold;
         }
       "))),
-
       tabItems(
         tabItem(.id.list$info,
                 fluidRow(mod_database_ui(.id.list$db), mod_season_info_ui(.id.list$si))),
@@ -169,7 +114,6 @@ tamatoa <- function(...,
     ### Quit GUI
     session$onSessionEnded(function() {
       # Close current pool object. Needed here in case working off 'other' db
-      # on.exit(dbDisconnect(conn))
       isolate({
         if (inherits(db.pool(), "Pool")) {
           if (dbIsValid(db.pool())) {
@@ -188,12 +132,11 @@ tamatoa <- function(...,
     #---------------------------------------------------------------------------
     ### Modules
     pool.list <- purrr::compact(list(
-      `***REMOVED*** - ***REMOVED***` = if (remote.prod) pool.remote.prod else NULL,
-      `***REMOVED***_Test - ***REMOVED***` = if (remote.test) pool.remote.test else NULL,
-      `***REMOVED*** - SQLExpress` = if (local.prod) pool.local.prod else NULL
+      `filedsn argument` = if (isTruthy(pool.filedsn)) pool.filedsn else NULL
     ))
 
-    db.pool <- mod_database_server(.id.list$db, pool.list, db.driver)
+    # TODO
+    db.pool <- mod_database_server(.id.list$db, pool.list, "db.driver")
     si.list <- mod_season_info_server(.id.list$si, db.pool)
     tab <- reactive(input$tabs)
 
